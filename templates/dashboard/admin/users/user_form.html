@@ -1,0 +1,259 @@
+{% extends "dashboard/admin/base.html" %}
+{% load static widget_tweaks %}
+
+{% block page_title %}{% if object %}Edit User{% else %}Create User{% endif %}{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-100">
+            {% if object %}
+                Edit User
+            {% else %}
+                Create New User
+            {% endif %}
+        </h1>
+        <a href="{% url 'dashboard:admin:user_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Users
+        </a>
+    </div>
+
+    <div class="card p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    <ul class="list-disc pl-5">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                    {{ form.email|add_class:"form-input"|attr:"placeholder=Enter email address" }}
+                    {% for error in form.email.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+                    {{ form.first_name|add_class:"form-input"|attr:"placeholder=Enter first name" }}
+                    {% for error in form.first_name.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-group">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+                    {{ form.last_name|add_class:"form-input"|attr:"placeholder=Enter last name" }}
+                    {% for error in form.last_name.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.role.id_for_label }}" class="form-label">{{ form.role.label }}</label>
+                    {{ form.role|add_class:"form-select" }}
+                    {% for error in form.role.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if not object %}
+            <!-- Password fields only shown for create form -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label }} *</label>
+                    {{ form.password }}
+                    {% for error in form.password.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                    <p class="text-gray-400 text-xs mt-1">Password must be at least 8 characters long</p>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.password_confirm.id_for_label }}" class="form-label">{{ form.password_confirm.label }} *</label>
+                    {{ form.password_confirm }}
+                    {% for error in form.password_confirm.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="form-group">
+                    <label for="{{ form.is_active.id_for_label }}" class="form-label">{{ form.is_active.label }}</label>
+                    {{ form.is_active|add_class:"form-select" }}
+                    {% for error in form.is_active.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.is_staff.id_for_label }}" class="form-label">{{ form.is_staff.label }}</label>
+                    {{ form.is_staff|add_class:"form-select" }}
+                    {% for error in form.is_staff.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% if form.is_superuser %}
+                <div class="form-group">
+                    <label for="{{ form.is_superuser.id_for_label }}" class="form-label">{{ form.is_superuser.label }}</label>
+                    {{ form.is_superuser|add_class:"form-select" }}
+                    {% for error in form.is_superuser.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if form.groups %}
+            <div class="form-group">
+                <label for="{{ form.groups.id_for_label }}" class="form-label">{{ form.groups.label }}</label>
+                {{ form.groups|add_class:"form-select" }}
+                {% for error in form.groups.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="flex justify-start space-x-4 mt-6">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save mr-2"></i> Save User
+                </button>
+                <a href="{% url 'dashboard:admin:user_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times mr-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 1200px;
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.py-8 {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.mb-6 {
+    margin-bottom: 1.5rem;
+}
+
+.text-3xl {
+    font-size: 1.875rem;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.text-gray-100 {
+    color: #f3f4f6;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}
+
+.p-6 {
+    padding: 1.5rem;
+}
+
+.space-y-6 > * + * {
+    margin-top: 1.5rem;
+}
+
+.grid {
+    display: grid;
+}
+
+.grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gap-6 {
+    gap: 1.5rem;
+}
+
+.text-red-400 {
+    color: #f87171;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.mt-1 {
+    margin-top: 0.25rem;
+}
+
+.mt-6 {
+    margin-top: 1.5rem;
+}
+
+.space-x-4 > * + * {
+    margin-left: 1rem;
+}
+
+.list-disc {
+    list-style-type: disc;
+}
+
+.pl-5 {
+    padding-left: 1.25rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.alert-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+@media (max-width: 768px) {
+    .md\:grid-cols-2,
+    .md\:grid-cols-3 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    .flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
+

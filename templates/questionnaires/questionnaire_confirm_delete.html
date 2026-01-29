@@ -1,0 +1,20 @@
+{% extends "dashboard/admin/base.html" %}
+
+{% block page_title %}Delete Questionnaire{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <div class="card-header">
+    <h2 style="margin:0;">Delete Questionnaire</h2>
+  </div>
+  <div class="card-body">
+    <p>Are you sure you want to delete <strong>{{ object.title }}</strong>?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button class="btn btn-danger" type="submit">Yes, delete</button>
+      <a class="btn btn-secondary" href="{% url 'questionnaires:questionnaire_detail' object.pk %}">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

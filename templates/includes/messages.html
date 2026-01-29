@@ -1,0 +1,24 @@
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    {% if messages %}
+        {% for message in messages %}
+        <div class="mb-4 alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %}">
+            <div class="flex items-start">
+                <div class="flex-shrink-0" style="margin-top: 2px;">
+                    {% if message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% elif message.tags == 'success' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-semibold">{{ message }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>

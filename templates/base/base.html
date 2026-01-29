@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HealthScreener Pro{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="{% static 'css/main.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+ <body class="bg-gray-50 font-sans antialiased flex flex-col min-h-screen">
+     {% if user.is_authenticated %}
+     <header class="bg-white shadow-sm">
+         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+             <div class="flex justify-between h-16">
+                 <div class="flex items-center">
+                     <div class="flex-shrink-0 flex items-center">
+                         <i class="fas fa-heartbeat text-teal-600 text-2xl mr-2"></i>
+                         <span class="text-xl font-bold text-gray-800">HealthScreener <span class="text-teal-600">Pro</span></span>
+                     </div>
+                     <nav class="hidden md:ml-10 md:flex space-x-2">
+                         <a href="/dashboard/" class="nav-link">Dashboard</a>
+                         <a href="{% url 'patients:add' %}" class="nav-link">Patients</a>
+                     </nav>
+                 </div>
+                 <div class="hidden md:ml-4 md:flex-shrink-0 md:flex md:items-center">
+                     <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
+                 </div>
+             </div>
+         </div>
+     </header>
+     {% endif %}
+ 
+    <!-- Main Content -->
+     <main class="flex-grow">
+         {% if user.is_authenticated %}
+         <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+{% include "messages.html" %}
+         {% endif %}
+
+         {% block content %}{% endblock %}
+
+         {% if user.is_authenticated %}
+         </div>
+         {% endif %}
+     </main>
+
+    <!-- Footer -->
+     {% if user.is_authenticated %}
+     <footer class="bg-white border-t border-gray-200">
+         <div class="max-w-7xl mx-auto py-6 px-4 overflow-hidden sm:px-6 lg:px-8">
+             <p class="text-center text-sm text-gray-500">
+                 &copy; {% now "Y" %} HealthScreener Pro. All rights reserved.
+             </p>
+         </div>
+     </footer>
+     {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

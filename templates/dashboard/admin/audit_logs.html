@@ -1,0 +1,551 @@
+{% extends "dashboard/admin/base.html" %}
+{% load static %}
+
+{% block page_title %}Audit Logs{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-100">Audit Logs</h1>
+        <div class="flex space-x-4">
+            <button onclick="exportLogs()" class="btn btn-secondary">
+                <i class="fas fa-download mr-2"></i> Export Logs
+            </button>
+            <button onclick="clearOldLogs()" class="btn btn-danger">
+                <i class="fas fa-trash mr-2"></i> Clear Old Logs
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-8">
+        <div class="card-body">
+            <form method="get" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <input type="text" name="q" placeholder="Search logs..." 
+                               value="{{ request.GET.q }}" 
+                               class="form-input">
+                    </div>
+                    <div>
+                        <select name="action" class="form-select">
+                            <option value="">All Actions</option>
+                            {% for action_type, action_label in action_choices %}
+                            <option value="{{ action_type }}" {% if request.GET.action == action_type %}selected{% endif %}>{{ action_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <select name="user" class="form-select">
+                            <option value="">All Users</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if request.GET.user == user.id|stringformat:"s" %}selected{% endif %}>{{ user.get_full_name|default:user.email }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <input type="date" name="date_from" 
+                               value="{{ request.GET.date_from }}" 
+                               class="form-input" placeholder="From">
+                    </div>
+                    <div>
+                        <input type="date" name="date_to" 
+                               value="{{ request.GET.date_to }}" 
+                               class="form-input" placeholder="To">
+                    </div>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search mr-2"></i> Search
+                    </button>
+                    <a href="{% url 'dashboard:admin:audit_logs' %}" class="btn btn-secondary ml-4">
+                        <i class="fas fa-times mr-2"></i> Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="dashboard-stat-card">
+            <div class="stat-content">
+                <p class="text-gray-400 text-sm">Total Logs</p>
+                <h3 class="text-2xl font-bold text-gray-100">{{ audit_logs.paginator.count|intcomma }}</h3>
+            </div>
+            <div class="stat-icon-wrapper icon-purple">
+                <i class="fas fa-list"></i>
+            </div>
+        </div>
+        <div class="dashboard-stat-card">
+            <div class="stat-content">
+                <p class="text-gray-400 text-sm">Today</p>
+                <h3 class="text-2xl font-bold text-gray-100">{{ today_logs|intcomma }}</h3>
+            </div>
+            <div class="stat-icon-wrapper icon-green">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+        </div>
+        <div class="dashboard-stat-card">
+            <div class="stat-content">
+                <p class="text-gray-400 text-sm">This Week</p>
+                <h3 class="text-2xl font-bold text-gray-100">{{ week_logs|intcomma }}</h3>
+            </div>
+            <div class="stat-icon-wrapper icon-orange">
+                <i class="fas fa-calendar-week"></i>
+            </div>
+        </div>
+        <div class="dashboard-stat-card">
+            <div class="stat-content">
+                <p class="text-gray-400 text-sm">This Month</p>
+                <h3 class="text-2xl font-bold text-gray-100">{{ month_logs|intcomma }}</h3>
+            </div>
+            <div class="stat-icon-wrapper icon-green">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Logs Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            {% if audit_logs %}
+            <div class="overflow-x-auto">
+                <table class="responsive-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Model</th>
+                            <th>Object</th>
+                            <th>IP Address</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in audit_logs %}
+                        <tr>
+                            <td>
+                                <span class="text-gray-100">{{ log.timestamp|date:"M d, Y H:i:s" }}</span>
+                            </td>
+                            <td>
+                                {% if log.user %}
+                                <div class="flex items-center">
+                                    <div class="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-semibold mr-2">
+                                        {{ log.user.first_name.0 }}{{ log.user.last_name.0 }}
+                                    </div>
+                                    <span class="text-gray-100">{{ log.user.get_full_name|default:log.user.email }}</span>
+                                </div>
+                                {% else %}
+                                <span class="text-gray-500">System</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full {% if log.action == 'create' %}bg-green-900 text-green-200{% elif log.action == 'update' %}bg-blue-900 text-blue-200{% elif log.action == 'delete' %}bg-red-900 text-red-200{% elif log.action == 'login' %}bg-purple-900 text-purple-200{% elif log.action == 'logout' %}bg-gray-700 text-gray-300{% else %}bg-yellow-900 text-yellow-200{% endif %}">
+                                    {{ log.get_action_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-gray-100 font-mono text-sm">{{ log.model }}</span>
+                            </td>
+                            <td>
+                                <span class="text-gray-100">{{ log.object_repr }}</span>
+                            </td>
+                            <td>
+                                <span class="text-gray-400 text-sm">{{ log.ip_address|default:"N/A" }}</span>
+                            </td>
+                            <td>
+                                {% if log.changes %}
+                                <button onclick="showChanges({{ log.id }})" class="text-teal-400 hover:text-teal-300 text-sm">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                {% else %}
+                                <span class="text-gray-500 text-sm">No changes</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="flex justify-between items-center mt-6 px-4">
+                <div class="text-gray-400 text-sm">
+                    Showing {{ audit_logs.start_index }} to {{ audit_logs.end_index }} of {{ audit_logs.paginator.count }} logs
+                </div>
+                <div class="flex space-x-2">
+                    {% if audit_logs.has_previous %}
+                        <a href="?page={{ audit_logs.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}" 
+                           class="btn btn-secondary btn-sm">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    {% endif %}
+                    
+                    <span class="text-gray-400 text-sm">
+                        Page {{ audit_logs.number }} of {{ audit_logs.paginator.num_pages }}
+                    </span>
+                    
+                    {% if audit_logs.has_next %}
+                        <a href="?page={{ audit_logs.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}" 
+                           class="btn btn-secondary btn-sm">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-history text-6xl text-gray-500 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-300 mb-2">No audit logs found</h3>
+                <p class="text-gray-500 mb-6">No audit logs match your search criteria.</p>
+                <a href="{% url 'dashboard:admin:audit_logs' %}" class="btn btn-primary">
+                    <i class="fas fa-times mr-2"></i> Clear Filters
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Changes Modal -->
+<div id="changesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-100">Audit Log Changes</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="changesContent" class="text-gray-100">
+            <!-- Changes will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<style>
+.space-y-4 > * + * {
+    margin-top: 1rem;
+}
+
+.space-x-2 > * + * {
+    margin-left: 0.5rem;
+}
+
+.space-x-4 > * + * {
+    margin-left: 1rem;
+}
+
+.grid {
+    display: grid;
+}
+
+.grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.md\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.gap-6 {
+    gap: 1.5rem;
+}
+
+.w-6 {
+    width: 1.5rem;
+}
+
+.h-6 {
+    height: 1.5rem;
+}
+
+.rounded-full {
+    border-radius: 9999px;
+}
+
+.bg-teal-600 {
+    background-color: #0d9488;
+}
+
+.text-white {
+    color: #ffffff;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.text-teal-400 {
+    color: #2dd4bf;
+}
+
+.text-teal-300 {
+    color: #5eead4;
+}
+
+.text-gray-100 {
+    color: #f3f4f6;
+}
+
+.text-gray-400 {
+    color: #9ca3af;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+.text-gray-300 {
+    color: #d1d5db;
+}
+
+.text-xl {
+    font-size: 1.25rem;
+}
+
+.text-6xl {
+    font-size: 3.75rem;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.text-2xl {
+    font-size: 1.5rem;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.mb-6 {
+    margin-bottom: 1.5rem;
+}
+
+.mb-8 {
+    margin-bottom: 2rem;
+}
+
+.mb-12 {
+    margin-bottom: 3rem;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}
+
+.mr-3 {
+    margin-right: 0.75rem;
+}
+
+.ml-2 {
+    margin-left: 0.5rem;
+}
+
+.ml-4 {
+    margin-left: 1rem;
+}
+
+.mt-6 {
+    margin-top: 1.5rem;
+}
+
+.py-12 {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.p-6 {
+    padding: 1.5rem;
+}
+
+.max-w-2xl {
+    max-width: 42rem;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.mx-4 {
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+.max-h-96 {
+    max-height: 24rem;
+}
+
+.overflow-y-auto {
+    overflow-y: auto;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.flex {
+    display: flex;
+}
+
+.hover\:text-teal-300:hover {
+    color: #5eead4;
+}
+
+.hover\:text-gray-200:hover {
+    color: #e5e7eb;
+}
+
+.fixed {
+    position: fixed;
+}
+
+.inset-0 {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.bg-black {
+    background-color: #000000;
+}
+
+.bg-opacity-50 {
+    opacity: 0.5;
+}
+
+.hidden {
+    display: none;
+}
+
+.z-50 {
+    z-index: 50;
+}
+
+.bg-gray-800 {
+    background-color: #1f2937;
+}
+
+.rounded-lg {
+    border-radius: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .md\:grid-cols-4,
+    .md\:grid-cols-5 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    .flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+
+<script>
+function showChanges(logId) {
+    // Fetch changes via AJAX (simplified for demo)
+    const modal = document.getElementById('changesModal');
+    const content = document.getElementById('changesContent');
+    
+    // This would normally fetch from an API endpoint
+    content.innerHTML = '<div class="space-y-4"><div><h4 class="font-semibold text-gray-300 mb-2">Field Changes:</h4><div class="bg-gray-700 rounded p-3"><p class="text-sm">Sample change data for log ID: ' + logId + '</p></div></div></div>';
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeModal() {
+    const modal = document.getElementById('changesModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function exportLogs() {
+    // Export functionality
+    const url = new URL(window.location);
+    url.searchParams.set('export', 'csv');
+    window.open(url.toString(), '_blank');
+}
+
+function clearOldLogs() {
+    if (confirm('Are you sure you want to clear audit logs older than 90 days? This action cannot be undone.')) {
+        // Clear old logs functionality
+        fetch('{% url "dashboard:admin:clear_audit_logs" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Old audit logs cleared successfully!');
+                window.location.reload();
+            } else {
+                alert('Error clearing logs: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+</script>
+{% endblock %}

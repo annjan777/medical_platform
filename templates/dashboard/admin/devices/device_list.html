@@ -1,0 +1,45 @@
+{% extends "dashboard/admin/base.html" %}
+
+{% block page_title %}Devices{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="margin:0;">All Devices</h2>
+    <a class="btn btn-primary" href="{% url 'dashboard:admin:device_create' %}">Add device</a>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Device ID</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Assigned To</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in devices %}
+          <tr>
+            <td>{{ d.name }}</td>
+            <td>{{ d.device_id }}</td>
+            <td>{{ d.get_device_type_display }}</td>
+            <td>{{ d.get_status_display }}</td>
+            <td>{{ d.assigned_to.email|default:"-" }}</td>
+            <td style="white-space:nowrap;">
+              <a href="{% url 'dashboard:admin:device_detail' d.pk %}">View</a> |
+              <a href="{% url 'dashboard:admin:device_update' d.pk %}">Edit</a> |
+              <a href="{% url 'dashboard:admin:device_delete' d.pk %}">Delete</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6">No devices found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

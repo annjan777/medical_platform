@@ -1,0 +1,31 @@
+{% extends "dashboard/admin/base.html" %}
+
+{% block page_title %}Device{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="margin:0;">{{ device.name }}</h2>
+    <div>
+      <a class="btn btn-secondary" href="{% url 'dashboard:admin:device_update' device.pk %}">Edit</a>
+    </div>
+  </div>
+  <div class="card-body">
+    <p><strong>Device ID:</strong> {{ device.device_id }}</p>
+    <p><strong>Type:</strong> {{ device.get_device_type_display }}</p>
+    <p><strong>Status:</strong> {{ device.get_status_display }}</p>
+    <p><strong>Assigned to:</strong> {{ device.assigned_to.email|default:"-" }}</p>
+    <p><strong>Location:</strong> {{ device.location|default:"-" }}</p>
+
+    <h3>Recent Sessions</h3>
+    <ul>
+      {% for s in sessions %}
+        <li>{{ s }}</li>
+      {% empty %}
+        <li>No linked screening sessions.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+

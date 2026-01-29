@@ -1,0 +1,354 @@
+{% extends 'dashboard/admin/base.html' %}
+{% load humanize %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Welcome Section -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-100 mb-2">Welcome back, {{ request.user.get_full_name|default:request.user.email }}!</h2>
+        <p class="text-gray-400">Here's what's happening with your platform today.</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="dashboard-card-container">
+        <!-- Users Card -->
+        <div class="dashboard-stat-card">
+            <div class="stat-content">
+                <p class="text-gray-400 text-sm">Total Users</p>
+                <h3 class="text-2xl font-bold text-gray-100">{{ total_users|intcomma }}</h3>
+                <p class="text-xs text-gray-500 mt-1">{{ new_users }} new this month</p>
+            </div>
+            <div class="stat-icon-wrapper icon-purple">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+
+        <!-- Patients Card -->
+        <div class="dashboard-stat-card">
+            <div class="stat-content">
+                <p class="text-gray-400 text-sm">Total Patients</p>
+                <h3 class="text-2xl font-bold text-gray-100">{{ total_patients|intcomma }}</h3>
+                <p class="text-xs text-gray-500 mt-1">{{ active_patients }} active</p>
+            </div>
+            <div class="stat-icon-wrapper icon-green">
+                <i class="fas fa-user-injured"></i>
+            </div>
+        </div>
+
+        <!-- Devices Card -->
+        <div class="dashboard-stat-card">
+            <div class="stat-content">
+                <p class="text-gray-400 text-sm">Total Devices</p>
+                <h3 class="text-2xl font-bold text-gray-100">{{ total_devices|intcomma }}</h3>
+                <p class="text-xs text-gray-500 mt-1">{{ active_devices }} active</p>
+            </div>
+            <div class="stat-icon-wrapper icon-orange">
+                <i class="fas fa-microchip"></i>
+            </div>
+        </div>
+
+        <!-- Screenings Card -->
+        <div class="dashboard-stat-card">
+            <div class="stat-content">
+                <p class="text-gray-400 text-sm">Screenings</p>
+                <h3 class="text-2xl font-bold text-gray-100">{{ total_screenings|intcomma }}</h3>
+                <p class="text-xs text-gray-500 mt-1">{{ recent_screenings }} this week</p>
+            </div>
+            <div class="stat-icon-wrapper icon-green">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Screenings -->
+    <div class="card mt-8">
+        <div class="card-header">
+            <h3 class="text-lg font-semibold text-gray-100">Recent Screening Sessions</h3>
+            <a href="{% url 'screening:session_list' %}" class="text-sm text-teal-400 hover:text-teal-300">View All</a>
+        </div>
+        <div class="card-body">
+            <div class="overflow-x-auto">
+                <table class="responsive-table">
+                    <thead>
+                        <tr>
+                            <th>Session ID</th>
+                            <th>Patient</th>
+                            <th>Device</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in recent_screenings_list|slice:":5" %}
+                        <tr>
+                            <td>#{{ session.id|stringformat:"06d" }}</td>
+                            <td>{{ session.patient.get_full_name|default:session.patient.email|default:"Unknown Patient" }}</td>
+                            <td>{{ session.device.name|default:"N/A" }}</td>
+                            <td>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full {% if session.status == 'completed' %}bg-green-900 text-green-200{% elif session.status == 'in_progress' %}bg-blue-900 text-blue-200{% else %}bg-gray-700 text-gray-300{% endif %}">
+                                    {{ session.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ session.created_at|date:"M d, Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'screening:session_detail' session.id %}" class="text-teal-400 hover:text-teal-300 text-sm">View</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-gray-500">
+                                No screening sessions found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card mt-8">
+        <div class="card-header">
+            <h3 class="text-lg font-semibold text-gray-100">Quick Actions</h3>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{% url 'dashboard:admin:user_create' %}" class="btn btn-primary">
+                    <i class="fas fa-user-plus mr-2"></i> Add User
+                </a>
+                <a href="{% url 'dashboard:admin:device_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i> Add Device
+                </a>
+                <a href="{% url 'patients:add' %}" class="btn btn-primary">
+                    <i class="fas fa-user-plus mr-2"></i> Add Patient
+                </a>
+                <a href="{% url 'questionnaires:questionnaire_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i> New Questionnaire
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.dashboard-stat-card {
+    background-color: var(--bg-tertiary);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border-color);
+    min-height: 120px;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-content h3 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.25rem 0;
+}
+
+.stat-content p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.stat-icon-wrapper {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.icon-purple {
+    background-color: #805ad5;
+}
+
+.icon-green {
+    background-color: #48bb78;
+}
+
+.icon-orange {
+    background-color: #f6ad55;
+}
+
+.text-gray-100 {
+    color: #f3f4f6;
+}
+
+.text-gray-400 {
+    color: #9ca3af;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+.text-teal-400 {
+    color: #2dd4bf;
+}
+
+.text-teal-300 {
+    color: #5eead4;
+}
+
+.text-green-200 {
+    color: #bbf7d0;
+}
+
+.text-green-900 {
+    color: #14532d;
+}
+
+.text-blue-200 {
+    color: #bfdbfe;
+}
+
+.text-blue-900 {
+    color: #1e3a8a;
+}
+
+.text-gray-300 {
+    color: #d1d5db;
+}
+
+.text-gray-700 {
+    color: #374151;
+}
+
+.bg-green-900 {
+    background-color: #14532d;
+}
+
+.bg-blue-900 {
+    background-color: #1e3a8a;
+}
+
+.bg-gray-700 {
+    background-color: #374151;
+}
+
+.grid {
+    display: grid;
+}
+
+.grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lg\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}
+
+.mt-8 {
+    margin-top: 2rem;
+}
+
+.mb-8 {
+    margin-bottom: 2rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.px-2 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.py-1 {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.text-lg {
+    font-size: 1.125rem;
+}
+
+.text-2xl {
+    font-size: 1.5rem;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.rounded-full {
+    border-radius: 9999px;
+}
+
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+.hover\:text-teal-300:hover {
+    color: #5eead4;
+}
+
+.mt-1 {
+    margin-top: 0.25rem;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+@media (max-width: 768px) {
+    .lg\:grid-cols-4 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+}
+</style>
+{% endblock %}

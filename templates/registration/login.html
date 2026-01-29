@@ -1,0 +1,139 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Login - HealthScreener Pro{% endblock %}
+
+{% block content %}
+<div class="min-h-screen relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-blue-50"></div>
+  <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-teal-100 blur-3xl opacity-70"></div>
+  <div class="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-blue-100 blur-3xl opacity-70"></div>
+
+  <div class="relative min-h-screen flex">
+    <div class="hidden lg:flex lg:w-1/2 p-12 items-center justify-center">
+      <div class="max-w-lg">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-white shadow-soft border border-gray-200 flex items-center justify-center">
+            <i class="fas fa-heartbeat text-teal-600 text-2xl"></i>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-teal-700">Patient Management Platform</p>
+            <h1 class="text-3xl font-extrabold text-gray-900">HealthScreener Pro</h1>
+          </div>
+        </div>
+
+        <p class="mt-6 text-lg text-gray-700 leading-relaxed">
+          Securely manage patient records and streamline manual data entry with a calm, clinical interface designed for day-to-day medical workflows.
+        </p>
+
+        <div class="mt-8 space-y-4">
+          <div class="flex gap-3 items-start">
+            <div class="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center text-teal-700">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">Role-based access</p>
+              <p class="text-sm text-gray-600">Admins manage users & full data. Data-entry users add patient records only.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3 items-start">
+            <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700">
+              <i class="fas fa-notes-medical"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">Fast patient entry</p>
+              <p class="text-sm text-gray-600">Simple, clean forms for quick registration and follow-up notes.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3 items-start">
+            <div class="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700">
+              <i class="fas fa-lock"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">Secure authentication</p>
+              <p class="text-sm text-gray-600">Built on Django’s trusted authentication system.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10">
+      <div class="w-full max-w-md">
+        <div class="bg-white/80 backdrop-blur rounded-2xl border border-gray-200 shadow-soft p-8">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-extrabold text-gray-900">Sign in</h2>
+              <p class="mt-1 text-sm text-gray-600">Use your credentials to continue.</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-700">
+              <i class="fas fa-user-md"></i>
+            </div>
+          </div>
+
+          {% if form.errors %}
+          <div class="mt-6 alert alert-error">
+            <div class="flex items-start">
+              <div class="flex-shrink-0" style="margin-top: 2px;"><i class="fas fa-exclamation-circle"></i></div>
+              <div class="ml-3">
+                <p class="text-sm font-semibold">Invalid username or password. Please try again.</p>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <form class="mt-6 space-y-4" method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <div>
+<label for="id_username" class="form-label">Email</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <i class="fas fa-envelope"></i>
+                  </span>
+                  <input id="id_username" name="username" type="email" required autofocus
+                         class="form-input pl-10" placeholder="Enter your email">
+              </div>
+            </div>
+
+            <div>
+              <label for="id_password" class="form-label">Password</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                  <i class="fas fa-key"></i>
+                </span>
+                <input id="id_password" name="password" type="password" autocomplete="current-password" required
+                       class="form-input pl-10" placeholder="Enter your password">
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" class="h-4 w-4 text-teal-600 border-gray-300 rounded">
+                Remember me
+              </label>
+
+              <a href="#" class="text-sm font-semibold text-teal-700 hover:text-teal-800">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="w-full btn btn-primary" style="padding: 0.75rem 1rem; border-radius: 0.75rem;">
+              <span class="mr-2"><i class="fas fa-sign-in-alt"></i></span>
+              Sign in
+            </button>
+
+            <p class="text-xs text-gray-500 text-center pt-2">
+              For access, contact your administrator.
+            </p>
+          </form>
+        </div>
+
+        <p class="mt-6 text-center text-xs text-gray-500">
+          &copy; {% now "Y" %} HealthScreener Pro
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

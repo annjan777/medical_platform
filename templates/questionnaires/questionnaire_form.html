@@ -1,0 +1,96 @@
+{% extends "dashboard/admin/base.html" %}
+{% load i18n static widget_tweaks %}
+
+{% block page_title %}{% if object %}Edit Questionnaire{% else %}Create Questionnaire{% endif %}{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-100">
+            {% if object %}
+                {% trans 'Edit Questionnaire' %}
+            {% else %}
+                {% trans 'Create New Questionnaire' %}
+            {% endif %}
+        </h1>
+        <a href="{% url 'questionnaires:questionnaire_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i> {% trans 'Back to Questionnaires' %}
+        </a>
+    </div>
+
+    <div class="card p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    <ul class="list-disc pl-5">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                    {{ form.title|add_class:"form-input"|attr:"placeholder=Enter questionnaire title" }}
+                    {% for error in form.title.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.version.id_for_label }}" class="form-label">{{ form.version.label }}</label>
+                    {{ form.version|add_class:"form-input"|attr:"placeholder=e.g., 1.0" }}
+                    {% for error in form.version.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                {{ form.description|add_class:"form-textarea"|attr:"rows=4"|attr:"placeholder=Provide a brief description of the questionnaire" }}
+                {% for error in form.description.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-group">
+                    <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+                    {{ form.status|add_class:"form-select" }}
+                    {% for error in form.status.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.questionnaire_type.id_for_label }}" class="form-label">{{ form.questionnaire_type.label }}</label>
+                    {{ form.questionnaire_type|add_class:"form-select" }}
+                    {% for error in form.questionnaire_type.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group flex items-center">
+                {{ form.is_active|add_class:"form-checkbox h-5 w-5 text-teal-600 border-gray-300 rounded focus:ring-teal-500" }}
+                <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-gray-300">{{ form.is_active.label }}</label>
+                {% for error in form.is_active.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="flex justify-start space-x-4 mt-6">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save mr-2"></i> {% trans 'Save Questionnaire' %}
+                </button>
+                <a href="{% url 'questionnaires:questionnaire_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times mr-2"></i> {% trans 'Cancel' %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

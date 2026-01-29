@@ -1,0 +1,227 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Dashboard - HealthScreener Pro{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Welcome Header -->
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="px-6 py-5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Welcome back, Dr. {{ user.first_name|default:"User" }}!</h1>
+                    <p class="mt-1 text-teal-100">Here's what's happening with your patients today.</p>
+                </div>
+                <div class="hidden md:block">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-teal-700 text-white">
+                        <i class="fas fa-calendar-day mr-2"></i>
+                        {{ current_date|date:"l, F j, Y" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Total Patients -->
+        <div class="dashboard-widget">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-teal-100 p-3 rounded-lg">
+                    <i class="fas fa-users text-teal-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-sm font-medium text-gray-500">Total Patients</h3>
+                    <p class="text-2xl font-semibold text-gray-900">1,248</p>
+                    <p class="text-xs text-green-600">
+                        <i class="fas fa-arrow-up"></i> 12.5% from last month
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Appointments -->
+        <div class="dashboard-widget">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-sm font-medium text-gray-500">Today's Appointments</h3>
+                    <p class="text-2xl font-semibold text-gray-900">18</p>
+                    <div class="mt-1 flex items-center">
+                        <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>
+                        <span class="text-xs text-gray-500">3 in progress</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Screenings -->
+        <div class="dashboard-widget">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-amber-100 p-3 rounded-lg">
+                    <i class="fas fa-clipboard-list text-amber-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-sm font-medium text-gray-500">Pending Screenings</h3>
+                    <p class="text-2xl font-semibold text-gray-900">7</p>
+                    <p class="text-xs text-amber-600">
+                        <i class="fas fa-exclamation-circle"></i> 2 require immediate attention
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Screenings -->
+        <div class="dashboard-widget">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-green-100 p-3 rounded-lg">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-sm font-medium text-gray-500">Completed Screenings</h3>
+                    <p class="text-2xl font-semibold text-gray-900">143</p>
+                    <p class="text-xs text-gray-500">This month</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Recent Patients -->
+        <div class="lg:col-span-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-lg font-medium">Recent Patients</h3>
+                </div>
+                <div class="overflow-hidden">
+                    <div class="responsive-table">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Visit</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="relative px-6 py-3">
+                                        <span class="sr-only">Action</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center">
+                                                <span class="text-teal-600 font-medium">JD</span>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">John Doe</div>
+                                                <div class="text-sm text-gray-500">ID: PT-1001</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">Today, 10:30 AM</div>
+                                        <div class="text-sm text-gray-500">General Checkup</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Completed
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="#" class="text-teal-600 hover:text-teal-900">View</a>
+                                    </td>
+                                </tr>
+                                <!-- More patient rows... -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 text-right">
+                    <a href="#" class="text-sm font-medium text-teal-600 hover:text-teal-500">View all patients</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-lg font-medium">Quick Actions</h3>
+                </div>
+                <div class="p-4 space-y-4">
+                    <a href="#" class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-600">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-sm font-medium text-gray-900">New Patient</h4>
+                            <p class="text-sm text-gray-500">Add a new patient record</p>
+                        </div>
+                    </a>
+                    <a href="#" class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-sm font-medium text-gray-900">Schedule Appointment</h4>
+                            <p class="text-sm text-gray-500">Book a new appointment</p>
+                        </div>
+                    </a>
+                    <a href="#" class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                            <i class="fas fa-vial"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-sm font-medium text-gray-900">New Screening</h4>
+                            <p class="text-sm text-gray-500">Start a new screening session</p>
+                        </div>
+                    </a>
+                    <a href="#" class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                            <i class="fas fa-file-medical"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-sm font-medium text-gray-900">Generate Report</h4>
+                            <p class="text-sm text-gray-500">Create patient or screening reports</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Upcoming Appointments -->
+            <div class="card mt-6">
+                <div class="card-header flex items-center justify-between">
+                    <h3 class="text-lg font-medium">Upcoming Appointments</h3>
+                    <a href="#" class="text-sm text-teal-600 hover:text-teal-500">View all</a>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div class="border-l-4 border-teal-500 pl-4 py-2">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-medium">Sarah Johnson</h4>
+                            <span class="text-xs text-gray-500">10:30 AM</span>
+                        </div>
+                        <p class="text-sm text-gray-500">Follow-up Consultation</p>
+                    </div>
+                    <div class="border-l-4 border-blue-500 pl-4 py-2">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-medium">Michael Chen</h4>
+                            <span class="text-xs text-gray-500">11:45 AM</span>
+                        </div>
+                        <p class="text-sm text-gray-500">Initial Screening</p>
+                    </div>
+                    <div class="border-l-4 border-purple-500 pl-4 py-2 opacity-75">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-sm font-medium text-gray-500">Emily Rodriguez</h4>
+                            <span class="text-xs text-gray-400">2:15 PM</span>
+                        </div>
+                        <p class="text-sm text-gray-400">Routine Checkup</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

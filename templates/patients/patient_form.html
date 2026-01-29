@@ -1,0 +1,77 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Add Patient - HealthScreener Pro{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <div class="card">
+    <div class="card-header flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold">New Patient</h2>
+        <p class="text-sm text-gray-500">Enter patient details manually for screening and records.</p>
+      </div>
+      <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
+    </div>
+
+    <div class="card-body">
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="form-label" for="id_first_name">First name</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}<div class="form-error">{{ form.first_name.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div>
+            <label class="form-label" for="id_last_name">Last name</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}<div class="form-error">{{ form.last_name.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div>
+            <label class="form-label" for="id_date_of_birth">Date of birth</label>
+            {{ form.date_of_birth }}
+            {% if form.date_of_birth.errors %}<div class="form-error">{{ form.date_of_birth.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div>
+            <label class="form-label" for="id_gender">Gender</label>
+            {{ form.gender }}
+            {% if form.gender.errors %}<div class="form-error">{{ form.gender.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div>
+            <label class="form-label" for="id_phone">Phone</label>
+            {{ form.phone }}
+            {% if form.phone.errors %}<div class="form-error">{{ form.phone.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div>
+            <label class="form-label" for="id_email">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="form-error">{{ form.email.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="form-label" for="id_address">Address</label>
+            {{ form.address }}
+            {% if form.address.errors %}<div class="form-error">{{ form.address.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="form-label" for="id_notes">Notes</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="form-error">{{ form.notes.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3">
+          <button type="submit" class="btn btn-primary">Save Patient</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

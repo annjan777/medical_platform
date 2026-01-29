@@ -1,0 +1,97 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Left Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-heartbeat sidebar-logo"></i>
+            <span class="sidebar-title">HealthScreener <span class="text-teal-400">Admin</span></span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'dashboard:admin:dashboard' %}" class="nav-item {% if 'admin/dashboard' in request.path %}active{% endif %}">
+                <i class="fas fa-tachometer-alt nav-icon"></i>
+                Dashboard
+            </a>
+            <a href="{% url 'dashboard:admin:user_list' %}" class="nav-item {% if 'admin/users' in request.path %}active{% endif %}">
+                <i class="fas fa-users nav-icon"></i>
+                Users
+            </a>
+            <a href="{% url 'dashboard:admin:device_list' %}" class="nav-item {% if 'admin/devices' in request.path %}active{% endif %}">
+                <i class="fas fa-tablet-alt nav-icon"></i>
+                Devices
+            </a>
+            <a href="{% url 'questionnaires:questionnaire_list' %}" class="nav-item {% if 'questionnaires' in request.path %}active{% endif %}">
+                <i class="fas fa-clipboard-list nav-icon"></i>
+                Questionnaires
+            </a>
+            <a href="{% url 'screening:session_list' %}" class="nav-item {% if 'screening' in request.path %}active{% endif %}">
+                <i class="fas fa-stethoscope nav-icon"></i>
+                Screening
+            </a>
+            <a href="{% url 'patients:list' %}" class="nav-item {% if 'patients' in request.path %}active{% endif %}">
+                <i class="fas fa-user-injured nav-icon"></i>
+                Patients
+            </a>
+            <a href="{% url 'dashboard:admin:audit_logs' %}" class="nav-item {% if 'admin/audit-logs' in request.path %}active{% endif %}">
+                <i class="fas fa-history nav-icon"></i>
+                Audit Logs
+            </a>
+            <a href="{% url 'dashboard:admin:system_settings' %}" class="nav-item {% if 'admin/settings' in request.path %}active{% endif %}">
+                <i class="fas fa-cog nav-icon"></i>
+                Settings
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="admin-main-content">
+        <header class="admin-header">
+            <div class="header-left">
+                <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-menu-wrapper">
+                    <button type="button" class="user-menu-button" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                        <img class="user-avatar" src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.email }}&background=0D8ABC&color=fff" alt="">
+                        <span class="user-name">{{ request.user.get_full_name|default:request.user.email }}</span>
+                        <i class="fas fa-chevron-down user-menu-icon"></i>
+                    </button>
+                    <div class="user-dropdown-menu hidden" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                        <a href="{% url 'logout' %}" class="dropdown-item" role="menuitem" tabindex="-1">Sign out</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="admin-main-area">
+            {% include "messages.html" %}
+            {% block admin_content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdownMenu = userMenuButton ? userMenuButton.nextElementSibling : null;
+
+        if (userMenuButton && userDropdownMenu) {
+            userMenuButton.addEventListener('click', () => {
+                userDropdownMenu.classList.toggle('hidden');
+            });
+
+            window.addEventListener('click', (event) => {
+                if (!userMenuButton.contains(event.target) && !userDropdownMenu.contains(event.target)) {
+                    userDropdownMenu.classList.add('hidden');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

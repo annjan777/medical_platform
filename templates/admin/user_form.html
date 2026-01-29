@@ -1,0 +1,123 @@
+{% extends "dashboard/admin/base.html" %}
+{% load i18n static widget_tweaks %}
+
+{% block page_title %}
+    {% if form.instance.pk %}
+        {% trans 'Edit User' %}: {{ form.instance.email }}
+    {% else %}
+        {% trans 'Add New User' %}
+    {% endif %}
+{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-100">
+            {% if form.instance.pk %}
+                {% trans 'Edit User' %}
+            {% else %}
+                {% trans 'Add New User' %}
+            {% endif %}
+        </h1>
+        <a href="{% url 'dashboard:admin:user_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i> {% trans 'Back to Users' %}
+        </a>
+    </div>
+
+    <div class="card p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                <ul class="list-disc pl-5">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <fieldset class="form-section">
+                <legend class="card-title mb-4">{% trans 'Account Information' %}</legend>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                        {{ form.email|add_class:"form-input"|attr:"placeholder=Enter user email" }}
+                        {% for error in form.email.errors %}
+                            <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <label for="{{ form.role.id_for_label }}" class="form-label">{{ form.role.label }}</label>
+                        {{ form.role|add_class:"form-select" }}
+                        {% for error in form.role.errors %}
+                            <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+                        {{ form.first_name|add_class:"form-input"|attr:"placeholder=Enter first name" }}
+                        {% for error in form.first_name.errors %}
+                            <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+                        {{ form.last_name|add_class:"form-input"|attr:"placeholder=Enter last name" }}
+                        {% for error in form.last_name.errors %}
+                            <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+                <legend class="card-title mb-4">{% trans 'Permissions and Status' %}</legend>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex items-center">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-gray-300">{{ form.is_active.label }}</label>
+                        {% for error in form.is_active.errors %}
+                            <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    <div class="flex items-center">
+                        {{ form.is_staff }}
+                        <label for="{{ form.is_staff.id_for_label }}" class="ml-2 text-gray-300">{{ form.is_staff.label }}</label>
+                        {% for error in form.is_staff.errors %}
+                            <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    <div class="flex items-center">
+                        {{ form.is_superuser }}
+                        <label for="{{ form.is_superuser.id_for_label }}" class="ml-2 text-gray-300">{{ form.is_superuser.label }}</label>
+                        {% for error in form.is_superuser.errors %}
+                            <p class="text-red-400 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="flex justify-between items-center mt-8">
+                <div>
+                    <button type="submit" class="btn btn-primary mr-3">
+                        <i class="fas fa-save mr-2"></i> {% trans 'Save User' %}
+                    </button>
+                    <a href="{% url 'dashboard:admin:user_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times mr-2"></i> {% trans 'Cancel' %}
+                    </a>
+                </div>
+                {% if form.instance.pk %}
+                <div>
+                    <a href="{% url 'dashboard:admin:user_delete' form.instance.pk %}" class="btn btn-danger"
+                       onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.');">
+                        <i class="fas fa-trash mr-2"></i> {% trans 'Delete User' %}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

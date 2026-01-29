@@ -1,0 +1,36 @@
+{% extends "dashboard/admin/base.html" %}
+
+{% block page_title %}Responses{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <div class="card-header">
+    <h2 style="margin:0;">Responses</h2>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Questionnaire</th>
+          <th>Respondent</th>
+          <th>Submitted</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in responses %}
+          <tr>
+            <td>{{ r.questionnaire }}</td>
+            <td>{{ r.respondent.email|default:"-" }}</td>
+            <td>{{ r.submitted_at|default:r.started_at }}</td>
+            <td><a href="{% url 'questionnaires:response_detail' r.pk %}">View</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4">No responses.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

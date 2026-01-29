@@ -1,0 +1,78 @@
+{% extends "dashboard/admin/base.html" %}
+{% load i18n static %}
+
+{% block page_title %}{% trans 'Dashboard' %}{% endblock %}
+
+{% block admin_content %}
+<div class="dashboard">
+    <div class="card-title mb-4">
+        <h2 class="text-xl font-bold text-gray-100">{% trans 'Welcome to HealthScreener Pro Admin' %}</h2>
+    </div>
+
+    <div class="dashboard-card-container">
+        <div class="dashboard-stat-card">
+            <div class="stat-icon-wrapper icon-purple">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ total_users }}</h3>
+                <p>{% trans 'Total Users' %}</p>
+            </div>
+        </div>
+
+        <div class="dashboard-stat-card">
+            <div class="stat-icon-wrapper icon-green">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ active_users }}</h3>
+                <p>{% trans 'Active Users' %}</p>
+            </div>
+        </div>
+
+        <div class="dashboard-stat-card">
+            <div class="stat-icon-wrapper icon-orange">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ staff_users }}</h3>
+                <p>{% trans 'Staff Members' %}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title">{% trans 'Recent Users' %}</h2>
+        <div class="table-responsive">
+            <table class="recent-users-table">
+                <thead>
+                    <tr>
+                        <th>{% trans 'Email' %}</th>
+                        <th>{% trans 'Joined' %}</th>
+                        <th>{% trans 'Status' %}</th>
+                        <th>{% trans 'Actions' %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in recent_users %}
+                    <tr>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                        <td>
+                            <span class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}">
+                                {% if user.is_active %}{% trans 'Active' %}{% else %}{% trans 'Inactive' %}{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'dashboard:admin:user_update' user.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i> View/Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ patient.get_full_name }} - HealthScreener Pro{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="card">
+    <div class="card-header flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold">{{ patient.get_full_name }}</h2>
+        <p class="text-sm text-gray-500">Patient Details</p>
+      </div>
+      <div class="flex space-x-2">
+        <a href="{% url 'patients:update' patient.pk %}" class="btn btn-secondary">
+          <i class="fas fa-edit mr-1"></i> Edit
+        </a>
+        <a href="{% url 'patients:list' %}" class="btn btn-outline">
+          <i class="fas fa-arrow-left mr-1"></i> Back to List
+        </a>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+          <div class="space-y-4">
+            <div>
+              <p class="text-sm font-medium text-gray-500">Full Name</p>
+              <p class="mt-1">{{ patient.get_full_name }}</p>
+            </div>
+            {% if patient.date_of_birth %}
+            <div>
+              <p class="text-sm font-medium text-gray-500">Date of Birth</p>
+              <p class="mt-1">{{ patient.date_of_birth|date:"F j, Y" }}</p>
+            </div>
+            {% endif %}
+            {% if patient.gender %}
+            <div>
+              <p class="text-sm font-medium text-gray-500">Gender</p>
+              <p class="mt-1">{{ patient.get_gender_display }}</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+          <div class="space-y-4">
+            {% if patient.phone %}
+            <div>
+              <p class="text-sm font-medium text-gray-500">Phone</p>
+              <p class="mt-1">{{ patient.phone }}</p>
+            </div>
+            {% endif %}
+            {% if patient.email %}
+            <div>
+              <p class="text-sm font-medium text-gray-500">Email</p>
+              <p class="mt-1">{{ patient.email }}</p>
+            </div>
+            {% endif %}
+            {% if patient.address %}
+            <div>
+              <p class="text-sm font-medium text-gray-500">Address</p>
+              <p class="mt-1 whitespace-pre-line">{{ patient.address }}</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if patient.notes %}
+      <div class="mt-8">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Notes</h3>
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <p class="whitespace-pre-line">{{ patient.notes }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="mt-8 pt-6 border-t border-gray-200">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-sm text-gray-500">Created on {{ patient.created_at|date:"F j, Y" }}</p>
+            {% if patient.updated_at %}
+            <p class="text-sm text-gray-500">Last updated {{ patient.updated_at|timesince }} ago</p>
+            {% endif %}
+          </div>
+          <a href="{% url 'patients:delete' patient.pk %}" class="text-red-600 hover:text-red-800 text-sm font-medium">
+            <i class="fas fa-trash-alt mr-1"></i> Delete Patient
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

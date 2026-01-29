@@ -1,0 +1,50 @@
+{% extends "dashboard/admin/base.html" %}
+
+{% block page_title %}Questionnaire{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="margin:0;">{{ questionnaire.title }} (v{{ questionnaire.version }})</h2>
+    <div>
+      <a class="btn btn-secondary" href="{% url 'questionnaires:questionnaire_update' questionnaire.pk %}">Edit</a>
+      <a class="btn btn-primary" href="{% url 'questionnaires:question_create' questionnaire.pk %}">Add question</a>
+    </div>
+  </div>
+  <div class="card-body">
+    <p><strong>Status:</strong> {{ questionnaire.get_status_display }}</p>
+    <p><strong>Type:</strong> {{ questionnaire.get_questionnaire_type_display }}</p>
+    <p>{{ questionnaire.description }}</p>
+
+    <h3>Questions</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Text</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in questions %}
+          <tr>
+            <td>{{ q.display_order }}</td>
+            <td>{{ q.text }}</td>
+            <td>{{ q.get_question_type_display }}</td>
+            <td>{{ q.is_required }}</td>
+            <td style="white-space:nowrap;">
+              <a href="{% url 'questionnaires:question_update' q.pk %}">Edit</a> |
+              <a href="{% url 'questionnaires:question_delete' q.pk %}">Delete</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">No questions yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

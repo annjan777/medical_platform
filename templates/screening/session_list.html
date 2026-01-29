@@ -1,0 +1,386 @@
+{% extends "dashboard/admin/base.html" %}
+{% load static %}
+
+{% block page_title %}Screening Sessions{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-100">Screening Sessions</h1>
+        <a href="{% url 'screening:session_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus mr-2"></i> New Screening Session
+        </a>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-8">
+        <div class="card-body">
+            <form method="get" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <input type="text" name="q" placeholder="Search sessions..." 
+                               value="{{ request.GET.q }}" 
+                               class="form-input">
+                    </div>
+                    <div>
+                        <select name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="scheduled" {% if request.GET.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                            <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            <option value="rescheduled" {% if request.GET.status == 'rescheduled' %}selected{% endif %}>Rescheduled</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select name="screening_type" class="form-select">
+                            <option value="">All Types</option>
+                            {% for type in screening_types %}
+                            <option value="{{ type.id }}" {% if request.GET.screening_type == type.id|stringformat:"s" %}selected{% endif %}>{{ type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search mr-2"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sessions List -->
+    <div class="card">
+        <div class="card-body p-0">
+            {% if sessions %}
+            <div class="overflow-x-auto">
+                <table class="responsive-table">
+                    <thead>
+                        <tr>
+                            <th>Session ID</th>
+                            <th>Patient</th>
+                            <th>Screening Type</th>
+                            <th>Status</th>
+                            <th>Scheduled Date</th>
+                            <th>Device</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in sessions %}
+                        <tr>
+                            <td>
+                                <span class="text-teal-400 font-mono">#{{ session.id|stringformat:"06d" }}</span>
+                            </td>
+                            <td>
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-semibold mr-3">
+                                        {{ session.patient.first_name.0 }}{{ session.patient.last_name.0 }}
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-100 font-medium">{{ session.patient.get_full_name }}</p>
+                                        <p class="text-gray-400 text-xs">{{ session.patient.email|default:"No email" }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-gray-100">{{ session.screening_type.name }}</span>
+                            </td>
+                            <td>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full {% if session.status == 'completed' %}bg-green-900 text-green-200{% elif session.status == 'in_progress' %}bg-blue-900 text-blue-200{% elif session.status == 'scheduled' %}bg-yellow-900 text-yellow-200{% elif session.status == 'cancelled' %}bg-red-900 text-red-200{% else %}bg-gray-700 text-gray-300{% endif %}">
+                                    {{ session.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-gray-100">{{ session.scheduled_date|date:"M d, Y H:i" }}</span>
+                            </td>
+                            <td>
+                                <span class="text-gray-100">{{ session.device_used.name|default:"N/A" }}</span>
+                            </td>
+                            <td>
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'screening:session_detail' session.id %}" class="text-teal-400 hover:text-teal-300 text-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'screening:session_update' session.id %}" class="text-blue-400 hover:text-blue-300 text-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if session.can_start %}
+                                    <a href="{% url 'screening:session_start' session.id %}" class="text-green-400 hover:text-green-300 text-sm">
+                                        <i class="fas fa-play"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if session.can_complete %}
+                                    <a href="{% url 'screening:session_complete' session.id %}" class="text-purple-400 hover:text-purple-300 text-sm">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if session.status == 'scheduled' %}
+                                    <a href="{% url 'screening:session_cancel' session.id %}" class="text-red-400 hover:text-red-300 text-sm">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="flex justify-between items-center mt-6 px-4">
+                <div class="text-gray-400 text-sm">
+                    Showing {{ sessions.start_index }} to {{ sessions.end_index }} of {{ sessions.paginator.count }} sessions
+                </div>
+                <div class="flex space-x-2">
+                    {% if sessions.has_previous %}
+                        <a href="?page={{ sessions.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}" 
+                           class="btn btn-secondary btn-sm">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    {% endif %}
+                    
+                    <span class="text-gray-400 text-sm">
+                        Page {{ sessions.number }} of {{ sessions.paginator.num_pages }}
+                    </span>
+                    
+                    {% if sessions.has_next %}
+                        <a href="?page={{ sessions.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}" 
+                           class="btn btn-secondary btn-sm">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-stethoscope text-6xl text-gray-500 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-300 mb-2">No screening sessions found</h3>
+                <p class="text-gray-500 mb-6">Get started by creating your first screening session.</p>
+                <a href="{% url 'screening:session_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i> Create First Session
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.space-y-4 > * + * {
+    margin-top: 1rem;
+}
+
+.space-x-2 > * + * {
+    margin-left: 0.5rem;
+}
+
+.grid {
+    display: grid;
+}
+
+.grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.w-8 {
+    width: 2rem;
+}
+
+.h-8 {
+    height: 2rem;
+}
+
+.rounded-full {
+    border-radius: 9999px;
+}
+
+.bg-teal-600 {
+    background-color: #0d9488;
+}
+
+.text-white {
+    color: #ffffff;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.text-teal-400 {
+    color: #2dd4bf;
+}
+
+.text-teal-300 {
+    color: #5eead4;
+}
+
+.text-blue-400 {
+    color: #60a5fa;
+}
+
+.text-blue-300 {
+    color: #93c5fd;
+}
+
+.text-green-400 {
+    color: #4ade80;
+}
+
+.text-green-300 {
+    color: #86efac;
+}
+
+.text-purple-400 {
+    color: #c084fc;
+}
+
+.text-purple-300 {
+    color: #d8b4fe;
+}
+
+.text-red-400 {
+    color: #f87171;
+}
+
+.text-red-300 {
+    color: #fca5a5;
+}
+
+.text-gray-100 {
+    color: #f3f4f6;
+}
+
+.text-gray-400 {
+    color: #9ca3af;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+.text-gray-300 {
+    color: #d1d5db;
+}
+
+.font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.text-xl {
+    font-size: 1.25rem;
+}
+
+.text-6xl {
+    font-size: 3.75rem;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.mb-6 {
+    margin-bottom: 1.5rem;
+}
+
+.mb-12 {
+    margin-bottom: 3rem;
+}
+
+.mr-3 {
+    margin-right: 0.75rem;
+}
+
+.py-12 {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.flex {
+    display: flex;
+}
+
+.hover\:text-teal-300:hover {
+    color: #5eead4;
+}
+
+.hover\:text-blue-300:hover {
+    color: #93c5fd;
+}
+
+.hover\:text-green-300:hover {
+    color: #86efac;
+}
+
+.hover\:text-purple-300:hover {
+    color: #d8b4fe;
+}
+
+.hover\:text-red-300:hover {
+    color: #fca5a5;
+}
+
+@media (max-width: 768px) {
+    .md\:grid-cols-4 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    .flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}

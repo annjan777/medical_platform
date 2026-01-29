@@ -1,0 +1,29 @@
+{% extends "dashboard/admin/base.html" %}
+
+{% block page_title %}{% if object %}Edit Question{% else %}Add Question{% endif %}{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <div class="card-header">
+    <h2 style="margin:0;">{% if object %}Edit Question{% else %}Add Question{% endif %}</h2>
+    {% if questionnaire %}
+      <div style="margin-top:6px;color:#666;">For: {{ questionnaire.title }}</div>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div style="margin-top:12px;">
+        <button class="btn btn-primary" type="submit">Save</button>
+        {% if questionnaire %}
+          <a class="btn btn-secondary" href="{% url 'questionnaires:questionnaire_detail' questionnaire.pk %}">Cancel</a>
+        {% else %}
+          <a class="btn btn-secondary" href="{% url 'questionnaires:questionnaire_list' %}">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

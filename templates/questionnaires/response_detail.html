@@ -1,0 +1,27 @@
+{% extends "dashboard/admin/base.html" %}
+
+{% block page_title %}Response{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="margin:0;">Response</h2>
+    <a class="btn btn-danger" href="{% url 'questionnaires:response_delete' response.pk %}">Delete</a>
+  </div>
+  <div class="card-body">
+    <p><strong>Questionnaire:</strong> {{ response.questionnaire }}</p>
+    <p><strong>Respondent:</strong> {{ response.respondent.email|default:"-" }}</p>
+    <p><strong>Submitted:</strong> {{ response.submitted_at|default:response.started_at }}</p>
+
+    <h3>Answers</h3>
+    <ul>
+      {% for a in answers %}
+        <li><strong>{{ a.question.text }}</strong><br>{{ a.get_value }}</li>
+      {% empty %}
+        <li>No answers.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+

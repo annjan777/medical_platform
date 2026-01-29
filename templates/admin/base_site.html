@@ -1,0 +1,50 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin/css/custom_admin.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <i class="fas fa-heartbeat" style="margin-right: 10px;"></i>
+        {{ site_header|default:_('Django administration') }}
+    </a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block footer %}
+{{ block.super }}
+<script>
+// Add custom JavaScript here if needed
+document.addEventListener('DOMContentLoaded', function() {
+    // Make tables more interactive
+    const tables = document.querySelectorAll('table');
+    tables.forEach(table => {
+        table.classList.add('table', 'table-striped', 'table-hover');
+    });
+    
+    // Style buttons
+    const buttons = document.querySelectorAll('input[type=submit], button, .button, a.button');
+    buttons.forEach(button => {
+        if (!button.classList.contains('btn')) {
+            button.classList.add('btn');
+            if (button.classList.contains('default')) {
+                button.classList.add('btn-primary');
+            } else if (button.classList.contains('deletelink')) {
+                button.classList.add('btn-danger');
+            } else {
+                button.classList.add('btn-secondary');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

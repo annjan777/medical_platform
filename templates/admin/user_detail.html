@@ -1,0 +1,137 @@
+{% extends "dashboard/admin/base.html" %}
+{% load i18n static humanize %}
+
+{% block page_title %}
+    {% trans 'User Details' %}: {{ user_detail.email }}
+{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-100">{% trans 'User Details' %}</h1>
+        <div class="flex space-x-3">
+            <a href="{% url 'dashboard:admin:user_update' user_detail.id %}" class="btn btn-primary">
+                <i class="fas fa-edit mr-2"></i> {% trans 'Edit User' %}
+            </a>
+            <a href="{% url 'dashboard:admin:user_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i> {% trans 'Back to Users' %}
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="card p-6 flex items-center col-span-1 lg:col-span-3">
+            <img class="user-avatar-large mr-6" src="https://ui-avatars.com/api/?name={{ user_detail.get_full_name|default:user_detail.email }}&background=0D8ABC&color=fff" alt="User Avatar">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-100">{{ user_detail.get_full_name|default:user_detail.email }}</h2>
+                <p class="text-gray-400">{{ user_detail.email|default:"No email provided" }}</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <span class="badge {% if user_detail.is_active %}badge-success{% else %}badge-danger{% endif %}">
+                        {% if user_detail.is_active %}{% trans 'Active' %}{% else %}{% trans 'Inactive' %}{% endif %}
+                    </span>
+                    <span class="badge badge-info">{{ user_detail.get_role_display }}</span>
+                    {% if user_detail.is_staff %}
+                    <span class="badge badge-info">{% trans 'Staff' %}</span>
+                    {% endif %}
+                    {% if user_detail.is_superuser %}
+                    <span class="badge badge-primary">{% trans 'Superuser' %}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="card p-6">
+            <h3 class="card-title mb-4"><i class="fas fa-id-card mr-2"></i> {% trans 'Account Details' %}</h3>
+            <div class="space-y-4">
+                <div class="detail-row">
+                    <div class="detail-label">{% trans 'Email' %}</div>
+                    <div class="detail-value">{{ user_detail.email|default:"-" }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">{% trans 'First Name' %}</div>
+                    <div class="detail-value">{{ user_detail.first_name|default:"-" }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">{% trans 'Last Name' %}</div>
+                    <div class="detail-value">{{ user_detail.last_name|default:"-" }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">{% trans 'Date Joined' %}</div>
+                    <div class="detail-value">{{ user_detail.date_joined|date:"F j, Y, g:i a" }}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">{% trans 'Last Login' %}</div>
+                    <div class="detail-value">{{ user_detail.last_login|date:"F j, Y, g:i a"|default:"Never" }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if user_groups %}
+        <div class="card p-6">
+            <h3 class="card-title mb-4"><i class="fas fa-users-cog mr-2"></i> {% trans 'Groups' %}</h3>
+            <div class="space-y-2">
+                {% if user_groups %}
+                    {% for group in user_groups %}
+                    <span class="badge badge-secondary">{{ group.name }}</span>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-400">{% trans 'This user is not a member of any groups.' %}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user_permissions %}
+        <div class="card p-6">
+            <h3 class="card-title mb-4"><i class="fas fa-key mr-2"></i> {% trans 'Permissions' %}</h3>
+            <div class="grid grid-cols-1 gap-3">
+                {% for perm in user_permissions %}
+                <div class="flex items-center text-gray-300">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>{{ perm.name|title }}</span>
+                </div>
+                {% empty %}
+                <p class="text-gray-400">{% trans 'No specific permissions assigned.' %}</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if user_activity %}
+    <div class="card p-6 mt-8">
+        <h3 class="card-title mb-4"><i class="fas fa-history mr-2"></i> {% trans 'Recent Activity' %}</h3>
+        <div class="timeline relative pl-6">
+            {% for entry in user_activity %}
+            <div class="timeline-item pb-6 relative">
+                <div class="timeline-marker absolute -left-2 top-0 mt-1 w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
+                    <i class="fas fa-circle text-xs text-white"></i>
+                </div>
+                <div class="timeline-content bg-gray-700 p-4 rounded-lg shadow-md ml-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-400">{{ entry.action_time|timesince }} {% trans 'ago' %}</span>
+                        <span class="badge {% if entry.is_addition %}badge-success{% elif entry.is_change %}badge-info{% else %}badge-danger{% endif %}">
+                            {% if entry.is_addition %}{% trans 'Created' %}
+                            {% elif entry.is_change %}{% trans 'Updated' %}
+                            {% else %}{% trans 'Deleted' %}{% endif %}
+                        </span>
+                    </div>
+                    <div class="text-gray-200 text-sm">
+                        {{ entry.get_change_message }}
+                    </div>
+                    {% if entry.get_edited_object %}
+                    <div class="mt-3 p-2 bg-gray-800 rounded text-gray-300 text-xs font-mono overflow-x-auto">
+                        <code>{{ entry.get_edited_object }}</code>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+             <div class="timeline::before absolute left-0 top-0 bottom-0 w-0.5 bg-gray-600 ml-0.5"></div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
