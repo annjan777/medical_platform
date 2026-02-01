@@ -1,0 +1,448 @@
+{% extends "base/base.html" %}
+{% load static widget_tweaks %}
+
+{% block title %}Patient Profile Information{% endblock %}
+
+{% block extra_css %}
+<style>
+.patient-profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.profile-header h1 {
+    color: #1f2937;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.profile-header p {
+    color: #6b7280;
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+}
+
+.profile-form {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-section h3 {
+    color: #1f2937;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #14b8a6;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    color: #1f2937;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+    outline: none;
+}
+
+.form-input:invalid,
+.form-select:invalid,
+.form-textarea:invalid {
+    border-color: #ef4444;
+}
+
+.error-message {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.error-message i {
+    margin-right: 0.25rem;
+}
+
+.help-text {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #14b8a6, #0d9488);
+    color: white;
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(20, 184, 166, 0.2);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0d9488, #0f766e);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(20, 184, 166, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 0.875rem 2rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    color: #4b5563;
+}
+
+.required-indicator {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.step {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin: 0 0.5rem;
+    position: relative;
+}
+
+.step.active {
+    background: #14b8a6;
+    color: white;
+}
+
+.step.completed {
+    background: #10b981;
+    color: white;
+}
+
+.step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 40px;
+    width: 40px;
+    height: 2px;
+    background: #e5e7eb;
+    transform: translateY(-50%);
+}
+
+.step.completed:not(:last-child)::after {
+    background: #10b981;
+}
+
+@media (max-width: 768px) {
+    .patient-profile-container {
+        padding: 1rem;
+    }
+    
+    .profile-form {
+        padding: 1.5rem;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="patient-profile-container">
+    <!-- Header -->
+    <div class="profile-header">
+        <div class="flex items-center justify-center mb-4">
+            <i class="fas fa-user-circle text-teal-600 text-6xl mr-4"></i>
+            <h1>Patient Profile Information</h1>
+        </div>
+        <p>Please fill in your details to proceed with the screening</p>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="step-indicator">
+        <div class="step active">1</div>
+        <div class="step">2</div>
+        <div class="step">3</div>
+    </div>
+
+    <!-- Profile Form -->
+    <form method="post" class="profile-form" id="patientProfileForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-error" style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    {% for error in form.non_field_errors %}
+                        <li style="margin-bottom: 0.5rem;">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <!-- Personal Information Section -->
+        <div class="form-section">
+            <h3><i class="fas fa-user mr-2"></i>Personal Information</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="full_name" class="form-label">
+                        Full Name <span class="required-indicator">*</span>
+                    </label>
+                    <input type="text" id="full_name" name="full_name" required
+                           class="form-input"
+                           placeholder="Enter your full name"
+                           pattern="[A-Za-z\s]{2,50}"
+                           title="Please enter a valid name (letters only, 2-50 characters)">
+                    {% for error in form.full_name.errors %}
+                        <p class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                        </p>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <label for="age" class="form-label">
+                        Age <span class="required-indicator">*</span>
+                    </label>
+                    <input type="number" id="age" name="age" required
+                           class="form-input"
+                           placeholder="Enter your age"
+                           min="1" max="120"
+                           title="Please enter a valid age between 1 and 120">
+                    {% for error in form.age.errors %}
+                        <p class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                        </p>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <label for="gender" class="form-label">
+                        Gender <span class="required-indicator">*</span>
+                    </label>
+                    <select id="gender" name="gender" required class="form-select">
+                        <option value="">Select Gender</option>
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                        <option value="O">Other</option>
+                        <option value="U">Prefer not to say</option>
+                    </select>
+                    {% for error in form.gender.errors %}
+                        <p class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                        </p>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <label for="phone_number" class="form-label">
+                        Phone Number <span class="required-indicator">*</span>
+                    </label>
+                    <input type="tel" id="phone_number" name="phone_number" required
+                           class="form-input"
+                           placeholder="Enter your phone number"
+                           pattern="[0-9]{10,15}"
+                           title="Please enter a valid phone number (10-15 digits)">
+                    {% for error in form.phone_number.errors %}
+                        <p class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                        </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Assistant Section -->
+        <div class="form-section">
+            <h3><i class="fas fa-user-nurse mr-2"></i>Health Assistant Information</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="health_assistant_name" class="form-label">
+                        Health Assistant Name <span class="required-indicator">*</span>
+                    </label>
+                    <input type="text" id="health_assistant_name" name="health_assistant_name" required
+                           class="form-input"
+                           placeholder="Enter health assistant name"
+                           pattern="[A-Za-z\s]{2,50}"
+                           title="Please enter a valid name (letters only, 2-50 characters)">
+                    {% for error in form.health_assistant_name.errors %}
+                        <p class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                        </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Section -->
+        <div class="form-section">
+            <h3><i class="fas fa-map-marker-alt mr-2"></i>Address Information</h3>
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="address" class="form-label">
+                        Address <span class="required-indicator">*</span>
+                    </label>
+                    <textarea id="address" name="address" required
+                              class="form-textarea"
+                              rows="3"
+                              placeholder="Enter your complete address (street, city, state, postal code)"
+                              title="Please enter your complete address"></textarea>
+                    {% for error in form.address.errors %}
+                        <p class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                        </p>
+                    {% endfor %}
+                    <p class="help-text">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Please include street address, city, state, and postal code
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="button" onclick="window.history.back()" class="btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i> Back
+            </button>
+            <button type="submit" class="btn-primary" id="submitBtn">
+                <i class="fas fa-arrow-right mr-2"></i> Next
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('patientProfileForm').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+    
+    // Re-enable after 3 seconds in case of issues
+    setTimeout(function() {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i> Next';
+    }, 3000);
+});
+
+// Real-time validation
+document.getElementById('phone_number').addEventListener('input', function(e) {
+    // Remove any non-numeric characters
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+});
+
+document.getElementById('age').addEventListener('input', function(e) {
+    // Ensure age is within valid range
+    if (e.target.value > 120) {
+        e.target.value = 120;
+    }
+    if (e.target.value < 0) {
+        e.target.value = '';
+    }
+});
+
+document.getElementById('full_name').addEventListener('input', function(e) {
+    // Allow only letters and spaces
+    e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+});
+
+document.getElementById('health_assistant_name').addEventListener('input', function(e) {
+    // Allow only letters and spaces
+    e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+});
+</script>
+{% endblock %}

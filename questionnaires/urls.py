@@ -8,6 +8,7 @@ urlpatterns = [
     # Questionnaire URLs
     path('', views.QuestionnaireListView.as_view(), name='questionnaire_list'),
     path('create/', views.QuestionnaireCreateView.as_view(), name='questionnaire_create'),
+    path('builder/', views.simple_questionnaire_builder, name='simple_questionnaire_builder'),
     path('<int:pk>/', views.QuestionnaireDetailView.as_view(), name='questionnaire_detail'),
     path('<int:pk>/update/', views.QuestionnaireUpdateView.as_view(), name='questionnaire_update'),
     path('<int:pk>/delete/', views.QuestionnaireDeleteView.as_view(), name='questionnaire_delete'),

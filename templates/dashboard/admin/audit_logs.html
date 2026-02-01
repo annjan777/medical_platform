@@ -1,5 +1,6 @@
 {% extends "dashboard/admin/base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block page_title %}Audit Logs{% endblock %}
 
@@ -11,9 +12,6 @@
         <div class="flex space-x-4">
             <button onclick="exportLogs()" class="btn btn-secondary">
                 <i class="fas fa-download mr-2"></i> Export Logs
-            </button>
-            <button onclick="clearOldLogs()" class="btn btn-danger">
-                <i class="fas fa-trash mr-2"></i> Clear Old Logs
             </button>
         </div>
     </div>
@@ -517,35 +515,10 @@ function closeModal() {
 }
 
 function exportLogs() {
-    // Export functionality
-    const url = new URL(window.location);
-    url.searchParams.set('export', 'csv');
-    window.open(url.toString(), '_blank');
-}
-
-function clearOldLogs() {
-    if (confirm('Are you sure you want to clear audit logs older than 90 days? This action cannot be undone.')) {
-        // Clear old logs functionality
-        fetch('{% url "dashboard:admin:clear_audit_logs" %}', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Old audit logs cleared successfully!');
-                window.location.reload();
-            } else {
-                alert('Error clearing logs: ' + data.error);
-            }
-        })
-        .catch(error => {
-            alert('Error: ' + error.message);
-        });
-    }
+    // Export logs functionality
+    const currentUrl = window.location.href;
+    const exportUrl = currentUrl.includes('?') ? currentUrl + '&export=csv' : currentUrl + '?export=csv';
+    window.open(exportUrl, '_blank');
 }
 </script>
 {% endblock %}

@@ -5,15 +5,21 @@
 {% block admin_content %}
 <div class="card">
   <div class="card-header">
-    <h2 style="margin:0;">Delete Question</h2>
+    <h2 class="text-xl font-semibold text-gray-100">Delete Question</h2>
   </div>
   <div class="card-body">
-    <p>Are you sure you want to delete this question?</p>
-    <blockquote style="margin:12px 0;padding:10px;border-left:4px solid #ccc;">{{ object.text }}</blockquote>
-    <form method="post">
+    <p class="text-gray-300 mb-4">Are you sure you want to delete this question?</p>
+    <blockquote class="border-l-4 border-gray-600 pl-4 py-2 bg-gray-800 rounded-r my-4">
+      <p class="text-gray-100">{{ object.text }}</p>
+    </blockquote>
+    <form method="post" class="flex space-x-4">
       {% csrf_token %}
-      <button class="btn btn-danger" type="submit">Yes, delete</button>
-      <a class="btn btn-secondary" href="{% url 'questionnaires:questionnaire_detail' object.questionnaire.pk %}">Cancel</a>
+      <button class="btn btn-danger" type="submit">
+        <i class="fas fa-trash mr-2"></i>Yes, delete
+      </button>
+      <a class="btn btn-secondary" href="{% url 'questionnaires:questionnaire_detail' object.questionnaire.pk %}">
+        <i class="fas fa-times mr-2"></i>Cancel
+      </a>
     </form>
   </div>
 </div>

@@ -131,11 +131,13 @@ class QuestionForm(forms.ModelForm):
 class QuestionOptionForm(forms.ModelForm):
     class Meta:
         model = QuestionOption
-        fields = ['text', 'value', 'display_order']
+        fields = ['text', 'value', 'display_order', 'option_image', 'is_image_primary']
         widgets = {
             'text': forms.TextInput(attrs={'class': 'form-control'}),
             'value': forms.TextInput(attrs={'class': 'form-control'}),
             'display_order': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'option_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'is_image_primary': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
     
     def __init__(self, *args, **kwargs):

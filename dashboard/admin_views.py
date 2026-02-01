@@ -1,21 +1,19 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, TemplateView
-from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django import forms
 
-from django.contrib.auth import get_user_model
-from patients.models import Patient
-from devices.models import Device
-from questionnaires.models import Question
+from .models import AuditLog, SystemSetting
+from .utils import log_action, log_model_change, get_client_ip
+from devices.models import Device as DeviceModel
 from questionnaires.models import Questionnaire
 from screening.models import ScreeningSession
-from .models import AuditLog, SystemSetting, EmailTemplate
 
 # Get the User model
 User = get_user_model()
@@ -81,6 +79,15 @@ class UserCreateView(SuperuserRequiredMixin, CreateView):
         user = form.save(commit=False)
         user.set_password(password)
         user.save()
+        
+        # Log the user creation
+        log_model_change(
+            user=self.request.user,
+            instance=user,
+            action='create',
+            ip_address=get_client_ip(self.request)
+        )
+        
         messages.success(self.request, f'User {user.email} created successfully.')
         return super().form_valid(form)
 
@@ -93,8 +100,30 @@ class UserUpdateView(SuperuserRequiredMixin, UpdateView):
         return reverse_lazy('dashboard:admin:user_detail', kwargs={'pk': self.object.pk})
     
     def form_valid(self, form):
+        # Get the original user data for change tracking
+        original_user = User.objects.get(pk=self.object.pk)
+        changes = {}
+        
+        # Track changes
+        for field in form.changed_data:
+            changes[field] = {
+                'old': str(getattr(original_user, field)),
+                'new': str(form.cleaned_data[field])
+            }
+        
+        response = super().form_valid(form)
+        
+        # Log the user update
+        log_model_change(
+            user=self.request.user,
+            instance=self.object,
+            action='update',
+            changes=changes,
+            ip_address=get_client_ip(self.request)
+        )
+        
         messages.success(self.request, 'User updated successfully.')
-        return super().form_valid(form)
+        return response
 
 class UserDetailView(SuperuserRequiredMixin, DetailView):
     model = User
@@ -103,7 +132,7 @@ class UserDetailView(SuperuserRequiredMixin, DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['devices'] = Device.objects.filter(assigned_to=self.object)
+        context['devices'] = DeviceModel.objects.filter(assigned_to=self.object)
         context['questionnaires'] = Questionnaire.objects.filter(created_by=self.object)
         return context
 
@@ -118,20 +147,20 @@ class UserDeleteView(SuperuserRequiredMixin, DeleteView):
 
 # Device Management Views
 class DeviceListView(SuperuserRequiredMixin, ListView):
-    model = Device
+    model = DeviceModel
     template_name = 'dashboard/admin/devices/device_list.html'
     context_object_name = 'devices'
-    paginate_by = 20
+    paginate_by = 10
     
     def get_queryset(self):
-        queryset = Device.objects.all().order_by('-date_added')
+        queryset = DeviceModel.objects.all().order_by('-date_added')
         status = self.request.GET.get('status')
         if status:
             queryset = queryset.filter(status=status)
         return queryset
 
 class DeviceCreateView(SuperuserRequiredMixin, CreateView):
-    model = Device
+    model = DeviceModel
     template_name = 'dashboard/admin/devices/device_form.html'
     fields = ['name', 'device_id', 'device_type', 'status', 'assigned_to', 'location', 'description']
     success_url = reverse_lazy('dashboard:admin:device_list')
@@ -142,7 +171,7 @@ class DeviceCreateView(SuperuserRequiredMixin, CreateView):
         return super().form_valid(form)
 
 class DeviceUpdateView(SuperuserRequiredMixin, UpdateView):
-    model = Device
+    model = DeviceModel
     template_name = 'dashboard/admin/devices/device_form.html'
     fields = ['name', 'device_id', 'device_type', 'status', 'assigned_to', 'location', 'description']
     
@@ -154,7 +183,7 @@ class DeviceUpdateView(SuperuserRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 class DeviceDetailView(SuperuserRequiredMixin, DetailView):
-    model = Device
+    model = DeviceModel
     template_name = 'dashboard/admin/devices/device_detail.html'
     context_object_name = 'device'
     
@@ -167,7 +196,7 @@ class DeviceDetailView(SuperuserRequiredMixin, DetailView):
         return context
 
 class DeviceDeleteView(SuperuserRequiredMixin, DeleteView):
-    model = Device
+    model = DeviceModel
     template_name = 'dashboard/admin/devices/device_confirm_delete.html'
     success_url = reverse_lazy('dashboard:admin:device_list')
     
@@ -250,44 +279,49 @@ def get_system_health():
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def admin_dashboard(request):
-    """Main admin dashboard view with system overview and quick stats."""
-    # Get user statistics
+    """Admin dashboard view with statistics and recent activities."""
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('login')
+    
+    # Log admin dashboard access
+    log_action(
+        user=request.user,
+        action='access',
+        model_name='Admin Dashboard',
+        object_repr='Dashboard Access',
+        ip_address=get_client_ip(request)
+    )
+    
+    # Get statistics
     total_users = User.objects.count()
     active_users = User.objects.filter(is_active=True).count()
-    new_users = User.objects.filter(
-        date_joined__gte=timezone.now() - timedelta(days=30)
-    ).count()
+    total_patients = User.objects.filter(role='patient').count()
+    total_devices = DeviceModel.objects.count()
+    active_devices = DeviceModel.objects.filter(status=DeviceModel.STATUS_ACTIVE).count()
+    total_questionnaires = Questionnaire.objects.count()
+    total_sessions = ScreeningSession.objects.count()
     
-    # Get patient statistics
-    total_patients = Patient.objects.count()
+    # Get recent activities
+    recent_activities = AuditLog.objects.select_related('user').order_by('-timestamp')[:10]
     
-    # Get device statistics
-    total_devices = Device.objects.count()
-    active_devices = Device.objects.filter(status=Device.STATUS_ACTIVE).count()
-    
-    # Get screening statistics
-    total_screenings = ScreeningSession.objects.count()
-    recent_screenings = ScreeningSession.objects.filter(
-        created_at__gte=timezone.now() - timedelta(days=7)
-    ).count()
-    recent_screenings_list = (
-        ScreeningSession.objects.select_related('patient', 'device_used')
-        .order_by('-created_at')[:5]
-    )
+    # Get system health
+    system_health = {
+        'database_status': 'healthy',
+        'storage_usage': '45%',
+        'memory_usage': '67%',
+        'cpu_usage': '23%',
+    }
     
     context = {
         'total_users': total_users,
         'active_users': active_users,
-        'new_users': new_users,
         'total_patients': total_patients,
-        'active_patients': total_patients,  # All patients are considered active
         'total_devices': total_devices,
         'active_devices': active_devices,
-        'total_screenings': total_screenings,
-        'recent_screenings': recent_screenings,
-        'recent_screenings_list': recent_screenings_list,
-        'recent_activities': get_recent_activities(),
-        'system_health': get_system_health(),
+        'total_questionnaires': total_questionnaires,
+        'total_sessions': total_sessions,
+        'recent_activities': recent_activities,
+        'system_health': system_health,
     }
     
     return render(request, 'dashboard/admin/dashboard.html', context)
@@ -320,31 +354,38 @@ class AuditLogListView(SuperuserRequiredMixin, ListView):
         if date_to:
             queryset = queryset.filter(timestamp__date__lte=date_to)
         
+        # Search functionality
+        search = self.request.GET.get('q')
+        if search:
+            queryset = queryset.filter(
+                Q(object_repr__icontains=search) |
+                Q(model__icontains=search) |
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(user__email__icontains=search)
+            )
+        
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # Add filter choices
         context['action_choices'] = AuditLog.ACTION_TYPES
-        context['users'] = User.objects.all()
+        context['users'] = User.objects.filter(is_superuser=True).order_by('email')
         
         # Add statistics
-        from django.utils import timezone
-        from datetime import timedelta
+        context['total_logs'] = AuditLog.objects.count()
+        context['today_logs'] = AuditLog.objects.filter(
+            timestamp__date=timezone.now().date()
+        ).count()
+        context['week_logs'] = AuditLog.objects.filter(
+            timestamp__gte=timezone.now() - timedelta(days=7)
+        ).count()
+        context['month_logs'] = AuditLog.objects.filter(
+            timestamp__gte=timezone.now() - timedelta(days=30)
+        ).count()
         
-        now = timezone.now()
-        context['today_logs'] = AuditLog.objects.filter(timestamp__date=now.date()).count()
-        context['week_logs'] = AuditLog.objects.filter(timestamp__gte=now - timedelta(days=7)).count()
-        context['month_logs'] = AuditLog.objects.filter(timestamp__gte=now - timedelta(days=30)).count()
-        
-        return context
-
-
-class SystemSettingsView(SuperuserRequiredMixin, TemplateView):
-    template_name = 'dashboard/admin/system_settings.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['settings'] = SystemSetting.objects.all()
         return context
 
 

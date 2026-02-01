@@ -1,0 +1,543 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Screening Questionnaire{% endblock %}
+
+{% block extra_css %}
+<style>
+.simple-screening-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.screening-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.screening-header h1 {
+    color: #1f2937;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.screening-header p {
+    color: #6b7280;
+    font-size: 1rem;
+}
+
+.questionnaire-type-selector {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e5e7eb;
+}
+
+.type-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.type-option {
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.type-option:hover {
+    border-color: #14b8a6;
+    transform: translateY(-2px);
+}
+
+.type-option.selected {
+    border-color: #14b8a6;
+    background: #f0fdfa;
+}
+
+.type-option i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.type-option h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.type-option p {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.questions-container {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e5e7eb;
+}
+
+.question-item {
+    margin-bottom: 2rem;
+}
+
+.question-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.question-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+.option-label {
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: block;
+}
+
+.option-label:hover {
+    border-color: #14b8a6;
+    background: #f0fdfa;
+}
+
+.option-label.selected {
+    border-color: #14b8a6;
+    background: #f0fdfa;
+}
+
+.option-label input[type="radio"],
+.option-label input[type="checkbox"] {
+    display: none;
+}
+
+.option-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.option-image {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+}
+
+.file-upload {
+    border: 2px dashed #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.file-upload:hover {
+    border-color: #14b8a6;
+    background: #f0fdfa;
+}
+
+.file-upload input[type="file"] {
+    display: none;
+}
+
+.file-upload i {
+    font-size: 2rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.file-upload p {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #14b8a6, #0d9488);
+    color: white;
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(20, 184, 166, 0.2);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0d9488, #0f766e);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(20, 184, 166, 0.3);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 0.875rem 2rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    color: #4b5563;
+}
+
+.hidden {
+    display: none;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .simple-screening-container {
+        padding: 1rem;
+    }
+    
+    .questionnaire-type-selector,
+    .questions-container {
+        padding: 1.5rem;
+    }
+    
+    .type-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .question-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="simple-screening-container">
+    <!-- Header -->
+    <div class="screening-header">
+        <h1>Screening Questionnaire</h1>
+        <p>Please select the type of questionnaire and answer the questions</p>
+    </div>
+
+    <!-- Questionnaire Type Selection -->
+    <div class="questionnaire-type-selector">
+        <h3 class="text-xl font-semibold text-gray-800">Select Questionnaire Type</h3>
+        <div class="type-options">
+            <div class="type-option" onclick="selectQuestionnaireType('medical_history')">
+                <i class="fas fa-notes-medical text-blue-500"></i>
+                <h4>Medical History</h4>
+                <p>Medical background</p>
+            </div>
+            <div class="type-option" onclick="selectQuestionnaireType('family_history')">
+                <i class="fas fa-users text-green-500"></i>
+                <h4>Family History</h4>
+                <p>Family medical history</p>
+            </div>
+            <div class="type-option" onclick="selectQuestionnaireType('mouth_features')">
+                <i class="fas fa-tooth text-purple-500"></i>
+                <h4>Mouth Features</h4>
+                <p>Oral health symptoms</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Container -->
+    <div class="questions-container hidden" id="questionsContainer">
+        <form method="post" id="screeningForm">
+            {% csrf_token %}
+            <div id="questionsList">
+                <!-- Questions will be loaded here -->
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" onclick="resetSelection()" class="btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i> Back
+                </button>
+                <button type="submit" class="btn-primary" id="submitBtn" disabled>
+                    <i class="fas fa-check mr-2"></i> Submit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let selectedType = null;
+let questionnaireData = {};
+
+function selectQuestionnaireType(type) {
+    selectedType = type;
+    
+    // Update UI
+    document.querySelectorAll('.type-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // Load questions for this type
+    loadQuestions(type);
+}
+
+function loadQuestions(type) {
+    // Sample questionnaire data - in real app, this would come from the server
+    const questionnaires = {
+        medical_history: {
+            title: 'Medical History',
+            questions: [
+                {
+                    id: 1,
+                    text: 'Do you have any chronic medical conditions?',
+                    type: 'text',
+                    options: ['Yes', 'No']
+                },
+                {
+                    id: 2,
+                    text: 'Are you currently taking any medications?',
+                    type: 'text',
+                    options: ['Yes', 'No']
+                },
+                {
+                    id: 3,
+                    text: 'Have you been tested for HIV?',
+                    type: 'text',
+                    options: ['Yes', 'No']
+                }
+            ]
+        },
+        family_history: {
+            title: 'Family History',
+            questions: [
+                {
+                    id: 1,
+                    text: 'Does anyone in your family have cancer?',
+                    type: 'text',
+                    options: ['Yes', 'No']
+                },
+                {
+                    id: 2,
+                    text: 'Any history of heart disease in your family?',
+                    type: 'text',
+                    options: ['Yes', 'No']
+                },
+                {
+                    id: 3,
+                    text: 'Family history of diabetes?',
+                    type: 'text',
+                    options: ['Yes', 'No']
+                }
+            ]
+        },
+        mouth_features: {
+            title: 'Mouth Features',
+            questions: [
+                {
+                    id: 1,
+                    text: 'Do you use tobacco products?',
+                    type: 'text',
+                    options: ['Yes', 'No']
+                },
+                {
+                    id: 2,
+                    text: 'Any sores or lesions in your mouth?',
+                    type: 'image',
+                    options: ['Normal', 'Lesion Type 1', 'Lesion Type 2']
+                },
+                {
+                    id: 3,
+                    text: 'Upload a photo of your mouth if needed',
+                    type: 'file',
+                    options: []
+                }
+            ]
+        }
+    };
+    
+    questionnaireData = questionnaires[type] || {};
+    renderQuestions();
+    
+    // Show questions container
+    document.getElementById('questionsContainer').classList.remove('hidden');
+    document.getElementById('questionsContainer').classList.add('fade-in');
+}
+
+function renderQuestions() {
+    const container = document.getElementById('questionsList');
+    container.innerHTML = '';
+    
+    questionnaireData.questions.forEach((question, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question-item';
+        
+        let optionsHtml = '';
+        
+        if (question.type === 'text') {
+            optionsHtml = `
+                <div class="question-options">
+                    ${question.options.map(option => `
+                        <label class="option-label">
+                            <input type="radio" name="question_${question.id}" value="${option}" onchange="checkFormComplete()">
+                            <span class="option-text">${option}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+        } else if (question.type === 'image') {
+            optionsHtml = `
+                <div class="question-options">
+                    ${question.options.map(option => `
+                        <label class="option-label">
+                            <input type="radio" name="question_${question.id}" value="${option}" onchange="checkFormComplete()">
+                            ${option.includes('Lesion') ? `<img src="/static/images/${option.toLowerCase().replace(' ', '_')}.jpg" alt="${option}" class="option-image">` : ''}
+                            <span class="option-text">${option}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+        } else if (question.type === 'file') {
+            optionsHtml = `
+                <label class="file-upload">
+                    <input type="file" accept="image/*" onchange="handleFileUpload(this, ${question.id})">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Click to upload image or drag and drop</p>
+                    <p class="text-xs text-gray-500">PNG, JPG up to 10MB</p>
+                </label>
+            `;
+        }
+        
+        questionDiv.innerHTML = `
+            <div class="question-text">
+                ${index + 1}. ${question.text}
+            </div>
+            ${optionsHtml}
+        `;
+        
+        container.appendChild(questionDiv);
+    });
+}
+
+function handleFileUpload(input, questionId) {
+    // Handle file upload
+    const file = input.files[0];
+    if (file) {
+        console.log('File uploaded for question', questionId, ':', file.name);
+        checkFormComplete();
+    }
+}
+
+function checkFormComplete() {
+    // Check if all required questions are answered
+    let allAnswered = true;
+    
+    questionnaireData.questions.forEach(question => {
+        if (question.type === 'file') {
+            // File upload questions are optional for this check
+            return;
+        }
+        
+        const answered = document.querySelector(`input[name="question_${question.id}"]:checked`);
+        if (!answered) {
+            allAnswered = false;
+        }
+    });
+    
+    document.getElementById('submitBtn').disabled = !allAnswered;
+}
+
+function resetSelection() {
+    selectedType = null;
+    questionnaireData = {};
+    
+    // Reset UI
+    document.querySelectorAll('.type-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    document.getElementById('questionsContainer').classList.add('hidden');
+    document.getElementById('submitBtn').disabled = true;
+}
+
+document.getElementById('screeningForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+    
+    // Collect form data
+    const formData = new FormData(this);
+    formData.append('questionnaire_type', selectedType);
+    
+    // In a real app, you'd send this to the server
+    console.log('Submitting questionnaire:', selectedType, formData);
+    
+    // Simulate submission
+    setTimeout(() => {
+        alert('Questionnaire submitted successfully!');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Submit';
+        resetSelection();
+    }, 2000);
+});
+</script>
+{% endblock %}

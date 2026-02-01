@@ -214,6 +214,16 @@ class QuestionOption(models.Model):
     text = models.CharField(max_length=200)
     value = models.CharField(max_length=100)
     display_order = models.PositiveIntegerField(default=0)
+    option_image = models.ImageField(
+        upload_to='question_options/',
+        null=True,
+        blank=True,
+        help_text='Optional image for this option'
+    )
+    is_image_primary = models.BooleanField(
+        default=False,
+        help_text='Display image instead of text'
+    )
     
     class Meta:
         ordering = ['display_order']
@@ -222,6 +232,21 @@ class QuestionOption(models.Model):
     
     def __str__(self):
         return self.text
+    
+    def get_display_content(self):
+        """Return the appropriate display content (text or image)."""
+        if self.is_image_primary and self.option_image:
+            return {
+                'type': 'image',
+                'content': self.option_image.url,
+                'alt_text': self.text
+            }
+        else:
+            return {
+                'type': 'text',
+                'content': self.text,
+                'alt_text': None
+            }
 
 
 class Response(models.Model):

@@ -8,14 +8,6 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-100">Patients</h1>
-        <div class="flex space-x-4">
-            <a href="{% url 'patients:add' %}" class="btn btn-primary">
-                <i class="fas fa-plus mr-2"></i> Add Patient
-            </a>
-            <a href="{% url 'patients:quick_add' %}" class="btn btn-secondary">
-                <i class="fas fa-user-plus mr-2"></i> Quick Add
-            </a>
-        </div>
     </div>
 
     <!-- Search and Filter -->
@@ -148,10 +140,7 @@
             <div class="text-center py-12">
                 <i class="fas fa-user-injured text-6xl text-gray-500 mb-4"></i>
                 <h3 class="text-xl font-semibold text-gray-300 mb-2">No patients found</h3>
-                <p class="text-gray-500 mb-6">Get started by adding your first patient.</p>
-                <a href="{% url 'patients:add' %}" class="btn btn-primary">
-                    <i class="fas fa-plus mr-2"></i> Add Your First Patient
-                </a>
+                <p class="text-gray-500 mb-6">No patients have been registered yet.</p>
             </div>
             {% endif %}
         </div>

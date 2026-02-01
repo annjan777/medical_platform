@@ -240,7 +240,15 @@ def questionnaire_start(request, pk):
     else:
         form = ResponseForm(questionnaire)
     
-    return render(request, 'questionnaires/questionnaire_form.html', {
+    # Use appropriate template based on questionnaire type
+    if questionnaire.title.lower() == 'patient registration' or 'patient' in questionnaire.title.lower():
+        template = 'questionnaires/patient_profile_form.html'
+    elif questionnaire.title.lower() == 'medical screening questionnaire' or 'medical screening' in questionnaire.title.lower():
+        template = 'questionnaires/simple_screening_form.html'
+    else:
+        template = 'questionnaires/simple_screening_form.html'  # Default to simple form
+    
+    return render(request, template, {
         'questionnaire': questionnaire,
         'form': form,
     })
@@ -250,3 +258,8 @@ def questionnaire_thank_you(request, pk):
     return render(request, 'questionnaires/thank_you.html', {
         'response': response,
     })
+
+
+def simple_questionnaire_builder(request):
+    """Simple questionnaire builder for creating medical screening questionnaires."""
+    return render(request, 'questionnaires/simple_questionnaire_builder.html')

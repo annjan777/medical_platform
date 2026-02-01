@@ -22,9 +22,8 @@
                          <span class="text-xl font-bold text-gray-800">HealthScreener <span class="text-teal-600">Pro</span></span>
                      </div>
                      <nav class="hidden md:ml-10 md:flex space-x-2">
-                         <a href="/dashboard/" class="nav-link">Dashboard</a>
-                         <a href="{% url 'patients:add' %}" class="nav-link">Patients</a>
-                     </nav>
+                        <a href="{% url 'patients:list' %}" class="nav-link">Patients</a>
+                    </nav>
                  </div>
                  <div class="hidden md:ml-4 md:flex-shrink-0 md:flex md:items-center">
                      <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>

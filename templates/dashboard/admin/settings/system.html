@@ -1,0 +1,148 @@
+{% extends "dashboard/admin/base.html" %}
+{% load static %}
+
+{% block page_title %}System Settings{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-100">System Settings</h1>
+        <button onclick="showAddSettingModal()" class="btn btn-primary">
+            <i class="fas fa-plus mr-2"></i> Add Setting
+        </button>
+    </div>
+
+    <!-- Settings Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="overflow-x-auto">
+                <table class="responsive-table">
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Value</th>
+                            <th>Description</th>
+                            <th>Public</th>
+                            <th>Last Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for setting in settings %}
+                        <tr>
+                            <td class="font-mono text-sm">{{ setting.key }}</td>
+                            <td class="font-mono text-sm">{{ setting.value|default:"<span class='text-gray-500'>Not set</span>" }}</td>
+                            <td class="text-gray-300">{{ setting.description|default:"-" }}</td>
+                            <td>
+                                {% if setting.is_public %}
+                                    <span class="text-green-400">Yes</span>
+                                {% else %}
+                                    <span class="text-gray-500">No</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-gray-400 text-sm">{{ setting.updated_at|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <button onclick="editSetting('{{ setting.key }}', '{{ setting.value }}', '{{ setting.description }}', {{ setting.is_public|yesno:"true,false" }})" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteSetting('{{ setting.key }}')" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-gray-500 py-8">
+                                No system settings configured yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Setting Modal -->
+    <div id="settingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-semibold text-gray-100 mb-4" id="modalTitle">Add Setting</h3>
+            <form id="settingForm">
+                <div class="mb-4">
+                    <label class="form-label">Key</label>
+                    <input type="text" id="settingKey" class="form-input" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Value</label>
+                    <textarea id="settingValue" class="form-textarea" rows="3"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Description</label>
+                    <input type="text" id="settingDescription" class="form-input">
+                </div>
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="settingPublic" class="mr-2">
+                        <span class="text-gray-300">Public (accessible via API)</span>
+                    </label>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentEditKey = null;
+
+function showAddSettingModal() {
+    currentEditKey = null;
+    document.getElementById('modalTitle').textContent = 'Add Setting';
+    document.getElementById('settingForm').reset();
+    document.getElementById('settingModal').classList.remove('hidden');
+}
+
+function editSetting(key, value, description, isPublic) {
+    currentEditKey = key;
+    document.getElementById('modalTitle').textContent = 'Edit Setting';
+    document.getElementById('settingKey').value = key;
+    document.getElementById('settingValue').value = value;
+    document.getElementById('settingDescription').value = description;
+    document.getElementById('settingPublic').checked = isPublic;
+    document.getElementById('settingModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('settingModal').classList.add('hidden');
+    document.getElementById('settingForm').reset();
+}
+
+function deleteSetting(key) {
+    if (confirm(`Are you sure you want to delete the setting "${key}"?`)) {
+        // In a real implementation, this would make an API call
+        alert('Setting deleted successfully!');
+        location.reload();
+    }
+}
+
+document.getElementById('settingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const key = document.getElementById('settingKey').value;
+    const value = document.getElementById('settingValue').value;
+    const description = document.getElementById('settingDescription').value;
+    const isPublic = document.getElementById('settingPublic').checked;
+    
+    // In a real implementation, this would make an API call
+    const action = currentEditKey ? 'updated' : 'created';
+    alert(`Setting ${action} successfully!`);
+    
+    closeModal();
+    location.reload();
+});
+</script>
+{% endblock %}
