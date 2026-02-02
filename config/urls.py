@@ -28,6 +28,7 @@ urlpatterns = [
     # Dashboards
     # =========================
     path("dashboard/", include(("dashboard.urls", "dashboard"), namespace="dashboard")),
+    path("health-assistant/", include(("health_assistant.urls", "health_assistant"), namespace="health_assistant")),
 
     # =========================
     # Patients

@@ -1,0 +1,406 @@
+{% extends "health_assistant/base.html" %}
+
+{% block page_title %}Health Assistant - Home{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-user-nurse me-2 text-primary"></i>
+                        Health Assistant Portal
+                    </h2>
+                    <p class="text-muted mb-0">Manage patient registrations and screening questionnaires</p>
+                </div>
+                <div class="text-end">
+                    <div class="text-muted small">Welcome back,</div>
+                    <div class="fw-bold">{{ request.user.get_full_name|default:request.user.email }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">Quick Actions</h4>
+            <div class="row">
+                <!-- Patient Registration -->
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-primary action-card" onclick="window.location.href='{% url "health_assistant:landing" %}'">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="fas fa-user-plus text-primary" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="card-title">Patient Registration</h5>
+                            <p class="card-text text-muted">
+                                Register new patients and conduct screening questionnaires in a streamlined workflow
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="badge bg-primary">Quick Start</span>
+                                <i class="fas fa-arrow-right text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Questionnaire Management -->
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-info action-card" onclick="window.location.href='{% url "health_assistant:questionnaires" %}'">
+                        <div class="card-body text-center p-4">
+                            <div class="mb-3">
+                                <i class="fas fa-clipboard-list text-info" style="font-size: 3rem;"></i>
+                            </div>
+                            <h5 class="card-title">Questionnaires</h5>
+                            <p class="card-text text-muted">
+                                View available questionnaires and manage screening forms
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="badge bg-info">Manage</span>
+                                <i class="fas fa-arrow-right text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Recent Activity
+                    </h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshActivity()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="recentActivity">
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading recent activity...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Today's Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="todayStats">
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading statistics...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-link me-2"></i>
+                        Quick Links
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url "health_assistant:landing" %}" class="btn btn-outline-primary btn-sm w-100">
+                                <i class="fas fa-user-plus me-2"></i>New Patient
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url "health_assistant:my_sessions" %}" class="btn btn-outline-info btn-sm w-100">
+                                <i class="fas fa-list me-2"></i>My Sessions
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="#" class="btn btn-outline-success btn-sm w-100" onclick="showHelp()">
+                                <i class="fas fa-question-circle me-2"></i>Help
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url "logout" %}" class="btn btn-outline-secondary btn-sm w-100">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Health Assistant Help Guide
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="accordion" id="helpAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#help1">
+                                <i class="fas fa-user-plus me-2"></i>
+                                Patient Registration
+                            </button>
+                        </h2>
+                        <div id="help1" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                <ol>
+                                    <li>Click on "Patient Registration" to start the workflow</li>
+                                    <li>Search for existing patients first to avoid duplicates</li>
+                                    <li>If patient doesn't exist, fill out the registration form</li>
+                                    <li>Ensure you have patient consent before proceeding</li>
+                                    <li>Select appropriate questionnaire for screening</li>
+                                    <li>Complete the questionnaire and submit</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#help2">
+                                <i class="fas fa-clipboard-list me-2"></i>
+                                Questionnaires
+                            </button>
+                        </h2>
+                        <div id="help2" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li>View all available screening questionnaires</li>
+                                    <li>Each questionnaire is designed for specific health screenings</li>
+                                    <li>Questionnaires include: General Health, Cardiovascular Risk, Diabetes Risk</li>
+                                    <li>Questions are automatically ordered and validated</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#help3">
+                                <i class="fas fa-history me-2"></i>
+                                Session Management
+                            </button>
+                        </h2>
+                        <div id="help3" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li>View all your screening sessions in "My Sessions"</li>
+                                    <li>Filter sessions by status and date</li>
+                                    <li>Continue incomplete sessions</li>
+                                    <li>View completed questionnaire results</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.action-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: inherit;
+}
+
+.action-card:hover .card-title {
+    color: inherit;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--medical-primary) 0%, var(--medical-secondary) 100%);
+    color: white;
+    border: none;
+}
+
+.activity-item {
+    border-left: 3px solid var(--medical-primary);
+    padding-left: 15px;
+    margin-bottom: 15px;
+}
+
+.activity-item .time {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.activity-item .title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.activity-item .description {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadTodayStats();
+    loadRecentActivity();
+});
+
+function loadTodayStats() {
+    const statsDiv = document.getElementById('todayStats');
+    
+    fetch('/health-assistant/api/today-stats/', {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        statsDiv.innerHTML = `
+            <div class="row text-center">
+                <div class="col-6 mb-3">
+                    <div class="stat-card rounded p-3">
+                        <h3 class="mb-1">${data.todays_sessions || 0}</h3>
+                        <small>Today's Sessions</small>
+                    </div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="stat-card rounded p-3">
+                        <h3 class="mb-1">${data.total_patients || 0}</h3>
+                        <small>Total Patients</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card rounded p-3">
+                        <h3 class="mb-1">${data.completed_sessions || 0}</h3>
+                        <small>Completed</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card rounded p-3">
+                        <h3 class="mb-1">${data.pending_sessions || 0}</h3>
+                        <small>Pending</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    })
+    .catch(error => {
+        console.error('Error loading stats:', error);
+        statsDiv.innerHTML = '<div class="alert alert-warning">Unable to load statistics</div>';
+    });
+}
+
+function loadRecentActivity() {
+    const activityDiv = document.getElementById('recentActivity');
+    
+    fetch('/health-assistant/api/recent-activity/', {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.activities && data.activities.length > 0) {
+            activityDiv.innerHTML = data.activities.map(activity => `
+                <div class="activity-item">
+                    <div class="title">${activity.title}</div>
+                    <div class="description">${activity.description}</div>
+                    <div class="time">${activity.time}</div>
+                </div>
+            `).join('');
+        } else {
+            activityDiv.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-2x mb-3"></i>
+                    <p>No recent activity</p>
+                    <small>Start by registering a new patient</small>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading activity:', error);
+        activityDiv.innerHTML = '<div class="alert alert-warning">Unable to load recent activity</div>';
+    });
+}
+
+function refreshActivity() {
+    loadTodayStats();
+    loadRecentActivity();
+    
+    // Show refresh animation
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+    icon.classList.add('fa-spin');
+    
+    setTimeout(() => {
+        icon.classList.remove('fa-spin');
+    }, 1000);
+}
+
+function showHelp() {
+    const modal = new bootstrap.Modal(document.getElementById('helpModal'));
+    modal.show();
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

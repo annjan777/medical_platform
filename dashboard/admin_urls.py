@@ -23,6 +23,9 @@ urlpatterns = [
     path("devices/<int:pk>/update/", admin_views.DeviceUpdateView.as_view(), name="device_update"),
     path("devices/<int:pk>/delete/", admin_views.DeviceDeleteView.as_view(), name="device_delete"),
 
+    # Questionnaires
+    path("questionnaires/", admin_views.QuestionnaireListView.as_view(), name="questionnaire_list"),
+
     # Settings / audit (placeholders)
     path("settings/system/", admin_views.SystemSettingsView.as_view(), name="system_settings"),
     path("settings/email/", admin_views.EmailSettingsView.as_view(), name="email_settings"),

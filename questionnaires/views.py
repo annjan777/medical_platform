@@ -6,9 +6,10 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db import transaction
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 
 from .models import Questionnaire, Question, QuestionOption, Response, Answer
 from .forms import QuestionnaireForm, QuestionForm, ResponseForm
@@ -37,7 +38,7 @@ class QuestionnaireCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateVie
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('questionnaires:questionnaire_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('questionnaires:detail', kwargs={'pk': self.object.pk})
 
 class QuestionnaireUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Questionnaire
@@ -52,7 +53,7 @@ class QuestionnaireUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVie
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('questionnaires:questionnaire_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('questionnaires:detail', kwargs={'pk': self.object.pk})
 
 class QuestionnaireDetailView(LoginRequiredMixin, DetailView):
     model = Questionnaire
@@ -61,13 +62,13 @@ class QuestionnaireDetailView(LoginRequiredMixin, DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['questions'] = self.object.questions.all().order_by('display_order')
+        context['questions'] = self.object.questions.all().order_by('order')
         return context
 
 class QuestionnaireDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Questionnaire
     template_name = 'questionnaires/questionnaire_confirm_delete.html'
-    success_url = reverse_lazy('questionnaires:questionnaire_list')
+    success_url = reverse_lazy('questionnaires:list')
     
     def test_func(self):
         return self.request.user.is_staff
@@ -107,16 +108,16 @@ class QuestionCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         # Set the display order to be the next available number
         last_question = (
             Question.objects.filter(questionnaire=questionnaire)
-            .order_by('-display_order')
+            .order_by('-order')
             .first()
         )
-        form.instance.display_order = (last_question.display_order + 1) if last_question else 1
+        form.instance.order = (last_question.order + 1) if last_question else 1
         
         messages.success(self.request, 'Question added successfully.')
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('questionnaires:questionnaire_detail', 
+        return reverse_lazy('questionnaires:detail', 
                           kwargs={'pk': self.object.questionnaire.id})
 
 class QuestionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -137,7 +138,7 @@ class QuestionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('questionnaires:questionnaire_detail', 
+        return reverse_lazy('questionnaires:detail', 
                           kwargs={'pk': self.object.questionnaire.id})
 
 class QuestionDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -149,7 +150,7 @@ class QuestionDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     
     def get_success_url(self):
         questionnaire_id = self.object.questionnaire.id
-        return reverse_lazy('questionnaires:questionnaire_detail', 
+        return reverse_lazy('questionnaires:detail', 
                           kwargs={'pk': questionnaire_id})
     
     def delete(self, request, *args, **kwargs):
@@ -218,12 +219,32 @@ def update_question_order(request):
         question_order = request.POST.getlist('order[]')
         with transaction.atomic():
             for index, question_id in enumerate(question_order, start=1):
-                Question.objects.filter(id=question_id).update(display_order=index)
+                Question.objects.filter(id=question_id).update(order=index)
         return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
+@login_required
+def api_list_questionnaires(request):
+    """API endpoint to list available questionnaires"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
+    questionnaires = Questionnaire.objects.filter(is_active=True).order_by('title')
+    
+    questionnaire_data = []
+    for q in questionnaires:
+        questionnaire_data.append({
+            'id': q.id,
+            'title': q.title,
+            'description': q.description,
+            'question_count': q.questions.count()
+        })
+    
+    return JsonResponse({'questionnaires': questionnaire_data})
+
 # Public Views
+@login_required
 def questionnaire_start(request, pk):
     questionnaire = get_object_or_404(Questionnaire, pk=pk, is_active=True)
     
@@ -246,10 +267,11 @@ def questionnaire_start(request, pk):
     elif questionnaire.title.lower() == 'medical screening questionnaire' or 'medical screening' in questionnaire.title.lower():
         template = 'questionnaires/simple_screening_form.html'
     else:
-        template = 'questionnaires/simple_screening_form.html'  # Default to simple form
+        template = 'questionnaires/simple_questionnaire_display.html'  # Use our new template
     
     return render(request, template, {
         'questionnaire': questionnaire,
+        'questions': questionnaire.questions.all().order_by('order'),
         'form': form,
     })
 
@@ -258,6 +280,38 @@ def questionnaire_thank_you(request, pk):
     return render(request, 'questionnaires/thank_you.html', {
         'response': response,
     })
+
+
+@login_required
+@require_POST
+@csrf_exempt
+def update_question_order(request):
+    """API endpoint to update question order."""
+    try:
+        import json
+        data = json.loads(request.body)
+        question_ids = data.get('question_ids', [])
+        
+        if not question_ids:
+            return JsonResponse({
+                'success': False,
+                'error': 'No question IDs provided'
+            }, status=400)
+        
+        with transaction.atomic():
+            for index, question_id in enumerate(question_ids, start=1):
+                Question.objects.filter(id=question_id).update(order=index)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Question order updated successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 def simple_questionnaire_builder(request):

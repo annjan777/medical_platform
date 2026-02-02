@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Health Assistant Portal{% endblock %} - HealthScreener Pro</title>
+
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <!-- AdminLTE Theme style -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        .main-header {
+            background: linear-gradient(90deg, #2c7a7b 0%, #4299e1 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .main-sidebar {
+            background: #2c3e50;
+        }
+        
+        .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active {
+            background-color: #2c7a7b;
+            color: #fff;
+        }
+        
+        .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link:hover {
+            background-color: rgba(44, 122, 123, 0.2);
+            color: #c2c7d0;
+        }
+        
+        .brand-link {
+            background: linear-gradient(90deg, #2c7a7b 0%, #4299e1 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .info-box {
+            border-radius: 0.5rem;
+            box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+        }
+        
+        .info-box-icon {
+            border-radius: 0.5rem 0 0 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #2c7a7b 0%, #4299e1 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #2a696a 0%, #3b8bc4 100%);
+        }
+        
+        .card-header {
+            background: linear-gradient(90deg, #2c7a7b 0%, #4299e1 100%);
+            color: white;
+        }
+        
+        .quick-action-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .quick-action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border-color: #2c7a7b;
+        }
+        
+        .patient-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .patient-card:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .activity-item {
+            border-left: 3px solid #2c7a7b;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .workflow-step {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        .workflow-step.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .step-indicator {
+            text-align: center;
+            position: relative;
+        }
+        
+        .step-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 1.2rem;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+        
+        .step-circle.active {
+            background-color: #2c7a7b;
+            color: white;
+        }
+        
+        .step-circle.completed {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .step-connector {
+            height: 2px;
+            background-color: #e9ecef;
+            margin: 25px 0;
+            position: relative;
+            top: -15px;
+        }
+    </style>
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+    <!-- Preloader -->
+    <div class="preloader flex-column justify-content-center align-items-center">
+        <i class="fas fa-heartbeat fa-spin fa-3x text-primary"></i>
+        <p class="mt-2">Loading...</p>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-dark">
+        <!-- Left navbar links -->
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu" href="#" role="button">
+                    <i class="fas fa-bars"></i>
+                </a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="{% url 'health_assistant:home' %}" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="{% url 'health_assistant:questionnaires' %}" class="nav-link">Questionnaires</a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="{% url 'health_assistant:landing' %}" class="nav-link">Patient Registration</a>
+            </li>
+        </ul>
+
+        <!-- Right navbar links -->
+        <ul class="navbar-nav ml-auto">
+            <!-- Messages Dropdown Menu -->
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <i class="far fa-comments"></i>
+                    <span class="badge badge-danger navbar-badge">3</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <a href="#" class="dropdown-item">
+                        <!-- Message Start -->
+                        <div class="media">
+                            <img src="https://via.placeholder.com/50" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+                            <div class="media-body">
+                                <h3 class="dropdown-item-title">
+                                    Admin User
+                                    <span class="float-right text-sm text-danger"><i class="fas fa-star"></i></span>
+                                </h3>
+                                <p class="text-sm">New patient registration guidelines available</p>
+                                <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
+                            </div>
+                        </div>
+                        <!-- Message End -->
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item dropdown-footer">See All Messages</a>
+                </div>
+            </li>
+            <!-- Notifications Dropdown Menu -->
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <i class="far fa-bell"></i>
+                    <span class="badge badge-warning navbar-badge">5</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <span class="dropdown-item dropdown-header">5 Notifications</span>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-users mr-2"></i> 3 new patient registrations today
+                        <span class="float-right text-muted text-sm">12h</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-file-medical mr-2"></i> 2 completed questionnaires
+                        <span class="float-right text-muted text-sm">2d</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
+                </div>
+            </li>
+            <!-- Fullscreen -->
+            <li class="nav-item">
+                <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                </a>
+            </li>
+            <!-- User Account Menu -->
+            <li class="nav-item dropdown user-menu">
+                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                    <img src="https://via.placeholder.com/160x160" class="user-image img-circle elevation-2" alt="User Image">
+                    <span class="d-none d-md-inline">{{ request.user.get_full_name|default:request.user.email }}</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <!-- User image -->
+                    <li class="user-header bg-primary">
+                        <img src="https://via.placeholder.com/160x160" class="img-circle elevation-2" alt="User Image">
+                        <p>
+                            {{ request.user.get_full_name|default:request.user.email }}
+                            <small>Health Assistant</small>
+                        </p>
+                    </li>
+                    <!-- Menu Body -->
+                    <li class="user-body">
+                        <div class="row">
+                            <div class="col-4 text-center">
+                                <a href="#">Sessions</a>
+                            </div>
+                            <div class="col-4 text-center">
+                                <a href="#">Patients</a>
+                            </div>
+                            <div class="col-4 text-center">
+                                <a href="#">Reports</a>
+                            </div>
+                        </div>
+                    </li>
+                    <!-- Menu Footer-->
+                    <li class="user-footer">
+                        <a href="#" class="btn btn-default btn-flat">Profile</a>
+                        <a href="{% url 'logout' %}" class="btn btn-default btn-flat float-right">Sign out</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <!-- /.navbar -->
+
+    <!-- Main Sidebar Container -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <!-- Brand Logo -->
+        <a href="{% url 'health_assistant:home' %}" class="brand-link">
+            <i class="fas fa-heartbeat brand-image img-circle elevation-3 ml-1" style="font-size: 2rem; color: white;"></i>
+            <span class="brand-text font-weight-light">Health Assistant</span>
+        </a>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Sidebar user panel (optional) -->
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="image">
+                    <img src="https://via.placeholder.com/160x160" class="img-circle elevation-2" alt="User Image">
+                </div>
+                <div class="info">
+                    <a href="#" class="d-block text-white">{{ request.user.get_full_name|default:request.user.email }}</a>
+                    <small class="text-muted">Health Assistant</small>
+                </div>
+            </div>
+
+            <!-- SidebarSearch Form -->
+            <div class="form-inline">
+                <div class="input-group" data-widget="sidebar-search">
+                    <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
+                    <div class="input-group-append">
+                        <button class="btn btn-sidebar">
+                            <i class="fas fa-search fa-fw"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Menu -->
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                    <!-- Dashboard -->
+                    <li class="nav-item">
+                        <a href="{% url 'health_assistant:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+                    
+                    <!-- Patient Management -->
+                    <li class="nav-item">
+                        <a href="{% url 'health_assistant:landing' %}" class="nav-link {% if request.resolver_match.url_name == 'landing' %}active{% endif %}">
+                            <i class="nav-icon fas fa-user-plus"></i>
+                            <p>Patient Registration</p>
+                        </a>
+                    </li>
+                    
+                    <!-- Questionnaires -->
+                    <li class="nav-item">
+                        <a href="{% url 'health_assistant:questionnaires' %}" class="nav-link {% if request.resolver_match.url_name == 'questionnaires' %}active{% endif %}">
+                            <i class="nav-icon fas fa-clipboard-list"></i>
+                            <p>Questionnaires</p>
+                        </a>
+                    </li>
+                    
+                    <!-- Sessions -->
+                    <li class="nav-item">
+                        <a href="{% url 'health_assistant:my_sessions' %}" class="nav-link {% if request.resolver_match.url_name == 'my_sessions' %}active{% endif %}">
+                            <i class="nav-icon fas fa-history"></i>
+                            <p>My Sessions</p>
+                        </a>
+                    </li>
+                    
+                    <!-- Reports -->
+                    <li class="nav-header">Reports</li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon fas fa-chart-bar"></i>
+                            <p>
+                                Reports
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Daily Report</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Weekly Report</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Monthly Report</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Settings -->
+                    <li class="nav-header">Settings</li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <p>Settings</p>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showHelp()">
+                            <i class="nav-icon fas fa-question-circle"></i>
+                            <p>Help & Support</p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        {% block content_header %}
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">{% block page_title %}Health Assistant Portal{% endblock %}</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="{% url 'health_assistant:home' %}">Home</a></li>
+                            {% block breadcrumb %}{% endblock %}
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+
+        <!-- Main content -->
+        <section class="content">
+            {% block content %}{% endblock %}
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <strong>Copyright &copy; 2024 <a href="#">HealthScreener Pro</a>.</strong>
+        All rights reserved.
+        <div class="float-right d-none d-sm-inline-block">
+            <b>Version</b> 1.0.0
+        </div>
+    </footer>
+
+    <!-- Control Sidebar -->
+    <aside class="control-sidebar control-sidebar-dark">
+        <!-- Control sidebar content goes here -->
+    </aside>
+</div>
+
+<!-- jQuery -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+{% block extra_js %}{% endblock %}
+
+<script>
+    // Initialize AdminLTE
+    $(document).ready(function() {
+        // Hide preloader
+        $('.preloader').fadeOut();
+        
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+        
+        // Initialize popovers
+        $('[data-toggle="popover"]').popover();
+    });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function showHelp() {
+        // This can be overridden in individual pages
+        alert('Help system coming soon! For now, contact your administrator.');
+    }
+</script>
+</body>
+</html>

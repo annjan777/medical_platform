@@ -1,0 +1,285 @@
+{% extends "health_assistant/base_clean.html" %}
+
+{% block page_title %}Health Assistant - Questionnaires{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-clipboard-list me-2 text-info"></i>
+                        Screening Questionnaires
+                    </h2>
+                    <p class="text-muted mb-0">Available screening questionnaires for patient assessment</p>
+                </div>
+                <div>
+                    <a href="{% url "health_assistant:home" %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questionnaire Cards -->
+    <div class="row" id="questionnaireContainer">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-info" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading available questionnaires...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Questionnaire Details Modal -->
+<div class="modal fade" id="questionnaireModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    <span id="modalTitle">Questionnaire Details</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="startQuestionnaireBtn">
+                    <i class="fas fa-play me-2"></i>Start Screening
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.questionnaire-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    height: 100%;
+}
+
+.questionnaire-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: var(--medical-secondary);
+}
+
+.questionnaire-card .card-img-top {
+    height: 120px;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--medical-secondary) 0%, var(--medical-primary) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+}
+
+.questionnaire-meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.questionnaire-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.questionnaire-preview {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.question-preview {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--medical-secondary);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedQuestionnaire = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadQuestionnaires();
+});
+
+function loadQuestionnaires() {
+    const container = document.getElementById('questionnaireContainer');
+    
+    fetch('/questionnaires/api/list/', {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.questionnaires && data.questionnaires.length > 0) {
+            container.innerHTML = data.questionnaires.map(q => createQuestionnaireCard(q)).join('');
+        } else {
+            container.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-warning text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <h5>No Questionnaires Available</h5>
+                        <p class="mb-0">There are currently no active screening questionnaires available.</p>
+                        <p class="text-muted small">Please contact your administrator to set up questionnaires.</p>
+                    </div>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading questionnaires:', error);
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error loading questionnaires. Please try again later.
+                </div>
+            </div>
+        `;
+    });
+}
+
+function createQuestionnaireCard(questionnaire) {
+    const icons = {
+        'General Health Screening': 'fa-heartbeat',
+        'Cardiovascular Risk Assessment': 'fa-heart',
+        'Diabetes Risk Screening': 'fa-tint'
+    };
+    
+    const icon = icons[questionnaire.title] || 'fa-clipboard-list';
+    
+    return `
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card questionnaire-card" onclick="showQuestionnaireDetails(${questionnaire.id}, '${questionnaire.title.replace(/'/g, "\\'")}', '${(questionnaire.description || '').replace(/'/g, "\\'")}', ${questionnaire.question_count || 0})">
+                <div class="card-img-top">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">${questionnaire.title}</h5>
+                    <p class="card-text text-muted">${questionnaire.description || 'No description available'}</p>
+                    <div class="questionnaire-meta">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-question-circle me-1"></i>${questionnaire.question_count || 0} questions</span>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Click to view details and start screening
+                    </small>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function showQuestionnaireDetails(id, title, description, questionCount) {
+    selectedQuestionnaire = { id, title, description, questionCount };
+    
+    document.getElementById('modalTitle').textContent = title;
+    
+    const modalContent = document.getElementById('modalContent');
+    modalContent.innerHTML = `
+        <div class="mb-4">
+            <h6>Description</h6>
+            <p class="text-muted">${description || 'No description available'}</p>
+        </div>
+        
+        <div class="mb-4">
+            <h6>Questionnaire Information</h6>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h4 class="text-primary mb-1">${questionCount}</h4>
+                        <small class="text-muted">Total Questions</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h4 class="text-success mb-1">Active</h4>
+                        <small class="text-muted">Status</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h4 class="text-info mb-1">Screening</h4>
+                        <small class="text-muted">Type</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h6>How to Use</h6>
+            <ol>
+                <li>Click "Start Screening" to begin the questionnaire</li>
+                <li>You will be prompted to register or select a patient</li>
+                <li>Answer all questions honestly and completely</li>
+                <li>Submit the questionnaire when complete</li>
+                <li>Results will be saved and available for review</li>
+            </ol>
+        </div>
+        
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Note:</strong> This questionnaire is designed for preliminary screening purposes only. 
+            Always consult with qualified healthcare professionals for medical diagnosis and treatment.
+        </div>
+    `;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('questionnaireModal'));
+    modal.show();
+}
+
+// Start questionnaire button handler
+document.getElementById('startQuestionnaireBtn').addEventListener('click', function() {
+    if (selectedQuestionnaire) {
+        // Close modal
+        bootstrap.Modal.getInstance(document.getElementById('questionnaireModal')).hide();
+        
+        // Redirect to landing page with questionnaire pre-selection
+        window.location.href = `/health-assistant/landing/#questionnaire=${selectedQuestionnaire.id}`;
+    }
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

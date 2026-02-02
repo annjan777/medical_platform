@@ -1,86 +1,35 @@
-{% extends 'dashboard/admin/base.html' %}
-{% load humanize %}
+{% extends "dashboard/admin/base_clean.html" %}
 
-{% block page_title %}Admin Dashboard{% endblock %}
+{% block title %}Admin Dashboard{% endblock %}
 
-{% block admin_content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Welcome Section -->
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-100 mb-2">Welcome back, {{ request.user.get_full_name|default:request.user.email }}!</h2>
-        <p class="text-gray-400">Here's what's happening with your platform today.</p>
-    </div>
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
 
-    <!-- Stats Grid -->
-    <div class="dashboard-card-container">
-        <!-- Users Card -->
-        <div class="dashboard-stat-card">
-            <div class="stat-content">
-                <p class="text-gray-400 text-sm">Total Users</p>
-                <h3 class="text-2xl font-bold text-gray-100">{{ total_users|intcomma }}</h3>
-                <p class="text-xs text-gray-500 mt-1">{{ new_users }} new this month</p>
-            </div>
-            <div class="stat-icon-wrapper icon-purple">
-                <i class="fas fa-users"></i>
-            </div>
-        </div>
-
-        <!-- Patients Card -->
-        <div class="dashboard-stat-card">
-            <div class="stat-content">
-                <p class="text-gray-400 text-sm">Total Patients</p>
-                <h3 class="text-2xl font-bold text-gray-100">{{ total_patients|intcomma }}</h3>
-                <p class="text-xs text-gray-500 mt-1">{{ active_patients }} active</p>
-            </div>
-            <div class="stat-icon-wrapper icon-green">
-                <i class="fas fa-user-injured"></i>
-            </div>
-        </div>
-
-        <!-- Devices Card -->
-        <div class="dashboard-stat-card">
-            <div class="stat-content">
-                <p class="text-gray-400 text-sm">Total Devices</p>
-                <h3 class="text-2xl font-bold text-gray-100">{{ total_devices|intcomma }}</h3>
-                <p class="text-xs text-gray-500 mt-1">{{ active_devices }} active</p>
-            </div>
-            <div class="stat-icon-wrapper icon-orange">
-                <i class="fas fa-microchip"></i>
-            </div>
-        </div>
-
-        <!-- Screenings Card -->
-        <div class="dashboard-stat-card">
-            <div class="stat-content">
-                <p class="text-gray-400 text-sm">Screenings</p>
-                <h3 class="text-2xl font-bold text-gray-100">{{ total_screenings|intcomma }}</h3>
-                <p class="text-xs text-gray-500 mt-1">{{ recent_screenings }} this week</p>
-            </div>
-            <div class="stat-icon-wrapper icon-green">
-                <i class="fas fa-clipboard-check"></i>
-            </div>
+{% block content %}
+<!-- Welcome Alert -->
+<div class="alert alert-info">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-shield-alt fa-2x me-3"></i>
+        <div>
+            <h5 class="mb-1">Welcome to Admin Dashboard</h5>
+            <p class="mb-0">System overview and management controls for HealthScreener Pro</p>
         </div>
     </div>
+</div>
 
-    <!-- Recent Screenings -->
-    <div class="card mt-8">
-        <div class="card-header">
-            <h3 class="text-lg font-semibold text-gray-100">Recent Screening Sessions</h3>
-            <a href="{% url 'screening:session_list' %}" class="text-sm text-teal-400 hover:text-teal-300">View All</a>
-        </div>
-        <div class="card-body">
-            <div class="overflow-x-auto">
-                <table class="responsive-table">
-                    <thead>
-                        <tr>
-                            <th>Session ID</th>
-                            <th>Patient</th>
-                            <th>Device</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-2">Total Users</h6>
+                    <div class="stat-number">{{ total_users|intcomma }}</div>
+                </div>
+                <div class="text-primary">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
                     <tbody>
                         {% for session in recent_screenings_list|slice:":5" %}
                         <tr>
@@ -126,7 +75,7 @@
                 <a href="{% url 'patients:add' %}" class="btn btn-primary">
                     <i class="fas fa-user-plus mr-2"></i> Add Patient
                 </a>
-                <a href="{% url 'questionnaires:questionnaire_create' %}" class="btn btn-primary">
+                <a href="{% url 'questionnaires:create' %}" class="btn btn-primary">
                     <i class="fas fa-plus mr-2"></i> New Questionnaire
                 </a>
             </div>

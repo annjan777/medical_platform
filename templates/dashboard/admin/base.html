@@ -432,9 +432,13 @@
                 <i class="fas fa-tablet-alt nav-icon"></i>
                 Devices
             </a>
-            <a href="{% url 'questionnaires:questionnaire_list' %}" class="nav-item {% if 'questionnaires' in request.path %}active{% endif %}">
+            <a href="{% url 'dashboard:admin:questionnaire_list' %}" class="nav-item {% if 'questionnaires' in request.path %}active{% endif %}">
                 <i class="fas fa-clipboard-list nav-icon"></i>
                 Questionnaires
+            </a>
+            <a href="{% url 'questionnaires:builder' %}" class="nav-item {% if 'builder' in request.path %}active{% endif %}">
+                <i class="fas fa-magic nav-icon"></i>
+                Questionnaire Builder
             </a>
             <a href="{% url 'screening:session_list' %}" class="nav-item {% if 'screening' in request.path %}active{% endif %}">
                 <i class="fas fa-stethoscope nav-icon"></i>

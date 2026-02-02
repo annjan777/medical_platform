@@ -1,0 +1,237 @@
+{% extends "health_assistant/base_adminlte.html" %}
+
+{% block title %}Questionnaires{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Questionnaires</li>
+{% endblock %}
+
+{% block content %}
+<section class="content">
+    <!-- Default box -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-clipboard-list mr-2"></i>
+                Available Screening Questionnaires
+            </h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button type="button" class="btn btn-tool" data-card-widget="remove" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle mr-2"></i>Screening Questionnaires</h5>
+                        <p class="mb-0">Select a questionnaire to start patient screening. Each questionnaire is designed for specific health assessments.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questionnaires Grid -->
+    <div class="row" id="questionnairesGrid">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p class="mt-3">Loading available questionnaires...</p>
+        </div>
+    </div>
+</section>
+
+<!-- Questionnaire Details Modal -->
+<div class="modal fade" id="questionnaireModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h4 class="modal-title">
+                    <i class="fas fa-clipboard-list mr-2"></i>
+                    <span id="modalTitle">Questionnaire Details</span>
+                </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="startQuestionnaireBtn">
+                    <i class="fas fa-play mr-2"></i>Start Screening
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedQuestionnaire = null;
+
+$(document).ready(function() {
+    loadQuestionnaires();
+});
+
+function loadQuestionnaires() {
+    const grid = $('#questionnairesGrid');
+    
+    $.ajax({
+        url: '/questionnaires/api/list/',
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function(data) {
+            if (data.questionnaires && data.questionnaires.length > 0) {
+                grid.html(data.questionnaires.map(q => createQuestionnaireCard(q)).join(''));
+            } else {
+                grid.html(`
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <h4><i class="fas fa-exclamation-triangle mr-2"></i>No Questionnaires Available</h4>
+                            <p>There are currently no active screening questionnaires available.</p>
+                            <p class="mb-0">Please contact your administrator to set up questionnaires.</p>
+                        </div>
+                    </div>
+                `);
+            }
+        },
+        error: function() {
+            grid.html(`
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <h4><i class="fas fa-exclamation-triangle mr-2"></i>Error Loading Questionnaires</h4>
+                        <p class="mb-0">Unable to load questionnaires. Please try again later.</p>
+                    </div>
+                </div>
+            `);
+        }
+    });
+}
+
+function createQuestionnaireCard(questionnaire) {
+    const icons = {
+        'General Health Screening': 'fa-heartbeat',
+        'Cardiovascular Risk Assessment': 'fa-heart',
+        'Diabetes Risk Screening': 'fa-tint'
+    };
+    
+    const icon = icons[questionnaire.title] || 'fa-clipboard-list';
+    const colors = ['primary', 'success', 'info', 'warning', 'danger'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    
+    return `
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card card-widget widget-user-2">
+                <!-- Add the bg color to the header -->
+                <div class="widget-user-header bg-${color}">
+                    <div class="widget-user-image">
+                        <i class="fas ${icon}" style="font-size: 3rem; color: white;"></i>
+                    </div>
+                    <!-- /.widget-user-image -->
+                    <h3 class="widget-user-username">${questionnaire.title}</h3>
+                    <h5 class="widget-user-desc">${questionnaire.description || 'No description available'}</h5>
+                </div>
+                <div class="card-footer p-0">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" onclick="showQuestionnaireDetails(${questionnaire.id}, '${questionnaire.title.replace(/'/g, "\\'")}', '${(questionnaire.description || '').replace(/'/g, "\\'")}', ${questionnaire.question_count || 0})">
+                                <span class="float-right badge bg-${color}">${questionnaire.question_count || 0} questions</span>
+                                <span>View Details</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" onclick="startQuestionnaireDirect(${questionnaire.id})">
+                                <span class="float-right"><i class="fas fa-play text-success"></i></span>
+                                <span>Start Screening</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function showQuestionnaireDetails(id, title, description, questionCount) {
+    selectedQuestionnaire = { id, title, description, questionCount };
+    
+    $('#modalTitle').text(title);
+    
+    const modalContent = $('#modalContent');
+    modalContent.html(`
+        <div class="row">
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info elevation-1">
+                        <i class="fas fa-question-circle"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Questions</span>
+                        <span class="info-box-number">${questionCount}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success elevation-1">
+                        <i class="fas fa-check-circle"></i>
+                    </span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Status</span>
+                        <span class="info-box-number">Active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5>Description</h5>
+            <p class="text-muted">${description || 'No description available'}</p>
+        </div>
+        
+        <div class="mt-4">
+            <h5>How to Use</h5>
+            <ol>
+                <li>Click "Start Screening" to begin the questionnaire</li>
+                <li>You will be prompted to register or select a patient</li>
+                <li>Answer all questions honestly and completely</li>
+                <li>Submit the questionnaire when complete</li>
+                <li>Results will be saved and available for review</li>
+            </ol>
+        </div>
+        
+        <div class="alert alert-info mt-4">
+            <h5><i class="fas fa-info-circle mr-2"></i>Important Note</h5>
+            <p class="mb-0">This questionnaire is designed for preliminary screening purposes only. Always consult with qualified healthcare professionals for medical diagnosis and treatment.</p>
+        </div>
+    `);
+    
+    $('#questionnaireModal').modal('show');
+}
+
+function startQuestionnaireDirect(id) {
+    window.location.href = `/health-assistant/landing/#questionnaire=${id}`;
+}
+
+// Start questionnaire button handler
+$('#startQuestionnaireBtn').click(function() {
+    if (selectedQuestionnaire) {
+        $('#questionnaireModal').modal('hide');
+        window.location.href = `/health-assistant/landing/#questionnaire=${selectedQuestionnaire.id}`;
+    }
+});
+</script>
+{% endblock %}

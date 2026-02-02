@@ -1,0 +1,293 @@
+{% extends "health_assistant/base_clean.html" %}
+
+{% block page_title %}Patient Registration{% endblock %}
+
+{% block health_assistant_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user-plus me-2"></i>Patient Registration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="patientRegistrationForm">
+                    {% csrf_token %}
+                    
+                    <!-- Patient Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-user me-2"></i>Patient Information
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                First Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.first_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                Last Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.last_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">
+                                Date of Birth <span class="text-danger">*</span>
+                            </label>
+                            {{ form.date_of_birth }}
+                            {% if form.date_of_birth.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.date_of_birth.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.gender.id_for_label }}" class="form-label">
+                                Gender <span class="text-danger">*</span>
+                            </label>
+                            {{ form.gender }}
+                            {% if form.gender.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.gender.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-phone me-2"></i>Contact Information
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                Phone Number
+                            </label>
+                            {{ form.phone_number }}
+                            <small class="text-muted">Optional: Contact number</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                Email Address
+                            </label>
+                            {{ form.email }}
+                            <small class="text-muted">Optional: Email address</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Address Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-map-marker-alt me-2"></i>Address Information
+                            </h6>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="{{ form.address.id_for_label }}" class="form-label">
+                                Street Address
+                            </label>
+                            {{ form.address }}
+                            <small class="text-muted">Optional: Full street address</small>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.city.id_for_label }}" class="form-label">
+                                City
+                            </label>
+                            {{ form.city }}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.state.id_for_label }}" class="form-label">
+                                State/Province
+                            </label>
+                            {{ form.state }}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.postal_code.id_for_label }}" class="form-label">
+                                Postal Code
+                            </label>
+                            {{ form.postal_code }}
+                        </div>
+                    </div>
+                    
+                    <!-- Consent Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-info-circle me-2"></i>Patient Consent
+                                </h6>
+                                <p class="mb-2">
+                                    By registering this patient, you confirm that you have obtained proper consent 
+                                    for medical screening and data collection in accordance with medical privacy regulations.
+                                </p>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="consentCheckbox" required>
+                                    <label class="form-check-label" for="consentCheckbox">
+                                        I confirm that patient consent has been obtained for screening and data collection
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'health_assistant:dashboard' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                                </a>
+                                <div>
+                                    <button type="reset" class="btn btn-outline-secondary me-2">
+                                        <i class="fas fa-redo me-2"></i>Reset Form
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <i class="fas fa-save me-2"></i>Register Patient
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle text-success me-2"></i>Patient Registered Successfully
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Patient has been registered successfully!</p>
+                <div id="patientDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="startScreeningBtn">
+                    <i class="fas fa-stethoscope me-2"></i>Start Screening
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('patientRegistrationForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate consent checkbox
+        const consentCheckbox = document.getElementById('consentCheckbox');
+        if (!consentCheckbox.checked) {
+            showAlert('Please confirm that patient consent has been obtained.', 'warning');
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registering...';
+        
+        // Submit form
+        const formData = new FormData(form);
+        
+        fetch('{% url "health_assistant:patient_register" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success modal
+                document.getElementById('patientDetails').innerHTML = `
+                    <div class="patient-info">
+                        <strong>Patient ID:</strong> ${data.patient.id}<br>
+                        <strong>Name:</strong> ${data.patient.first_name} ${data.patient.last_name}<br>
+                        <strong>Age:</strong> ${calculateAge(data.patient.date_of_birth)}<br>
+                        <strong>Gender:</strong> ${data.patient.gender}
+                    </div>
+                `;
+                
+                successModal.show();
+                
+                // Set up start screening button
+                document.getElementById('startScreeningBtn').onclick = function() {
+                    window.location.href = `/health-assistant/screening/${data.patient.id}/`;
+                };
+                
+                // Reset form
+                form.reset();
+                
+            } else {
+                showAlert(data.message || 'Registration failed. Please try again.', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred during registration. Please try again.', 'danger');
+        })
+        .finally(() => {
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Register Patient';
+        });
+    });
+    
+    // Helper function to calculate age from date of birth
+    function calculateAge(dateString) {
+        const dob = new Date(dateString);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            age--;
+        }
+        
+        return age;
+    }
+});
+</script>
+{% endblock %}

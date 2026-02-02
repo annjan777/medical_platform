@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'screening.apps.ScreeningConfig',
     'devices.apps.DevicesConfig',
     'dashboard.apps.DashboardConfig',
+    'health_assistant.apps.HealthAssistantConfig',
     'core.apps.CoreConfig',
 ]
 

@@ -35,119 +35,46 @@ class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
         fields = [
-            'text', 'help_text', 'question_type', 'is_required',
-            'display_order', 'depends_on_question', 'depends_on_value',
-            'allowed_file_types', 'max_file_size', 'min_value', 'max_value',
-            'min_label', 'max_label'
+            'question_text', 'question_type', 'is_required'
         ]
         widgets = {
-            'text': forms.Textarea(attrs={'rows': 2}),
-            'help_text': forms.Textarea(attrs={'rows': 2}),
-            'depends_on_value': forms.TextInput(attrs={'placeholder': 'Value that enables this question'}),
-            'allowed_file_types': forms.TextInput(attrs={'placeholder': 'e.g., .pdf,.doc,.jpg'}),
-            'min_label': forms.TextInput(attrs={'placeholder': 'e.g., Not at all likely'}),
-            'max_label': forms.TextInput(attrs={'placeholder': 'e.g., Extremely likely'}),
+            'question_text': forms.Textarea(attrs={'rows': 2}),
         }
     
     def __init__(self, *args, **kwargs):
-        questionnaire_id = kwargs.pop('questionnaire_id', None)
         super().__init__(*args, **kwargs)
-        
-        # Set the questionnaire for the question if provided
-        if questionnaire_id:
-            self.fields['depends_on_question'].queryset = Question.objects.filter(
-                questionnaire_id=questionnaire_id
-            )
-        
-        # Add CSS classes to form fields
         for field_name, field in self.fields.items():
-            # Set appropriate CSS classes based on field type
-            if isinstance(field.widget, forms.Textarea):
-                field.widget.attrs.update({'class': 'form-control', 'rows': 3})
-            elif isinstance(field.widget, (forms.Select, forms.SelectMultiple)):
-                field.widget.attrs.update({'class': 'form-select'})
-            elif isinstance(field.widget, forms.CheckboxInput):
+            if field_name == 'is_required':
                 field.widget.attrs.update({'class': 'form-check-input'})
-            elif field_name in ['min_value', 'max_value', 'max_file_size', 'display_order']:
-                field.widget.attrs.update({'class': 'form-control', 'step': 'any'})
+            elif field_name == 'question_type':
+                field.widget.attrs.update({'class': 'form-select'})
+            elif field_name == 'order':
+                field.widget.attrs.update({'class': 'form-control', 'min': 0})
             else:
                 field.widget.attrs.update({'class': 'form-control'})
-            
-            # Add placeholder for text inputs if not already set
-            if isinstance(field.widget, forms.TextInput) and 'placeholder' not in field.widget.attrs:
-                field.widget.attrs['placeholder'] = field.label
         
         # Special handling for boolean field
         self.fields['is_required'].widget.attrs.update({'class': 'form-check-input'})
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        question_type = cleaned_data.get('question_type')
-        
-        # Validate that depends_on_question is within the same questionnaire
-        depends_on_question = cleaned_data.get('depends_on_question')
-        questionnaire_id = getattr(self.instance, 'questionnaire_id', None)
-        
-        if depends_on_question and questionnaire_id and depends_on_question.questionnaire_id != questionnaire_id:
-            raise ValidationError({
-                'depends_on_question': 'Dependency must be a question from the same questionnaire.'
-            })
-        
-        # Validate min/max values for numeric questions
-        if question_type == Question.TYPE_NUMBER:
-            min_val = cleaned_data.get('min_value')
-            max_val = cleaned_data.get('max_value')
-            
-            if min_val is not None and max_val is not None and min_val > max_val:
-                raise ValidationError({
-                    'min_value': 'Minimum value cannot be greater than maximum value.'
-                })
-        
-        # Validate file upload settings
-        if question_type == Question.TYPE_FILE:
-            allowed_types = cleaned_data.get('allowed_file_types', '')
-            max_size = cleaned_data.get('max_file_size')
-            
-            if not allowed_types:
-                self.add_error('allowed_file_types', 'Please specify allowed file types (e.g., .pdf,.jpg,.doc)')
-            
-            if max_size is not None and max_size <= 0:
-                self.add_error('max_file_size', 'Maximum file size must be greater than 0')
-        
-        # Validate rating scale labels
-        if question_type == Question.TYPE_RATING:
-            min_label = cleaned_data.get('min_label')
-            max_label = cleaned_data.get('max_label')
-            
-            if not min_label or not max_label:
-                if not min_label:
-                    self.add_error('min_label', 'Required for rating scale questions')
-                if not max_label:
-                    self.add_error('max_label', 'Required for rating scale questions')
-        
-        return cleaned_data
 
 
 class QuestionOptionForm(forms.ModelForm):
     class Meta:
         model = QuestionOption
-        fields = ['text', 'value', 'display_order', 'option_image', 'is_image_primary']
+        fields = ['text', 'option_image', 'order']
         widgets = {
             'text': forms.TextInput(attrs={'class': 'form-control'}),
-            'value': forms.TextInput(attrs={'class': 'form-control'}),
-            'display_order': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'option_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'is_image_primary': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'order': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Set default display order if not provided
-        if not self.instance.pk and not self.initial.get('display_order'):
+        # Set default order if not provided
+        if not self.instance.pk and not self.initial.get('order'):
             question = self.initial.get('question')
             if question:
-                last_option = question.options.order_by('-display_order').first()
-                self.initial['display_order'] = (last_option.display_order + 1) if last_option else 0,
+                last_option = question.options.order_by('-order').first()
+                self.initial['order'] = (last_option.order + 1) if last_option else 0
 
 
 # Formset for question options
@@ -177,7 +104,7 @@ class ResponseForm(forms.ModelForm):
     def __init__(self, questionnaire, *args, **kwargs):
         self.questionnaire = questionnaire
         # Question model does not currently have an is_active flag; treat all as active.
-        self.questions = questionnaire.questions.all().order_by('display_order')
+        self.questions = questionnaire.questions.all().order_by('order')
         super().__init__(*args, **kwargs)
         
         # Set initial values for hidden fields
@@ -207,111 +134,38 @@ class ResponseForm(forms.ModelForm):
         """Create a form field for a question based on its type."""
         field_name = f'question_{question.id}'
         field_kwargs = {
-            'label': question.text,
+            'label': question.question_text,
             'required': question.is_required,
-            'help_text': question.help_text,
+            'help_text': getattr(question, 'help_text', ''),
         }
         
-        # Add question type specific attributes
-        if question.question_type in [Question.TYPE_TEXT, Question.TYPE_EMAIL, Question.TYPE_TEXTAREA, Question.TYPE_NUMBER, Question.TYPE_DATE, Question.TYPE_FILE]:
-            field_class = {
-                Question.TYPE_TEXT: forms.CharField,
-                Question.TYPE_EMAIL: forms.EmailField,
-                Question.TYPE_TEXTAREA: forms.CharField,
-                Question.TYPE_NUMBER: forms.FloatField,
-                Question.TYPE_DATE: forms.DateField,
-                Question.TYPE_FILE: forms.FileField,
-            }[question.question_type]
-            
-            # Set widget based on question type
-            if question.question_type == Question.TYPE_TEXTAREA:
-                field_kwargs['widget'] = forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
-            elif question.question_type == Question.TYPE_DATE:
-                field_kwargs['widget'] = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
-            elif question.question_type == Question.TYPE_FILE:
-                field_kwargs['widget'] = forms.FileInput(attrs={'class': 'form-control'})
-                if question.allowed_file_types:
-                    field_kwargs['help_text'] = (field_kwargs.get('help_text', '') + 
-                                               f" Allowed file types: {question.allowed_file_types}").strip()
-            else:
-                field_kwargs['widget'] = forms.TextInput(attrs={'class': 'form-control'})
-            
-            # Add validation for number fields
-            if question.question_type == Question.TYPE_NUMBER:
-                if question.min_value is not None:
-                    field_kwargs['min_value'] = question.min_value
-                if question.max_value is not None:
-                    field_kwargs['max_value'] = question.max_value
-            
-            field = field_class(**field_kwargs)
-            
-        elif question.question_type in [Question.TYPE_RADIO, Question.TYPE_SELECT, Question.TYPE_CHECKBOX, Question.TYPE_RATING]:
-            if question.question_type == Question.TYPE_RATING:
-                # For rating, create choices from min to max value
-                min_val = int(question.min_value) if question.min_value is not None else 1
-                max_val = int(question.max_value) if question.max_value is not None else 5
-                choices = [(str(i), str(i)) for i in range(min_val, max_val + 1)]
-            else:
-                # For other types, get options from the related QuestionOption model
-                choices = [(opt.value, opt.text) for opt in question.get_options()]
-            
-            if question.question_type == Question.TYPE_RADIO:
-                field = forms.ChoiceField(
-                    choices=choices,
-                    widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
-                    **field_kwargs
-                )
-            elif question.question_type == Question.TYPE_SELECT:
-                field = forms.ChoiceField(
-                    choices=[('', '---------')] + choices,
-                    widget=forms.Select(attrs={'class': 'form-select'}),
-                    **field_kwargs
-                )
-            elif question.question_type == Question.TYPE_RATING:
-                field = forms.ChoiceField(
-                    choices=choices,
-                    widget=forms.RadioSelect(attrs={'class': 'rating-radio'}),
-                    **field_kwargs
-                )
-            else:  # checkbox (multiple choice)
-                field = forms.MultipleChoiceField(
-                    choices=choices,
-                    widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-                    **field_kwargs
-                )
-        
-        elif question.question_type == 'textarea':
-            field = forms.CharField(
-                widget=forms.Textarea(attrs={
-                    'rows': 4,
-                    'class': 'form-control',
-                }),
-                **field_kwargs
-            )
-        
-        elif question.question_type == 'date':
-            field = forms.DateField(
-                widget=forms.DateInput(attrs={'type': 'date'}),
-                **field_kwargs
-            )
-        
-        elif question.question_type == 'time':
-            field = forms.TimeField(
-                widget=forms.TimeInput(attrs={'type': 'time'}),
-                **field_kwargs
-            )
-        
-        elif question.question_type == 'datetime':
-            field = forms.DateTimeField(
-                widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-                **field_kwargs
-            )
-        
+        # Add question type specific attributes for simplified types
+        if question.question_type in [question.TYPE_YES_NO, question.TYPE_TRUE_FALSE]:
+            # For Yes/No and True/False, use ChoiceField with RadioSelect
+            field_class = forms.ChoiceField
+            if question.question_type == question.TYPE_YES_NO:
+                choices = [('yes', 'Yes'), ('no', 'No')]
+            else:  # True/False
+                choices = [('true', 'True'), ('false', 'False')]
+            field_kwargs['choices'] = choices
+            field_kwargs['widget'] = forms.RadioSelect()
+        elif question.question_type == question.TYPE_SHORT_ANSWER:
+            # For short answer, use CharField with Textarea
+            field_class = forms.CharField
+            field_kwargs['widget'] = forms.Textarea(attrs={'rows': 3, 'class': 'form-control'})
+        elif question.question_type == question.TYPE_MULTIPLE_CHOICE:
+            # For multiple choice, use ChoiceField with RadioSelect
+            field_class = forms.ChoiceField
+            choices = [(opt.id, opt.text) for opt in question.options.all()]
+            field_kwargs['choices'] = choices
+            field_kwargs['widget'] = forms.RadioSelect()
         else:
-            # Default to text input
-            field = forms.CharField(**field_kwargs)
+            # Fallback for any other types
+            field_class = forms.CharField
+            field_kwargs['widget'] = forms.TextInput(attrs={'class': 'form-control'})
         
-        return field
+        field = field_class(**field_kwargs)
+        self.fields[field_name] = field
     
     def clean(self):
         cleaned_data = super().clean()

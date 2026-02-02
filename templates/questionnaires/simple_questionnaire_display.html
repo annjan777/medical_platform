@@ -1,0 +1,234 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}{{ questionnaire.title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ questionnaire.title }}</h1>
+            {% if questionnaire.description %}
+                <p class="text-gray-600">{{ questionnaire.description }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-gray-600">Progress</span>
+                <span class="text-sm text-gray-600"><span id="currentQuestion">1</span> of <span id="totalQuestions">{{ questions.count }}</span></span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Questions Form -->
+        <form id="questionnaireForm" class="space-y-6">
+            {% for question in questions %}
+            <div class="question-container bg-white rounded-lg shadow-sm p-6" data-question-id="{{ question.id }}" data-question-order="{{ forloop.counter0 }}">
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                        {{ forloop.counter }}. {{ question.question_text }}
+                        {% if question.is_required %}<span class="text-red-500">*</span>{% endif %}
+                    </h3>
+                </div>
+
+                <!-- Yes/No Question -->
+                {% if question.question_type == 'yes_no' %}
+                <div class="space-y-3">
+                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="question_{{ question.id }}" value="yes" class="mr-3" {% if question.is_required %}required{% endif %}>
+                        <span class="text-gray-700">Yes</span>
+                    </label>
+                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="question_{{ question.id }}" value="no" class="mr-3" {% if question.is_required %}required{% endif %}>
+                        <span class="text-gray-700">No</span>
+                    </label>
+                </div>
+
+                <!-- True/False Question -->
+                {% elif question.question_type == 'true_false' %}
+                <div class="space-y-3">
+                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="question_{{ question.id }}" value="true" class="mr-3" {% if question.is_required %}required{% endif %}>
+                        <span class="text-gray-700">True</span>
+                    </label>
+                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="question_{{ question.id }}" value="false" class="mr-3" {% if question.is_required %}required{% endif %}>
+                        <span class="text-gray-700">False</span>
+                    </label>
+                </div>
+
+                <!-- Multiple Choice Question -->
+                {% elif question.question_type == 'multiple_choice' %}
+                <div class="space-y-3">
+                    {% for option in question.options.all %}
+                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" class="mr-3" {% if question.is_required %}required{% endif %}>
+                        
+                        {% if option.option_image %}
+                        <div class="flex-1">
+                            <img src="{{ option.option_image.url }}" alt="{{ option.text|default:option.id }}" 
+                                 class="max-h-32 max-w-full object-contain rounded">
+                            {% if option.text %}
+                            <p class="mt-2 text-sm text-gray-600">{{ option.text }}</p>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <span class="text-gray-700">{{ option.text }}</span>
+                        {% endif %}
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <!-- Short Answer Question -->
+                {% elif question.question_type == 'short_answer' %}
+                <div>
+                    <textarea name="question_{{ question.id }}" 
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              rows="3" 
+                              placeholder="Enter your answer here..."
+                              {% if question.is_required %}required{% endif %}></textarea>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center">
+                <button type="button" id="prevBtn" onclick="previousQuestion()" class="btn btn-secondary" disabled>
+                    <i class="fas fa-arrow-left mr-2"></i> Previous
+                </button>
+                <button type="button" id="nextBtn" onclick="nextQuestion()" class="btn btn-primary">
+                    Next <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+                <button type="submit" id="submitBtn" class="btn btn-success hidden">
+                    <i class="fas fa-check mr-2"></i> Submit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentQuestionIndex = 0;
+const totalQuestions = {{ questions.count }};
+const questionContainers = document.querySelectorAll('.question-container');
+
+function showQuestion(index) {
+    // Hide all questions
+    questionContainers.forEach(container => {
+        container.style.display = 'none';
+    });
+    
+    // Show current question
+    questionContainers[index].style.display = 'block';
+    
+    // Update progress
+    const progress = ((index + 1) / totalQuestions) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+    document.getElementById('currentQuestion').textContent = index + 1;
+    
+    // Update buttons
+    document.getElementById('prevBtn').disabled = index === 0;
+    
+    if (index === totalQuestions - 1) {
+        document.getElementById('nextBtn').classList.add('hidden');
+        document.getElementById('submitBtn').classList.remove('hidden');
+    } else {
+        document.getElementById('nextBtn').classList.remove('hidden');
+        document.getElementById('submitBtn').classList.add('hidden');
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < totalQuestions - 1) {
+        currentQuestionIndex++;
+        showQuestion(currentQuestionIndex);
+    }
+}
+
+function previousQuestion() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        showQuestion(currentQuestionIndex);
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    showQuestion(0);
+});
+
+// Form submission
+document.getElementById('questionnaireForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Collect form data
+    const formData = new FormData(this);
+    const answers = {};
+    
+    for (let [key, value] of formData.entries()) {
+        answers[key] = value;
+    }
+    
+    // Here you would normally send this to your backend
+    console.log('Submitting answers:', answers);
+    
+    // Show success message
+    alert('Questionnaire submitted successfully!');
+    
+    // Redirect to thank you page
+    window.location.href = '{% url "questionnaires:questionnaire_thank_you" 0 %}'.replace('0', 'submitted');
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    showQuestion(0);
+});
+</script>
+
+<style>
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #2563eb;
+}
+
+.btn-secondary {
+    background-color: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #4b5563;
+}
+
+.btn-success {
+    background-color: #10b981;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #059669;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>
+{% endblock %}

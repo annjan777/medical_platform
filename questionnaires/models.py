@@ -69,7 +69,7 @@ class Questionnaire(models.Model):
     
     def get_questions(self):
         """Return all questions for this questionnaire ordered by display order."""
-        return self.questions.all().order_by('display_order')
+        return self.questions.all().order_by('order')
     
     def is_complete(self, response):
         """Check if all required questions have been answered in the given response."""
@@ -82,79 +82,29 @@ class Questionnaire(models.Model):
 
 
 class Question(models.Model):
-    """Model representing a question in a questionnaire."""
+    """Simplified model for questionnaire questions."""
     
-    # Question types
-    TYPE_TEXT = 'text'
-    TYPE_TEXTAREA = 'textarea'
-    TYPE_RADIO = 'radio'
-    TYPE_CHECKBOX = 'checkbox'
-    TYPE_SELECT = 'select'
-    TYPE_RATING = 'rating'
-    TYPE_DATE = 'date'
-    TYPE_EMAIL = 'email'
-    TYPE_NUMBER = 'number'
-    TYPE_FILE = 'file'
+    # Question types as per requirements
+    TYPE_YES_NO = 'yes_no'
+    TYPE_TRUE_FALSE = 'true_false'
+    TYPE_MULTIPLE_CHOICE = 'multiple_choice'
+    TYPE_SHORT_ANSWER = 'short_answer'
     
     QUESTION_TYPES = [
-        (TYPE_TEXT, 'Short Text'),
-        (TYPE_TEXTAREA, 'Long Text'),
-        (TYPE_RADIO, 'Multiple Choice (Single Answer)'),
-        (TYPE_CHECKBOX, 'Multiple Choice (Multiple Answers)'),
-        (TYPE_SELECT, 'Dropdown'),
-        (TYPE_RATING, 'Rating Scale'),
-        (TYPE_DATE, 'Date'),
-        (TYPE_EMAIL, 'Email'),
-        (TYPE_NUMBER, 'Number'),
-        (TYPE_FILE, 'File Upload'),
+        (TYPE_YES_NO, 'Yes/No'),
+        (TYPE_TRUE_FALSE, 'True/False'),
+        (TYPE_MULTIPLE_CHOICE, 'Multiple Choice'),
+        (TYPE_SHORT_ANSWER, 'Short Answer'),
     ]
     
-    questionnaire = models.ForeignKey(
-        Questionnaire,
-        on_delete=models.CASCADE,
-        related_name='questions'
-    )
-    text = models.TextField()
-    help_text = models.TextField(blank=True)
-    question_type = models.CharField(
-        max_length=20,
-        choices=QUESTION_TYPES,
-        default=TYPE_TEXT
-    )
+    questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE, related_name='questions')
+    question_text = models.TextField()
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
+    order = models.PositiveIntegerField(default=0)
     is_required = models.BooleanField(default=True)
-    display_order = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    # Conditional logic fields
-    depends_on_question = models.ForeignKey(
-        'self',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='dependent_questions'
-    )
-    depends_on_value = models.TextField(blank=True, null=True)
-    
-    # For file uploads
-    allowed_file_types = models.CharField(max_length=200, blank=True)
-    max_file_size = models.PositiveIntegerField(
-        default=5,  # 5MB default
-        help_text='Maximum file size in MB'
-    )
-    
-    # For number fields
-    min_value = models.FloatField(null=True, blank=True)
-    max_value = models.FloatField(null=True, blank=True)
-    
-    # For rating scales
-    min_label = models.CharField(max_length=50, blank=True)
-    max_label = models.CharField(max_length=50, blank=True)
     
     class Meta:
-        ordering = ['display_order', 'created_at']
-        verbose_name = 'question'
-        verbose_name_plural = 'questions'
+        ordering = ['order']
     
     def __str__(self):
         return f"{self.questionnaire.title} - {self.text[:50]}..."
@@ -172,7 +122,7 @@ class Question(models.Model):
     
     def get_options(self):
         """Get all options for this question."""
-        return self.options.all().order_by('display_order')
+        return self.options.all().order_by('order')
     
     def validate_answer(self, value):
         """Validate the answer value based on question type."""
@@ -205,47 +155,35 @@ class Question(models.Model):
 
 
 class QuestionOption(models.Model):
-    """Model representing an option for a multiple choice question."""
-    question = models.ForeignKey(
-        Question,
-        on_delete=models.CASCADE,
-        related_name='options'
-    )
-    text = models.CharField(max_length=200)
-    value = models.CharField(max_length=100)
-    display_order = models.PositiveIntegerField(default=0)
-    option_image = models.ImageField(
-        upload_to='question_options/',
-        null=True,
-        blank=True,
-        help_text='Optional image for this option'
-    )
-    is_image_primary = models.BooleanField(
-        default=False,
-        help_text='Display image instead of text'
-    )
+    """Options for multiple choice questions with image support."""
+    
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
+    text = models.CharField(max_length=255, blank=True)  # Text option
+    option_image = models.ImageField(upload_to='question_options/', blank=True, null=True)  # Image option
+    order = models.PositiveIntegerField(default=0)
     
     class Meta:
-        ordering = ['display_order']
-        verbose_name = 'question option'
-        verbose_name_plural = 'question options'
+        ordering = ['order']
     
     def __str__(self):
-        return self.text
+        if self.text:
+            return self.text
+        elif self.option_image:
+            return f"Image: {self.option_image.name}"
+        return f"Option {self.id}"
     
     def get_display_content(self):
-        """Return the appropriate display content (text or image)."""
-        if self.is_image_primary and self.option_image:
+        """Return the appropriate content for display (text or image)."""
+        if self.option_image:
             return {
                 'type': 'image',
-                'content': self.option_image.url,
-                'alt_text': self.text
+                'url': self.option_image.url,
+                'alt': self.text or f"Option {self.id}"
             }
         else:
             return {
                 'type': 'text',
-                'content': self.text,
-                'alt_text': None
+                'content': self.text
             }
 
 
@@ -326,7 +264,7 @@ class Answer(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['question__display_order']
+        ordering = ['question__order']
         unique_together = ('response', 'question')
         verbose_name = 'answer'
         verbose_name_plural = 'answers'
@@ -336,15 +274,11 @@ class Answer(models.Model):
     
     def get_value(self):
         """Get the appropriate value based on question type."""
-        if self.question.question_type == Question.TYPE_RADIO:
-            return self.option_answer.first().value if self.option_answer.exists() else None
-        elif self.question.question_type == Question.TYPE_CHECKBOX:
-            return [opt.value for opt in self.option_answer.all()]
-        elif self.question.question_type == Question.TYPE_NUMBER:
-            return self.number_answer
-        elif self.question.question_type == Question.TYPE_DATE:
-            return self.date_answer
-        elif self.question.question_type == Question.TYPE_FILE:
-            return self.file_answer
+        if self.question.question_type == Question.TYPE_MULTIPLE_CHOICE:
+            return self.option_answer.first() if self.option_answer.exists() else None
+        elif self.question.question_type in [Question.TYPE_YES_NO, Question.TYPE_TRUE_FALSE]:
+            return self.text_answer
+        elif self.question.question_type == Question.TYPE_SHORT_ANSWER:
+            return self.text_answer
         else:
             return self.text_answer

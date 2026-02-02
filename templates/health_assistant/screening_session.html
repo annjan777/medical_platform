@@ -1,0 +1,427 @@
+{% extends "health_assistant/base_clean.html" %}
+
+{% block page_title %}Screening Session{% endblock %}
+
+{% block health_assistant_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-stethoscope me-2"></i>New Screening Session
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Patient Selection -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-user me-2"></i>Step 1: Select Patient
+                        </h6>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="patientSearch" class="form-label">Search Patient</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="patientSearch" 
+                                       placeholder="Search by name, ID, or phone...">
+                                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div id="patientSearchResults" class="mt-2"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <button type="button" class="btn btn-outline-primary" id="newPatientBtn">
+                                <i class="fas fa-user-plus me-2"></i>Register New Patient
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Selected Patient Info -->
+                <div id="selectedPatientInfo" class="row mb-4" style="display: none;">
+                    <div class="col-12">
+                        <div class="patient-info">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-1">Selected Patient</h6>
+                                    <div id="patientDetails"></div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="changePatientBtn">
+                                        <i class="fas fa-exchange-alt me-1"></i>Change Patient
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Selection -->
+                <div class="row mb-4" id="productSelection" style="display: none;">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-box me-2"></i>Step 2: Select Screening Product
+                        </h6>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="row" id="productCards">
+                            <!-- Products will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Device Selection -->
+                <div class="row mb-4" id="deviceSelection" style="display: none;">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-microchip me-2"></i>Step 3: Select Device
+                        </h6>
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <div class="row" id="deviceCards">
+                            <!-- Devices will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Consent -->
+                <div class="row mb-4" id="consentSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Patient Consent Required
+                            </h6>
+                            <p class="mb-3">
+                                Before starting the screening, please ensure the patient has read and agreed to the consent form.
+                            </p>
+                            <div class="consent-content">
+                                <div class="border rounded p-3 mb-3" style="max-height: 200px; overflow-y: auto;">
+                                    <h6>Medical Screening Consent Form</h6>
+                                    <p>
+                                        I hereby consent to participate in medical screening procedures. 
+                                        I understand that the screening may involve various diagnostic tests 
+                                        and that my personal health information will be collected and stored 
+                                        securely for medical purposes.
+                                    </p>
+                                    <p>
+                                        I understand that I can withdraw my consent at any time and that 
+                                        all information will be kept confidential in accordance with 
+                                        medical privacy regulations.
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>Patient Rights:</strong><br>
+                                        • Right to understand the procedure<br>
+                                        • Right to ask questions<br>
+                                        • Right to withdraw consent<br>
+                                        • Right to privacy and confidentiality
+                                    </p>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="patientConsent">
+                                    <label class="form-check-label" for="patientConsent">
+                                        <strong>I confirm that the patient has read and agreed to the consent form</strong>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Start Screening -->
+                <div class="row" id="startSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Ready to Start Screening</h6>
+                                <p class="text-muted mb-0">All preparations complete. Click below to begin the screening session.</p>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-secondary me-2" id="backBtn">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                </button>
+                                <button type="button" class="btn btn-success btn-lg" id="startScreeningBtn" disabled>
+                                    <i class="fas fa-play me-2"></i>Start Screening
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner mb-3"></div>
+                <h6>Creating Screening Session...</h6>
+                <p class="text-muted mb-0">Please wait while we set up your session</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedPatient = null;
+let selectedProduct = null;
+let selectedDevice = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Load products
+    loadProducts();
+    
+    // Patient search
+    const patientSearch = document.getElementById('patientSearch');
+    const searchBtn = document.getElementById('searchBtn');
+    
+    searchBtn.addEventListener('click', searchPatients);
+    patientSearch.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            searchPatients();
+        }
+    });
+    
+    // New patient button
+    document.getElementById('newPatientBtn').addEventListener('click', function() {
+        window.location.href = '{% url "health_assistant:patient_register" %}';
+    });
+    
+    // Change patient button
+    document.getElementById('changePatientBtn').addEventListener('click', function() {
+        resetPatientSelection();
+    });
+    
+    // Consent checkbox
+    document.getElementById('patientConsent').addEventListener('change', function() {
+        document.getElementById('startScreeningBtn').disabled = !this.checked;
+    });
+    
+    // Start screening button
+    document.getElementById('startScreeningBtn').addEventListener('click', startScreening);
+    
+    // Back button
+    document.getElementById('backBtn').addEventListener('click', function() {
+        resetDeviceSelection();
+    });
+});
+
+function searchPatients() {
+    const query = document.getElementById('patientSearch').value.trim();
+    const resultsDiv = document.getElementById('patientSearchResults');
+    
+    if (!query) {
+        resultsDiv.innerHTML = '';
+        return;
+    }
+    
+    resultsDiv.innerHTML = '<div class="spinner"></div>';
+    
+    makeAjaxRequest(`/health_assistant/api/search-patients/?q=${query}`)
+        .then(data => {
+            if (data.patients && data.patients.length > 0) {
+                resultsDiv.innerHTML = data.patients.map(patient => `
+                    <div class="patient-result card mb-2" onclick="selectPatient(${patient.id})">
+                        <div class="card-body py-2">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <strong>${patient.name}</strong>
+                                    <br><small class="text-muted">ID: ${patient.external_id || patient.id}</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small>Age: ${patient.age}</small><br>
+                                    <small>Gender: ${patient.gender}</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small>${patient.phone || 'No phone'}</small>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button class="btn btn-sm btn-primary">Select</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                resultsDiv.innerHTML = '<div class="alert alert-info">No patients found. Try a different search or register a new patient.</div>';
+            }
+        })
+        .catch(error => {
+            resultsDiv.innerHTML = '<div class="alert alert-danger">Error searching patients. Please try again.</div>';
+        });
+}
+
+function selectPatient(patientId) {
+    makeAjaxRequest(`/health_assistant/api/get-patient/${patientId}/`)
+        .then(data => {
+            if (data.patient) {
+                selectedPatient = data.patient;
+                displaySelectedPatient();
+                showProductSelection();
+            }
+        });
+}
+
+function displaySelectedPatient() {
+    const patientInfo = document.getElementById('selectedPatientInfo');
+    const patientDetails = document.getElementById('patientDetails');
+    
+    patientDetails.innerHTML = `
+        <strong>Name:</strong> ${selectedPatient.name}<br>
+        <strong>ID:</strong> ${selectedPatient.external_id || selectedPatient.id}<br>
+        <strong>Age:</strong> ${selectedPatient.age} | <strong>Gender:</strong> ${selectedPatient.gender}<br>
+        <strong>Phone:</strong> ${selectedPatient.phone || 'Not provided'}
+    `;
+    
+    patientInfo.style.display = 'block';
+}
+
+function showProductSelection() {
+    document.getElementById('productSelection').style.display = 'block';
+}
+
+function loadProducts() {
+    makeAjaxRequest('/health_assistant/api/get-products/')
+        .then(data => {
+            if (data.products) {
+                const productCards = document.getElementById('productCards');
+                productCards.innerHTML = data.products.map(product => `
+                    <div class="col-md-4 mb-3">
+                        <div class="card product-card h-100" onclick="selectProduct(${product.id})">
+                            <div class="card-body text-center">
+                                <i class="fas fa-box fa-3x text-primary mb-3"></i>
+                                <h6>${product.name}</h6>
+                                <p class="text-muted small">${product.description}</p>
+                                <span class="badge bg-info">${product.questionnaires_count} Questionnaires</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        });
+}
+
+function selectProduct(productId) {
+    makeAjaxRequest(`/health_assistant/api/get-product/${productId}/`)
+        .then(data => {
+            if (data.product) {
+                selectedProduct = data.product;
+                showDeviceSelection();
+                loadDevices();
+            }
+        });
+}
+
+function showDeviceSelection() {
+    document.getElementById('deviceSelection').style.display = 'block';
+}
+
+function loadDevices() {
+    makeAjaxRequest('/health_assistant/api/get-devices/')
+        .then(data => {
+            if (data.devices) {
+                const deviceCards = document.getElementById('deviceCards');
+                deviceCards.innerHTML = data.devices.map(device => `
+                    <div class="col-md-4 mb-3">
+                        <div class="card device-card h-100 ${!device.is_connected ? 'opacity-50' : ''}" 
+                             onclick="selectDevice(${device.id})" ${!device.is_connected ? 'disabled' : ''}>
+                            <div class="card-body text-center">
+                                <i class="fas fa-microchip fa-3x ${device.is_connected ? 'text-success' : 'text-danger'} mb-3"></i>
+                                <h6>${device.name}</h6>
+                                <p class="text-muted small">${device.model}</p>
+                                <span class="badge ${device.is_connected ? 'bg-success' : 'bg-danger'}">
+                                    ${device.is_connected ? 'Connected' : 'Disconnected'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        });
+}
+
+function selectDevice(deviceId) {
+    makeAjaxRequest(`/health_assistant/api/get-device/${deviceId}/`)
+        .then(data => {
+            if (data.device && data.device.is_connected) {
+                selectedDevice = data.device;
+                showConsentSection();
+            } else {
+                showAlert('Selected device is not connected. Please choose a different device.', 'warning');
+            }
+        });
+}
+
+function showConsentSection() {
+    document.getElementById('consentSection').style.display = 'block';
+    document.getElementById('startSection').style.display = 'block';
+}
+
+function startScreening() {
+    if (!selectedPatient || !selectedProduct || !selectedDevice) {
+        showAlert('Please complete all steps before starting screening.', 'warning');
+        return;
+    }
+    
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    loadingModal.show();
+    
+    makeAjaxRequest('/health_assistant/api/create-session/', 'POST', {
+        patient_id: selectedPatient.id,
+        product_id: selectedProduct.id,
+        device_id: selectedDevice.id
+    })
+    .then(data => {
+        loadingModal.hide();
+        
+        if (data.success) {
+            showAlert('Screening session created successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = `/health_assistant/session/${data.session_id}/`;
+            }, 1000);
+        } else {
+            showAlert(data.message || 'Failed to create screening session.', 'danger');
+        }
+    })
+    .catch(error => {
+        loadingModal.hide();
+        showAlert('Error creating screening session. Please try again.', 'danger');
+    });
+}
+
+function resetPatientSelection() {
+    selectedPatient = null;
+    document.getElementById('selectedPatientInfo').style.display = 'none';
+    document.getElementById('productSelection').style.display = 'none';
+    document.getElementById('deviceSelection').style.display = 'none';
+    document.getElementById('consentSection').style.display = 'none';
+    document.getElementById('startSection').style.display = 'none';
+    document.getElementById('patientSearch').value = '';
+    document.getElementById('patientSearchResults').innerHTML = '';
+    document.getElementById('patientConsent').checked = false;
+    document.getElementById('startScreeningBtn').disabled = true;
+}
+
+function resetDeviceSelection() {
+    selectedDevice = null;
+    document.getElementById('deviceSelection').style.display = 'none';
+    document.getElementById('consentSection').style.display = 'none';
+    document.getElementById('startSection').style.display = 'none';
+    document.getElementById('patientConsent').checked = false;
+    document.getElementById('startScreeningBtn').disabled = true;
+}
+</script>
+{% endblock %}

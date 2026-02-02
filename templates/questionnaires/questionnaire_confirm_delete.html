@@ -12,7 +12,7 @@
     <form method="post">
       {% csrf_token %}
       <button class="btn btn-danger" type="submit">Yes, delete</button>
-      <a class="btn btn-secondary" href="{% url 'questionnaires:questionnaire_detail' object.pk %}">Cancel</a>
+      <a class="btn btn-secondary" href="{% url 'questionnaires:detail' object.pk %}">Cancel</a>
     </form>
   </div>
 </div>

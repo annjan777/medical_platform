@@ -1,0 +1,444 @@
+{% extends "dashboard/admin/base.html" %}
+{% load static %}
+
+{% block page_title %}{{ page_title|default:"Create Questionnaire" }}{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-100">{{ page_title|default:"Questionnaire Builder" }}</h1>
+        <div class="flex space-x-4">
+            <button onclick="saveQuestionnaire()" class="btn btn-primary">
+                <i class="fas fa-save mr-2"></i> {% if questionnaire %}Update{% else %}Save{% endif %} Questionnaire
+            </button>
+        </div>
+    </div>
+
+    <!-- Questionnaire Info -->
+    <div class="card mb-8">
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="form-label">Questionnaire Title *</label>
+                    <input type="text" id="questionnaireTitle" class="form-input" 
+                           placeholder="e.g., Medical Screening Form"
+                           value="{% if questionnaire %}{{ questionnaire.title }}{% endif %}">
+                </div>
+                <div>
+                    <label class="form-label">Description</label>
+                    <textarea id="questionnaireDescription" class="form-textarea" rows="3" 
+                              placeholder="Brief description of the questionnaire">{% if questionnaire %}{{ questionnaire.description }}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Section -->
+    <div class="card">
+        <div class="card-body" data-questions-data="{% if questions_data %}{{ questions_data|safe }}{% endif %}">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-100">Questions</h2>
+                <button onclick="addQuestion()" class="btn btn-secondary">
+                    <i class="fas fa-plus mr-2"></i> Add Question
+                </button>
+            </div>
+
+            <div id="questionsContainer" class="space-y-6">
+                <!-- Questions will be added here dynamically -->
+            </div>
+
+            <div id="emptyState" class="text-center py-12 text-gray-500">
+                <i class="fas fa-question-circle text-6xl mb-4"></i>
+                <p class="text-lg">No questions added yet</p>
+                <p class="text-sm">Click "Add Question" to get started</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Question Template (hidden) -->
+<template id="questionTemplate">
+    <div class="question-item border border-gray-700 rounded-lg p-6" data-question-id="">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex-1">
+                <div class="flex items-center space-x-4 mb-4">
+                    <span class="text-gray-400">Question #<span class="question-number">1</span></span>
+                    <button onclick="removeQuestion(this)" class="text-red-400 hover:text-red-300">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                
+                <!-- Question Text -->
+                <div class="mb-4">
+                    <label class="form-label">Question *</label>
+                    <textarea class="question-text form-textarea" rows="2" placeholder="Enter your question here"></textarea>
+                </div>
+
+                <!-- Question Type -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="form-label">Question Type *</label>
+                        <select class="question-type form-select" onchange="handleQuestionTypeChange(this)">
+                            <option value="">Select question type</option>
+                            <option value="yes_no">Yes/No</option>
+                            <option value="true_false">True/False</option>
+                            <option value="multiple_choice">Multiple Choice</option>
+                            <option value="short_answer">Short Answer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="flex items-center mt-6">
+                            <input type="checkbox" class="question-required mr-2" checked>
+                            <span class="text-gray-300">Required</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Multiple Choice Options (hidden by default) -->
+                <div class="multiple-choice-options hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="form-label">Options</label>
+                        <button onclick="addOption(this)" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-plus mr-1"></i> Add Option
+                        </button>
+                    </div>
+                    <div class="options-container space-y-3">
+                        <!-- Options will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Option Template (hidden) -->
+<template id="optionTemplate">
+    <div class="option-item flex items-center space-x-3">
+        <button onclick="removeOption(this)" class="text-red-400 hover:text-red-300">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="flex-1">
+            <div class="flex items-center space-x-3">
+                <!-- Text Option -->
+                <input type="text" class="option-text form-input flex-1" placeholder="Enter option text">
+                
+                <!-- OR Divider -->
+                <span class="text-gray-500">OR</span>
+                
+                <!-- Image Option -->
+                <div class="flex items-center space-x-2">
+                    <input type="file" class="option-image hidden" accept="image/*" onchange="handleImageUpload(this)">
+                    <button type="button" onclick="this.previousElementSibling.click()" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-image mr-1"></i> Add Image
+                    </button>
+                    <span class="option-image-name text-sm text-gray-400"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+let questionCounter = 0;
+let optionCounter = 0;
+
+function addQuestion() {
+    questionCounter++;
+    const template = document.getElementById('questionTemplate');
+    const clone = template.content.cloneNode(true);
+    
+    // Set question ID and number
+    const questionItem = clone.querySelector('.question-item');
+    questionItem.dataset.questionId = questionCounter;
+    clone.querySelector('.question-number').textContent = questionCounter;
+    
+    // Add to container
+    const container = document.getElementById('questionsContainer');
+    container.appendChild(clone);
+    
+    // Hide empty state
+    document.getElementById('emptyState').classList.add('hidden');
+    
+    // Reorder questions
+    reorderQuestions();
+}
+
+function removeQuestion(button) {
+    const questionItem = button.closest('.question-item');
+    questionItem.remove();
+    
+    // Show empty state if no questions
+    const container = document.getElementById('questionsContainer');
+    if (container.children.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+    }
+    
+    // Reorder questions
+    reorderQuestions();
+}
+
+function reorderQuestions() {
+    const questions = document.querySelectorAll('.question-item');
+    questions.forEach((question, index) => {
+        question.querySelector('.question-number').textContent = index + 1;
+    });
+}
+
+function handleQuestionTypeChange(select) {
+    const questionItem = select.closest('.question-item');
+    const optionsContainer = questionItem.querySelector('.multiple-choice-options');
+    
+    if (select.value === 'multiple_choice') {
+        optionsContainer.classList.remove('hidden');
+        // Add default options if none exist
+        const container = optionsContainer.querySelector('.options-container');
+        if (container.children.length === 0) {
+            addOption(optionsContainer.querySelector('.btn'));
+            addOption(optionsContainer.querySelector('.btn'));
+        }
+    } else {
+        optionsContainer.classList.add('hidden');
+    }
+}
+
+function addOption(button) {
+    optionCounter++;
+    const template = document.getElementById('optionTemplate');
+    const clone = template.content.cloneNode(true);
+    
+    // Add to options container
+    const optionsContainer = button.closest('.multiple-choice-options').querySelector('.options-container');
+    optionsContainer.appendChild(clone);
+}
+
+function removeOption(button) {
+    const optionItem = button.closest('.option-item');
+    optionItem.remove();
+}
+
+function handleImageUpload(input) {
+    const file = input.files[0];
+    const nameSpan = input.parentElement.querySelector('.option-image-name');
+    
+    if (file) {
+        nameSpan.textContent = file.name;
+        // Clear text input when image is selected
+        const textInput = input.closest('.option-item').querySelector('.option-text');
+        if (textInput) {
+            textInput.value = '';
+            textInput.disabled = true;
+        }
+    } else {
+        nameSpan.textContent = '';
+        // Enable text input when no image
+        const textInput = input.closest('.option-item').querySelector('.option-text');
+        if (textInput) {
+            textInput.disabled = false;
+        }
+    }
+}
+
+function saveQuestionnaire() {
+    const title = document.getElementById('questionnaireTitle').value.trim();
+    const description = document.getElementById('questionnaireDescription').value.trim();
+    
+    if (!title) {
+        alert('Please enter a questionnaire title');
+        return;
+    }
+    
+    const questions = [];
+    const questionItems = document.querySelectorAll('.question-item');
+    
+    for (const item of questionItems) {
+        const questionText = item.querySelector('.question-text').value.trim();
+        const questionType = item.querySelector('.question-type').value;
+        const isRequired = item.querySelector('.question-required').checked;
+        
+        if (!questionText || !questionType) {
+            alert('Please complete all question fields');
+            return;
+        }
+        
+        const question = {
+            question_text: questionText,
+            type: questionType,
+            required: isRequired,
+            order: questions.length + 1
+        };
+        
+        // Add options for multiple choice questions
+        if (questionType === 'multiple_choice') {
+            const options = [];
+            const optionItems = item.querySelectorAll('.option-item');
+            
+            for (const optionItem of optionItems) {
+                const text = optionItem.querySelector('.option-text').value.trim();
+                const imageInput = optionItem.querySelector('.option-image');
+                const imageFile = imageInput.files[0];
+                
+                if (text || imageFile) {
+                    options.push({
+                        text: text,
+                        image_file: imageFile,
+                        order: options.length + 1
+                    });
+                }
+            }
+            
+            if (options.length < 2) {
+                alert('Multiple choice questions must have at least 2 options');
+                return;
+            }
+            
+            question.options = options;
+        }
+        
+        questions.push(question);
+    }
+    
+    if (questions.length === 0) {
+        alert('Please add at least one question');
+        return;
+    }
+    
+    // Send data to backend
+    const csrftoken = getCookie('csrftoken');
+    
+    console.log('Sending data:', {
+        title,
+        description,
+        questions
+    });
+    
+    // Determine if we're in edit mode
+    const isEditMode = {% if questionnaire %}true{% else %}false{% endif %};
+    const url = isEditMode ? '/questionnaires/builder/{% if questionnaire %}{{ questionnaire.pk }}{% endif %}/edit/' : '/questionnaires/api/save/';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({
+            title,
+            description,
+            questions
+        })
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            alert('Questionnaire ' + (isEditMode ? 'updated' : 'saved') + ' successfully!');
+            // Redirect to admin list
+            window.location.href = '/dashboard/admin/questionnaires/';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error ' + (isEditMode ? 'updating' : 'saving') + ' questionnaire. Please try again.');
+    });
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Load existing questions if in edit mode
+    const questionsDataElement = document.querySelector('[data-questions-data]');
+    const questionsData = questionsDataElement ? JSON.parse(questionsDataElement.getAttribute('data-questions-data') || '[]') : [];
+    
+    if (questionsData && questionsData.length > 0) {
+        // Clear the empty state
+        document.getElementById('emptyState').classList.add('hidden');
+        
+        // Load existing questions
+        questionsData.forEach(function(questionData, index) {
+            addQuestion(questionData);
+        });
+    } else {
+        // Add initial question for new questionnaires
+        addQuestion();
+    }
+});
+
+// Modified addQuestion function to support loading existing data
+function addQuestion(existingData = null) {
+    questionCounter++;
+    const template = document.getElementById('questionTemplate');
+    const clone = template.content.cloneNode(true);
+    
+    // Set question ID and number
+    const questionItem = clone.querySelector('.question-item');
+    questionItem.dataset.questionId = questionCounter;
+    clone.querySelector('.question-number').textContent = questionCounter;
+    
+    // Load existing data if provided
+    if (existingData) {
+        clone.querySelector('.question-text').value = existingData.question_text || existingData.text || '';
+        clone.querySelector('.question-type').value = existingData.type || '';
+        clone.querySelector('.question-required').checked = existingData.required || false;
+        
+        // Handle question type change to show options if needed
+        const questionTypeSelect = clone.querySelector('.question-type');
+        if (existingData.type === 'multiple_choice' && existingData.options) {
+            // Add options after the element is in the DOM
+            setTimeout(() => {
+                handleQuestionTypeChange(questionTypeSelect);
+                const optionsContainer = questionItem.querySelector('.options-container');
+                existingData.options.forEach(optionData => {
+                    addOptionWithText(questionItem, optionData.text, optionData.order);
+                });
+            }, 0);
+        }
+    }
+    
+    // Add to container
+    const container = document.getElementById('questionsContainer');
+    container.appendChild(clone);
+    
+    // Hide empty state
+    document.getElementById('emptyState').classList.add('hidden');
+    
+    // Reorder questions
+    reorderQuestions();
+}
+
+// Helper function to add option with existing text
+function addOptionWithText(questionItem, text, order) {
+    optionCounter++;
+    const template = document.getElementById('optionTemplate');
+    const clone = template.content.cloneNode(true);
+    
+    // Set the text value
+    clone.querySelector('.option-text').value = text || '';
+    
+    // Add to options container
+    const optionsContainer = questionItem.querySelector('.options-container');
+    optionsContainer.appendChild(clone);
+}
+</script>
+{% endblock %}

@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
+from django import forms
 
 from .models import AuditLog, SystemSetting
 from .utils import log_action, log_model_change, get_client_ip
@@ -400,3 +401,20 @@ class EmailSettingsView(SuperuserRequiredMixin, TemplateView):
 
 class APIKeysView(SuperuserRequiredMixin, TemplateView):
     template_name = 'dashboard/admin/api_keys.html'
+
+
+class QuestionnaireListView(SuperuserRequiredMixin, ListView):
+    """List view for questionnaires in admin panel."""
+    model = Questionnaire
+    template_name = 'dashboard/admin/questionnaire_list.html'
+    context_object_name = 'questionnaires'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        return Questionnaire.objects.all().order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_questionnaires'] = Questionnaire.objects.count()
+        context['active_questionnaires'] = Questionnaire.objects.filter(is_active=True).count()
+        return context

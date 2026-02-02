@@ -1,0 +1,816 @@
+{% extends "health_assistant/base_adminlte.html" %}
+
+{% block title %}Patient Registration{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Patient Registration</li>
+{% endblock %}
+
+{% block content %}
+<section class="content">
+    <!-- Progress Steps -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-tasks mr-2"></i>
+                Patient Registration & Screening Workflow
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    <ul class="steps">
+                        <li class="step step-success" id="step1-indicator">
+                            <a href="#" onclick="showStep1(); return false;">
+                                <span class="step-number">1</span>
+                                <span class="step-title">Patient Registration</span>
+                            </a>
+                        </li>
+                        <li class="step" id="step2-indicator">
+                            <a href="#" onclick="showStep2(); return false;">
+                                <span class="step-number">2</span>
+                                <span class="step-title">Select Questionnaire</span>
+                            </a>
+                        </li>
+                        <li class="step" id="step3-indicator">
+                            <a href="#" onclick="showStep3(); return false;">
+                                <span class="step-number">3</span>
+                                <span class="step-title">Complete Screening</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 1: Patient Registration -->
+    <div id="step1" class="workflow-step active">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Step 1: Register New Patient
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- Patient Search -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="callout callout-info">
+                            <h5><i class="fas fa-search mr-2"></i>Quick Patient Search</h5>
+                            <p>Search for existing patient first to avoid duplicate registrations.</p>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="patientSearchInput" 
+                                               placeholder="Search by name, phone, or email...">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-info" id="searchPatientBtn">
+                                                <i class="fas fa-search"></i> Search
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="searchResults" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Registration Form -->
+                <form id="patientRegistrationForm">
+                    {% csrf_token %}
+                    
+                    <!-- Patient Information -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="first_name">
+                                    First Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="last_name">
+                                    Last Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="date_of_birth">
+                                    Date of Birth <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="gender">
+                                    Gender <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control" id="gender" name="gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                    <option value="O">Other</option>
+                                    <option value="U">Prefer not to say</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="phone_number">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                                       placeholder="Optional contact number">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="Optional email address">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="city">City</label>
+                                <input type="text" class="form-control" id="city" name="city" 
+                                       placeholder="Optional city">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="address">Address</label>
+                                <textarea class="form-control" id="address" name="address" rows="2" 
+                                          placeholder="Optional street address"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consent -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="callout callout-warning">
+                                <h5><i class="fas fa-exclamation-triangle mr-2"></i>Patient Consent</h5>
+                                <p>By registering this patient, you confirm that you have obtained proper consent for medical screening and data collection.</p>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="consentCheckbox" required>
+                                    <label class="form-check-label" for="consentCheckbox">
+                                        I confirm that patient consent has been obtained for screening and data collection
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="btn-group float-right">
+                                <a href="{% url 'health_assistant:home' %}" class="btn btn-default">
+                                    <i class="fas fa-arrow-left mr-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="registerPatientBtn">
+                                    <i class="fas fa-save mr-2"></i>Register Patient & Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Questionnaire Selection -->
+    <div id="step2" class="workflow-step">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-clipboard-list mr-2"></i>
+                    Step 2: Select Screening Questionnaire
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-info elevation-1">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Patient Information</span>
+                                <span class="info-box-number" id="patientSummary">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-success elevation-1">
+                                <i class="fas fa-clipboard-list"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Available Questionnaires</span>
+                                <span class="info-box-number" id="questionnaireCount">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Select a Questionnaire</h5>
+                        <div id="questionnaireList">
+                            <div class="text-center">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading available questionnaires...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="btn-group float-right">
+                            <button type="button" class="btn btn-default" id="backToStep1">
+                                <i class="fas fa-arrow-left mr-2"></i>Back to Patient Registration
+                            </button>
+                            <button type="button" class="btn btn-success" id="startQuestionnaireBtn" disabled>
+                                <i class="fas fa-play mr-2"></i>Start Questionnaire
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Questionnaire -->
+    <div id="step3" class="workflow-step">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-clipboard-list mr-2"></i>
+                    <span id="questionnaireTitle">Screening Questionnaire</span>
+                </h3>
+            </div>
+            <div class="card-body">
+                <div id="questionnaireContent">
+                    <!-- Questionnaire will be loaded here -->
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="btn-group float-right">
+                            <button type="button" class="btn btn-default" id="backToStep2">
+                                <i class="fas fa-arrow-left mr-2"></i>Back to Questionnaire Selection
+                            </button>
+                            <button type="button" class="btn btn-primary" id="submitQuestionnaireBtn">
+                                <i class="fas fa-check mr-2"></i>Submit Questionnaire
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h4 class="modal-title">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Screening Completed Successfully!
+                </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                <div id="successDetails"></div>
+                <div class="mt-3">
+                    <h6>What's Next?</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success mr-2"></i>Patient has been registered</li>
+                        <li><i class="fas fa-check text-success mr-2"></i>Questionnaire completed</li>
+                        <li><i class="fas fa-check text-success mr-2"></i>Data saved successfully</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="newScreeningBtn">
+                    <i class="fas fa-plus mr-2"></i>Start New Screening
+                </button>
+                <button type="button" class="btn btn-info" id="viewDashboardBtn">
+                    <i class="fas fa-tachometer-alt mr-2"></i>View Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.steps {
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.step {
+    position: relative;
+    text-align: center;
+    flex: 1;
+}
+
+.step:before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #ddd;
+    z-index: -1;
+}
+
+.step:first-child:before {
+    left: 50%;
+    width: 50%;
+}
+
+.step:last-child:before {
+    width: 50%;
+}
+
+.step a {
+    display: block;
+    color: #666;
+    text-decoration: none;
+}
+
+.step a:hover {
+    color: #333;
+}
+
+.step-success a {
+    color: #28a745;
+}
+
+.step-success .step-number {
+    background: #28a745;
+    color: white;
+}
+
+.step-active a {
+    color: #007bff;
+}
+
+.step-active .step-number {
+    background: #007bff;
+    color: white;
+}
+
+.step-number {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 50%;
+    background: #ddd;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.step-title {
+    display: block;
+    font-size: 14px;
+}
+
+.workflow-step {
+    display: none;
+}
+
+.workflow-step.active {
+    display: block;
+}
+
+.questionnaire-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.questionnaire-card:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+}
+
+.questionnaire-card.selected {
+    border-color: #007bff;
+    background-color: #f0f8ff;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPatient = null;
+let selectedQuestionnaire = null;
+
+$(document).ready(function() {
+    // Initialize form
+    const patientForm = $('#patientRegistrationForm');
+    const searchBtn = $('#searchPatientBtn');
+    const searchInput = $('#patientSearchInput');
+    
+    // Patient search
+    searchBtn.click(searchPatients);
+    searchInput.keypress(function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            searchPatients();
+        }
+    });
+    
+    // Patient registration
+    patientForm.submit(function(e) {
+        e.preventDefault();
+        registerPatient();
+    });
+    
+    // Navigation buttons
+    $('#backToStep1').click(showStep1);
+    $('#backToStep2').click(showStep2);
+    $('#startQuestionnaireBtn').click(startQuestionnaire);
+    $('#submitQuestionnaireBtn').click(submitQuestionnaire);
+    
+    // Success modal buttons
+    $('#newScreeningBtn').click(function() {
+        $('#successModal').modal('hide');
+        resetWorkflow();
+    });
+    
+    $('#viewDashboardBtn').click(function() {
+        window.location.href = "{% url 'health_assistant:home' %}";
+    });
+});
+
+function searchPatients() {
+    const query = $('#patientSearchInput').val().trim();
+    const resultsDiv = $('#searchResults');
+    
+    if (!query) {
+        resultsDiv.html('');
+        return;
+    }
+    
+    resultsDiv.html('<div class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div> Searching...</div>');
+    
+    $.ajax({
+        url: `/health-assistant/api/search-patients/?q=${encodeURIComponent(query)}`,
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function(data) {
+            if (data.patients && data.patients.length > 0) {
+                resultsDiv.html(`
+                    <div class="callout callout-warning">
+                        <h6>Found ${data.patients.length} existing patient(s)</h6>
+                        <p>Please select an existing patient or continue with new registration:</p>
+                        <div class="list-group">
+                            ${data.patients.map(patient => `
+                                <div class="list-group-item list-group-item-action patient-card" 
+                                     onclick="selectExistingPatient(${patient.id})">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>${patient.name}</strong>
+                                            <br><small class="text-muted">Age: ${patient.age} | Gender: ${patient.gender}</small>
+                                            ${patient.phone ? `<br><small class="text-muted">Phone: ${patient.phone}</small>` : ''}
+                                        </div>
+                                        <button class="btn btn-sm btn-primary">Select</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `);
+            } else {
+                resultsDiv.html(`
+                    <div class="callout callout-success">
+                        <h6><i class="fas fa-check-circle mr-2"></i>No existing patients found</h6>
+                        <p>Please proceed with new patient registration.</p>
+                    </div>
+                `);
+            }
+        },
+        error: function() {
+            resultsDiv.html('<div class="callout callout-danger">Error searching patients. Please try again.</div>');
+        }
+    });
+}
+
+function selectExistingPatient(patientId) {
+    $.ajax({
+        url: `/health-assistant/api/get-patient/${patientId}/`,
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function(data) {
+            if (data.patient) {
+                currentPatient = data.patient;
+                showStep2();
+            }
+        },
+        error: function() {
+            alert('Error loading patient details');
+        }
+    });
+}
+
+function registerPatient() {
+    const form = $('#patientRegistrationForm');
+    const submitBtn = $('#registerPatientBtn');
+    
+    // Validate consent
+    if (!$('#consentCheckbox').is(':checked')) {
+        alert('Please confirm patient consent has been obtained.');
+        return;
+    }
+    
+    // Show loading state
+    submitBtn.prop('disabled', true);
+    submitBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Registering...');
+    
+    // Submit form
+    const formData = new FormData(form[0]);
+    
+    $.ajax({
+        url: "{% url 'health_assistant:patient_register' %}",
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function(data) {
+            if (data.success) {
+                currentPatient = data.patient;
+                showStep2();
+            } else {
+                alert(data.message || 'Registration failed. Please try again.');
+            }
+        },
+        error: function() {
+            alert('An error occurred during registration. Please try again.');
+        },
+        complete: function() {
+            submitBtn.prop('disabled', false);
+            submitBtn.html('<i class="fas fa-save mr-2"></i>Register Patient & Continue');
+        }
+    });
+}
+
+function showStep1() {
+    hideAllSteps();
+    $('#step1').addClass('active');
+    updateStepIndicator(1);
+}
+
+function showStep2() {
+    hideAllSteps();
+    $('#step2').addClass('active');
+    updateStepIndicator(2);
+    
+    // Update patient summary
+    if (currentPatient) {
+        $('#patientSummary').html(`
+            <strong>${currentPatient.name}</strong><br>
+            <small>Age: ${currentPatient.age} | Gender: ${currentPatient.gender}</small>
+            ${currentPatient.phone ? `<br><small>Phone: ${currentPatient.phone}</small>` : ''}
+        `);
+    }
+    
+    // Load questionnaires
+    loadQuestionnaires();
+}
+
+function showStep3() {
+    hideAllSteps();
+    $('#step3').addClass('active');
+    updateStepIndicator(3);
+}
+
+function hideAllSteps() {
+    $('.workflow-step').removeClass('active');
+}
+
+function updateStepIndicator(step) {
+    $('.step').removeClass('step-success step-active');
+    
+    for (let i = 1; i <= step; i++) {
+        if (i < step) {
+            $(`#step${i}-indicator`).addClass('step-success');
+        } else if (i === step) {
+            $(`#step${i}-indicator`).addClass('step-active');
+        }
+    }
+}
+
+function loadQuestionnaires() {
+    const listDiv = $('#questionnaireList');
+    
+    $.ajax({
+        url: '/questionnaires/api/list/',
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function(data) {
+            if (data.questionnaires && data.questionnaires.length > 0) {
+                $('#questionnaireCount').text(data.questionnaires.length + ' available');
+                
+                listDiv.html(data.questionnaires.map(q => `
+                    <div class="card questionnaire-card mb-2" onclick="selectQuestionnaire(${q.id}, '${q.title.replace(/'/g, "\\'")}', '${(q.description || '').replace(/'/g, "\\'")}', ${q.question_count || 0})">
+                        <div class="card-body">
+                            <h6 class="card-title">${q.title}</h6>
+                            <p class="card-text text-muted">${q.description || 'No description'}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary">${q.question_count || 0} questions</span>
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </div>
+                        </div>
+                    </div>
+                `).join(''));
+            } else {
+                $('#questionnaireCount').text('No available');
+                listDiv.html(`
+                    <div class="callout callout-warning">
+                        <h6><i class="fas fa-exclamation-triangle mr-2"></i>No Questionnaires Available</h6>
+                        <p>Please contact your administrator to set up questionnaires.</p>
+                    </div>
+                `);
+            }
+        },
+        error: function() {
+            listDiv.html('<div class="callout callout-danger">Error loading questionnaires. Please try again.</div>');
+        }
+    });
+}
+
+function selectQuestionnaire(id, title, description, questionCount) {
+    selectedQuestionnaire = { id, title, description, questionCount };
+    
+    // Update UI
+    $('.questionnaire-card').removeClass('selected');
+    $(event.currentTarget).addClass('selected');
+    
+    // Enable start button
+    $('#startQuestionnaireBtn').prop('disabled', false);
+}
+
+function startQuestionnaire() {
+    if (!selectedQuestionnaire) {
+        alert('Please select a questionnaire');
+        return;
+    }
+    
+    showStep3();
+    
+    // Load questionnaire content
+    const contentDiv = $('#questionnaireContent');
+    contentDiv.html('<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2">Loading questionnaire...</p></div>');
+    
+    $('#questionnaireTitle').text(selectedQuestionnaire.title);
+    
+    $.ajax({
+        url: `/questionnaires/${selectedQuestionnaire.id}/start/`,
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function(html) {
+            // Extract the questionnaire form from the response
+            const tempDiv = $('<div>').html(html);
+            const questionnaireForm = tempDiv.find('form');
+            
+            if (questionnaireForm.length) {
+                contentDiv.html(questionnaireForm.prop('outerHTML'));
+                
+                // Add patient info to the form
+                const patientInfo = $('<input>').attr({
+                    type: 'hidden',
+                    name: 'patient_id',
+                    value: currentPatient.id
+                });
+                contentDiv.find('form').append(patientInfo);
+            } else {
+                contentDiv.html('<div class="callout callout-danger">Error loading questionnaire content.</div>');
+            }
+        },
+        error: function() {
+            contentDiv.html('<div class="callout callout-danger">Error loading questionnaire. Please try again.</div>');
+        }
+    });
+}
+
+function submitQuestionnaire() {
+    const form = $('#questionnaireContent form');
+    const submitBtn = $('#submitQuestionnaireBtn');
+    
+    if (!form.length) {
+        alert('Questionnaire form not found');
+        return;
+    }
+    
+    // Show loading state
+    submitBtn.prop('disabled', true);
+    submitBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...');
+    
+    // Submit form
+    const formData = new FormData(form[0]);
+    
+    $.ajax({
+        url: form.attr('action'),
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function(data) {
+            if (data.success) {
+                showSuccessModal();
+            } else {
+                alert(data.message || 'Submission failed. Please try again.');
+            }
+        },
+        error: function() {
+            alert('An error occurred during submission. Please try again.');
+        },
+        complete: function() {
+            submitBtn.prop('disabled', false);
+            submitBtn.html('<i class="fas fa-check mr-2"></i>Submit Questionnaire');
+        }
+    });
+}
+
+function showSuccessModal() {
+    $('#successDetails').html(`
+        <div class="patient-info">
+            <p><strong>Patient:</strong> ${currentPatient.name}</p>
+            <p><strong>Questionnaire:</strong> ${selectedQuestionnaire.title}</p>
+            <p><strong>Completed:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+    `);
+    
+    $('#successModal').modal('show');
+}
+
+function resetWorkflow() {
+    // Reset all variables
+    currentPatient = null;
+    selectedQuestionnaire = null;
+    
+    // Reset form
+    $('#patientRegistrationForm')[0].reset();
+    $('#searchResults').html('');
+    $('#questionnaireList').html('');
+    $('#questionnaireContent').html('');
+    
+    // Reset progress
+    updateStepIndicator(1);
+    showStep1();
+}
+</script>
+{% endblock %}

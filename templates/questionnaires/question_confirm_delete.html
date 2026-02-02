@@ -10,14 +10,14 @@
   <div class="card-body">
     <p class="text-gray-300 mb-4">Are you sure you want to delete this question?</p>
     <blockquote class="border-l-4 border-gray-600 pl-4 py-2 bg-gray-800 rounded-r my-4">
-      <p class="text-gray-100">{{ object.text }}</p>
+      <p class="text-gray-100">{{ object.question_text }}</p>
     </blockquote>
     <form method="post" class="flex space-x-4">
       {% csrf_token %}
       <button class="btn btn-danger" type="submit">
         <i class="fas fa-trash mr-2"></i>Yes, delete
       </button>
-      <a class="btn btn-secondary" href="{% url 'questionnaires:questionnaire_detail' object.questionnaire.pk %}">
+      <a class="btn btn-secondary" href="{% url 'questionnaires:detail' object.questionnaire.pk %}">
         <i class="fas fa-times mr-2"></i>Cancel
       </a>
     </form>

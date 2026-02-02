@@ -5,7 +5,7 @@ from .views import AdminDashboardView
 
 def admin_required(function=None):
     actual_decorator = user_passes_test(
-        lambda u: u.is_authenticated and (u.is_superuser or u.is_staff),
+        lambda u: u.is_authenticated and u.is_superuser,
         login_url='login',
         redirect_field_name=None
     )

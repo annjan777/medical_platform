@@ -1,0 +1,319 @@
+{% extends "health_assistant/base_clean.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Alert -->
+<div class="alert alert-info">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-info-circle fa-2x me-3"></i>
+        <div>
+            <h5 class="mb-1">Welcome to Health Assistant Portal</h5>
+            <p class="mb-0">Manage patient registrations and screening questionnaires efficiently. Use the quick actions below to get started.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4" id="statsRow">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-2">Today's Sessions</h6>
+                    <div class="stat-number" id="todaySessions">0</div>
+                </div>
+                <div class="text-primary">
+                    <i class="fas fa-calendar-day fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-2">Completed</h6>
+                    <div class="stat-number text-success" id="completedSessions">0</div>
+                </div>
+                <div class="text-success">
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-2">Pending</h6>
+                    <div class="stat-number text-warning" id="pendingSessions">0</div>
+                </div>
+                <div class="text-warning">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-2">Total Patients</h6>
+                    <div class="stat-number text-info" id="totalPatients">0</div>
+                </div>
+                <div class="text-info">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">Quick Actions</h4>
+    </div>
+    
+    <div class="col-md-4 col-sm-6 mb-3">
+        <div class="quick-action" data-url="{% url 'health_assistant:landing' %}">
+            <i class="fas fa-user-plus"></i>
+            <h5>Patient Registration</h5>
+            <p class="text-muted">Register new patient and start screening</p>
+            <span class="badge bg-primary">Quick Start</span>
+        </div>
+    </div>
+    
+    <div class="col-md-4 col-sm-6 mb-3">
+        <div class="quick-action" data-url="{% url 'health_assistant:questionnaires' %}">
+            <i class="fas fa-clipboard-list"></i>
+            <h5>Questionnaires</h5>
+            <p class="text-muted">View available screening forms</p>
+            <span class="badge bg-info">Manage</span>
+        </div>
+    </div>
+    
+    <div class="col-md-4 col-sm-6 mb-3">
+        <div class="quick-action" data-url="{% url 'health_assistant:my_sessions' %}">
+            <i class="fas fa-history"></i>
+            <h5>My Sessions</h5>
+            <p class="text-muted">View screening history</p>
+            <span class="badge bg-success">History</span>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Activity
+                </h5>
+                <button class="btn btn-sm btn-outline-light" onclick="refreshActivity()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="recentActivity">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading recent activity...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    Today's Tasks
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <i class="fas fa-check-circle text-success"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">Complete patient registration</h6>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <i class="fas fa-clock text-warning"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">Review pending questionnaires</h6>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: 60%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-exclamation-circle text-danger"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">Follow up with patients</h6>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-danger" style="width: 30%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Need Help?
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-book fa-3x text-primary mb-3"></i>
+                            <h6>User Guide</h6>
+                            <p class="text-muted">Learn how to use the portal effectively</p>
+                            <button class="btn btn-outline-primary btn-sm">View Guide</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-headset fa-3x text-success mb-3"></i>
+                            <h6>Support</h6>
+                            <p class="text-muted">Get help from our support team</p>
+                            <button class="btn btn-outline-success btn-sm">Contact Support</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-video fa-3x text-info mb-3"></i>
+                            <h6>Tutorials</h6>
+                            <p class="text-muted">Watch video tutorials</p>
+                            <button class="btn btn-outline-info btn-sm">Watch Videos</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    loadTodayStats();
+    loadRecentActivity();
+    
+    // Handle quick action clicks
+    $('.quick-action').click(function() {
+        window.location.href = $(this).data('url');
+    });
+});
+
+function loadTodayStats() {
+    $.ajax({
+        url: '/health-assistant/api/today-stats/',
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function(data) {
+            $('#todaySessions').text(data.todays_sessions || 0);
+            $('#completedSessions').text(data.completed_sessions || 0);
+            $('#pendingSessions').text(data.pending_sessions || 0);
+            $('#totalPatients').text(data.total_patients || 0);
+        },
+        error: function() {
+            console.error('Error loading stats');
+        }
+    });
+}
+
+function loadRecentActivity() {
+    $.ajax({
+        url: '/health-assistant/api/recent-activity/',
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function(data) {
+            const activityDiv = $('#recentActivity');
+            
+            if (data.activities && data.activities.length > 0) {
+                activityDiv.html(data.activities.map(activity => `
+                    <div class="activity-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${activity.title}</h6>
+                                <p class="text-muted mb-1">${activity.description}</p>
+                            </div>
+                            <small class="text-muted">${activity.time}</small>
+                        </div>
+                    </div>
+                `).join(''));
+            } else {
+                activityDiv.html(`
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No recent activity</h6>
+                        <p class="text-muted">Start by registering a new patient</p>
+                    </div>
+                `);
+            }
+        },
+        error: function() {
+            $('#recentActivity').html(`
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Unable to load recent activity
+                </div>
+            `);
+        }
+    });
+}
+
+function refreshActivity() {
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+    icon.classList.add('fa-spin');
+    
+    loadTodayStats();
+    loadRecentActivity();
+    
+    setTimeout(() => {
+        icon.classList.remove('fa-spin');
+    }, 1000);
+}
+</script>
+{% endblock %}
