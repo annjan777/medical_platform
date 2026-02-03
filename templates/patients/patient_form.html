@@ -1,76 +1,113 @@
-{% extends 'base/base.html' %}
+{% extends "dashboard/admin/base.html" %}
 
-{% block title %}Add Patient - Medical Data Collection Platform{% endblock %}
+{% block page_title %}{% if form.instance.pk %}Edit Patient{% else %}Add Patient{% endif %}{% endblock %}
 
-{% block content %}
-<div class="max-w-4xl mx-auto">
-  <div class="card">
-    <div class="card-header flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold">New Patient</h2>
-        <p class="text-sm text-gray-500">Enter patient details manually for screening and records.</p>
+{% block admin_content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h2 style="margin:0;">
+          {% if form.instance.pk %}
+            Edit Patient: {{ form.instance.get_full_name }}
+          {% else %}
+            Add New Patient
+          {% endif %}
+        </h2>
       </div>
-      <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
-    </div>
-
-    <div class="card-body">
-      <form method="post" class="space-y-6">
-        {% csrf_token %}
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="form-label" for="id_first_name">First name</label>
-            {{ form.first_name }}
-            {% if form.first_name.errors %}<div class="form-error">{{ form.first_name.errors|striptags }}</div>{% endif %}
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="text-muted mb-3">Personal Information</h5>
+              
+              <div class="mb-3">
+                <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name *</label>
+                <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" 
+                       class="form-control" value="{{ form.first_name.value|default:'' }}" required>
+                {% if form.first_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name *</label>
+                <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" 
+                       class="form-control" value="{{ form.last_name.value|default:'' }}" required>
+                {% if form.last_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth *</label>
+                <input type="date" name="{{ form.date_of_birth.name }}" id="{{ form.date_of_birth.id_for_label }}" 
+                       class="form-control" value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}" required>
+                {% if form.date_of_birth.errors %}
+                  <div class="text-danger small mt-1">{{ form.date_of_birth.errors.0 }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ form.gender.id_for_label }}" class="form-label">Gender *</label>
+                <select name="{{ form.gender.name }}" id="{{ form.gender.id_for_label }}" class="form-select" required>
+                  <option value="">Select Gender</option>
+                  {% for value, label in form.gender.field.choices %}
+                    <option value="{{ value }}" {% if form.gender.value == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                {% if form.gender.errors %}
+                  <div class="text-danger small mt-1">{{ form.gender.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <h5 class="text-muted mb-3">Contact Information</h5>
+              
+              <div class="mb-3">
+                <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                <input type="tel" name="{{ form.phone_number.name }}" id="{{ form.phone_number.id_for_label }}" 
+                       class="form-control" value="{{ form.phone_number.value|default:'' }}" 
+                       placeholder="+1 (555) 123-4567">
+                {% if form.phone_number.errors %}
+                  <div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}" class="form-label">Email Address</label>
+                <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" 
+                       class="form-control" value="{{ form.email.value|default:'' }}" 
+                       placeholder="patient@example.com">
+                {% if form.email.errors %}
+                  <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                <textarea name="{{ form.address.name }}" id="{{ form.address.id_for_label }}" 
+                          class="form-control" rows="2" placeholder="123 Main St, Apt 4B">{{ form.address.value|default:'' }}</textarea>
+                {% if form.address.errors %}
+                  <div class="text-danger small mt-1">{{ form.address.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
           </div>
-
-          <div>
-            <label class="form-label" for="id_last_name">Last name</label>
-            {{ form.last_name }}
-            {% if form.last_name.errors %}<div class="form-error">{{ form.last_name.errors|striptags }}</div>{% endif %}
+          
+          <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'patients:list' %}" class="btn btn-secondary">
+              <i class="fas fa-times me-2"></i>Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save me-2"></i>{% if form.instance.pk %}Update Patient{% else %}Save Patient{% endif %}
+            </button>
           </div>
-
-          <div>
-            <label class="form-label" for="id_date_of_birth">Date of birth</label>
-            {{ form.date_of_birth }}
-            {% if form.date_of_birth.errors %}<div class="form-error">{{ form.date_of_birth.errors|striptags }}</div>{% endif %}
-          </div>
-
-          <div>
-            <label class="form-label" for="id_gender">Gender</label>
-            {{ form.gender }}
-            {% if form.gender.errors %}<div class="form-error">{{ form.gender.errors|striptags }}</div>{% endif %}
-          </div>
-
-          <div>
-            <label class="form-label" for="id_phone">Phone</label>
-            {{ form.phone }}
-            {% if form.phone.errors %}<div class="form-error">{{ form.phone.errors|striptags }}</div>{% endif %}
-          </div>
-
-          <div>
-            <label class="form-label" for="id_email">Email</label>
-            {{ form.email }}
-            {% if form.email.errors %}<div class="form-error">{{ form.email.errors|striptags }}</div>{% endif %}
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="form-label" for="id_address">Address</label>
-            {{ form.address }}
-            {% if form.address.errors %}<div class="form-error">{{ form.address.errors|striptags }}</div>{% endif %}
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="form-label" for="id_notes">Notes</label>
-            {{ form.notes }}
-            {% if form.notes.errors %}<div class="form-error">{{ form.notes.errors|striptags }}</div>{% endif %}
-          </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-3">
-          <button type="submit" class="btn btn-primary">Save Patient</button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
 </div>

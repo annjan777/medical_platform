@@ -1,369 +1,140 @@
 {% extends "dashboard/admin/base.html" %}
-{% load static %}
 
 {% block page_title %}Patients{% endblock %}
 
 {% block admin_content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-100">Patients</h1>
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h2 style="margin:0;">Patients</h2>
+    <div class="d-flex align-items-center gap-2">
+      <form method="get" class="d-flex align-items-center gap-2">
+        <input type="text" name="q" placeholder="Search patients..." 
+               value="{{ request.GET.q }}" class="form-control form-control-sm" style="width: 200px;">
+        <select name="gender" class="form-select form-select-sm" style="width: auto;">
+          <option value="">All Genders</option>
+          <option value="M" {% if request.GET.gender == 'M' %}selected{% endif %}>Male</option>
+          <option value="F" {% if request.GET.gender == 'F' %}selected{% endif %}>Female</option>
+          <option value="O" {% if request.GET.gender == 'O' %}selected{% endif %}>Other</option>
+          <option value="U" {% if request.GET.gender == 'U' %}selected{% endif %}>Unspecified</option>
+        </select>
+        <button type="submit" class="btn btn-sm btn-primary">
+          <i class="fas fa-search me-2"></i>Search
+          
+        </button>
+        <a href="{% url 'patients:add' %}" class="btn btn-sm btn-primary">
+        <i class="fas fa-plus me-2"></i>Add Patient
+      </a>
+      </form>
+      
     </div>
-
+  </div>
+  <div class="card-body">
     <!-- Search and Filter -->
-    <div class="card mb-8">
-        <div class="card-body">
-            <form method="get" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <input type="text" name="q" placeholder="Search patients..." 
-                               value="{{ request.GET.q }}" 
-                               class="form-input">
-                    </div>
-                    <div>
-                        <select name="gender" class="form-select">
-                            <option value="">All Genders</option>
-                            <option value="M" {% if request.GET.gender == 'M' %}selected{% endif %}>Male</option>
-                            <option value="F" {% if request.GET.gender == 'F' %}selected{% endif %}>Female</option>
-                            <option value="O" {% if request.GET.gender == 'O' %}selected{% endif %}>Other</option>
-                            <option value="U" {% if request.GET.gender == 'U' %}selected{% endif %}>Unspecified</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search mr-2"></i> Search
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
     <!-- Patients List -->
-    <div class="card">
-        <div class="card-body p-0">
-            {% if patients %}
-            <div class="overflow-x-auto">
-                <table class="responsive-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Age</th>
-                            <th>Gender</th>
-                            <th>Contact</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for patient in patients %}
-                        <tr>
-                            <td>
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-semibold mr-3">
-                                        {{ patient.first_name.0 }}{{ patient.last_name.0 }}
-                                    </div>
-                                    <div>
-                                        <p class="text-gray-100 font-medium">{{ patient.get_full_name }}</p>
-                                        <p class="text-gray-400 text-sm">{{ patient.email|default:"No email" }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="text-gray-100">{{ patient.age }}</span>
-                            </td>
-                            <td>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full {% if patient.gender == 'M' %}bg-blue-900 text-blue-200{% elif patient.gender == 'F' %}bg-pink-900 text-pink-200{% elif patient.gender == 'O' %}bg-purple-900 text-purple-200{% else %}bg-gray-700 text-gray-300{% endif %}">
-                                    {{ patient.get_gender_display }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="text-gray-100">
-                                    {% if patient.phone_number %}
-                                        {{ patient.phone_number }}
-                                    {% else %}
-                                        <span class="text-gray-500">No phone</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td>
-                                <span class="text-gray-400 text-sm">{{ patient.created_at|date:"M d, Y" }}</span>
-                            </td>
-                            <td>
-                                <div class="flex space-x-2">
-                                    <a href="{% url 'patients:detail' patient.id %}" class="text-teal-400 hover:text-teal-300 text-sm">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{% url 'patients:update' patient.id %}" class="text-blue-400 hover:text-blue-300 text-sm">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{% url 'patients:dashboard' patient.id %}" class="text-green-400 hover:text-green-300 text-sm">
-                                        <i class="fas fa-chart-line"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination -->
-            {% if is_paginated %}
-            <div class="flex justify-between items-center mt-6 px-4">
-                <div class="text-gray-400 text-sm">
-                    Showing {{ patients.start_index }} to {{ patients.end_index }} of {{ patients.paginator.count }} patients
+    {% if patients %}
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Patient ID</th>
+              <th>Name</th>
+              <th>Age</th>
+              <th>Gender</th>
+              <th>Contact</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for patient in patients %}
+            <tr>
+              <td>
+                <span class="badge bg-primary">{{ patient.patient_id }}</span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">
+                    {{ patient.first_name.0 }}{{ patient.last_name.0 }}
+                  </div>
+                  <div>
+                    <div class="fw-medium">{{ patient.get_full_name }}</div>
+                    <small class="text-muted">{{ patient.email|default:"No email" }}</small>
+                  </div>
                 </div>
-                <div class="flex space-x-2">
-                    {% if patients.has_previous %}
-                        <a href="?page={{ patients.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}" 
-                           class="btn btn-secondary btn-sm">
-                            <i class="fas fa-chevron-left"></i>
-                        </a>
-                    {% endif %}
-                    
-                    <span class="text-gray-400 text-sm">
-                        Page {{ patients.number }} of {{ patients.paginator.num_pages }}
-                    </span>
-                    
-                    {% if patients.has_next %}
-                        <a href="?page={{ patients.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}" 
-                           class="btn btn-secondary btn-sm">
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                    {% endif %}
+              </td>
+              <td>{{ patient.age }}</td>
+              <td>
+                <span class="badge bg-secondary">{{ patient.get_gender_display }}</span>
+              </td>
+              <td>
+                <div>
+                  {% if patient.phone_number %}
+                    {{ patient.phone_number }}
+                  {% else %}
+                    <span class="text-muted">No phone</span>
+                  {% endif %}
                 </div>
-            </div>
+              </td>
+              <td>
+                <small>{{ patient.created_at|date:"M d, Y" }}</small>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <a href="{% url 'patients:detail' patient.patient_id %}" class="btn btn-outline-primary">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <a href="{% url 'patients:update' patient.patient_id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <a href="{% url 'patients:dashboard' patient.patient_id %}" class="btn btn-outline-info">
+                    <i class="fas fa-chart-line"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      {% if is_paginated %}
+        <nav aria-label="Page navigation" class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if patients.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ patients.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Previous</a>
+              </li>
             {% endif %}
             
-            {% else %}
-            <div class="text-center py-12">
-                <i class="fas fa-user-injured text-6xl text-gray-500 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-300 mb-2">No patients found</h3>
-                <p class="text-gray-500 mb-6">No patients have been registered yet.</p>
-            </div>
+            <li class="page-item active">
+              <span class="page-link">Page {{ patients.number }} of {{ patients.paginator.num_pages }}</span>
+            </li>
+            
+            {% if patients.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ patients.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Next</a>
+              </li>
             {% endif %}
+          </ul>
+        </nav>
+        
+        <div class="text-center text-muted mt-2">
+          Showing {{ patients.start_index }} to {{ patients.end_index }} of {{ patients.paginator.count }} patients
         </div>
-    </div>
+      {% endif %}
+    {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-user-inactive fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No patients found</h4>
+        <p class="text-muted">No patients have been registered yet.</p>
+        <a href="{% url 'patients:add' %}" class="btn btn-primary">
+          <i class="fas fa-plus me-2"></i>Add First Patient
+        </a>
+      </div>
+    {% endif %}
+  </div>
 </div>
-
-<style>
-.space-y-4 > * + * {
-    margin-top: 1rem;
-}
-
-.space-x-2 > * + * {
-    margin-left: 0.5rem;
-}
-
-.space-x-4 > * + * {
-    margin-left: 1rem;
-}
-
-.grid {
-    display: grid;
-}
-
-.grid-cols-1 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.md\:grid-cols-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.gap-4 {
-    gap: 1rem;
-}
-
-.w-10 {
-    width: 2.5rem;
-}
-
-.h-10 {
-    height: 2.5rem;
-}
-
-.rounded-full {
-    border-radius: 9999px;
-}
-
-.bg-teal-600 {
-    background-color: #0d9488;
-}
-
-.bg-blue-900 {
-    background-color: #1e3a8a;
-}
-
-.bg-pink-900 {
-    background-color: #831843;
-}
-
-.bg-purple-900 {
-    background-color: #581c87;
-}
-
-.bg-gray-700 {
-    background-color: #374151;
-}
-
-.text-white {
-    color: #ffffff;
-}
-
-.text-blue-200 {
-    color: #bfdbfe;
-}
-
-.text-pink-200 {
-    color: #fbcfe8;
-}
-
-.text-purple-200 {
-    color: #e9d5ff;
-}
-
-.text-gray-300 {
-    color: #d1d5db;
-}
-
-.text-gray-500 {
-    color: #6b7280;
-}
-
-.text-teal-400 {
-    color: #2dd4bf;
-}
-
-.text-teal-300 {
-    color: #5eead4;
-}
-
-.text-blue-400 {
-    color: #60a5fa;
-}
-
-.text-blue-300 {
-    color: #93c5fd;
-}
-
-.text-green-400 {
-    color: #4ade80;
-}
-
-.text-green-300 {
-    color: #86efac;
-}
-
-.text-gray-100 {
-    color: #f3f4f6;
-}
-
-.text-gray-400 {
-    color: #9ca3af;
-}
-
-.text-gray-300 {
-    color: #d1d5db;
-}
-
-.text-xl {
-    font-size: 1.25rem;
-}
-
-.text-6xl {
-    font-size: 3.75rem;
-}
-
-.font-semibold {
-    font-weight: 600;
-}
-
-.font-medium {
-    font-weight: 500;
-}
-
-.text-sm {
-    font-size: 0.875rem;
-}
-
-.mb-2 {
-    margin-bottom: 0.5rem;
-}
-
-.mb-4 {
-    margin-bottom: 1rem;
-}
-
-.mb-6 {
-    margin-bottom: 1.5rem;
-}
-
-.mb-12 {
-    margin-bottom: 3rem;
-}
-
-.mr-3 {
-    margin-right: 0.75rem;
-}
-
-.mt-6 {
-    margin-top: 1.5rem;
-}
-
-.py-12 {
-    padding-top: 3rem;
-    padding-bottom: 3rem;
-}
-
-.px-4 {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-.btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-}
-
-.overflow-x-auto {
-    overflow-x: auto;
-}
-
-.justify-between {
-    justify-content: space-between;
-}
-
-.items-center {
-    align-items: center;
-}
-
-.flex {
-    display: flex;
-}
-
-.hover\:text-teal-300:hover {
-    color: #5eead4;
-}
-
-.hover\:text-blue-300:hover {
-    color: #93c5fd;
-}
-
-.hover\:text-green-300:hover {
-    color: #86efac;
-}
-
-@media (max-width: 768px) {
-    .md\:grid-cols-3 {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-    }
-    
-    .flex {
-        flex-direction: column;
-        gap: 1rem;
-    }
-}
-</style>
 {% endblock %}

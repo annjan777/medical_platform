@@ -203,8 +203,13 @@
             <div class="header-right">
                 <div class="user-menu-wrapper">
                     <button type="button" class="user-menu-button" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                        <img class="user-avatar" src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.email }}&background=0D8ABC&color=fff" alt="">
-                        <span class="user-name">{{ request.user.get_full_name|default:request.user.email }}</span>
+                        {% if request.user %}
+                            <img class="user-avatar" src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.email|default:"User" }}&background=0D8ABC&color=fff" alt="">
+                            <span class="user-name">{{ request.user.get_full_name|default:request.user.email|default:"User" }}</span>
+                        {% else %}
+                            <img class="user-avatar" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="">
+                            <span class="user-name">User</span>
+                        {% endif %}
                         <i class="fas fa-chevron-down user-menu-icon"></i>
                     </button>
                     <div class="user-dropdown-menu hidden" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
@@ -215,7 +220,6 @@
         </header>
 
         <main class="admin-main-area">
-            {% include "messages.html" %}
             {% block admin_content %}{% endblock %}
         </main>
     </div>

@@ -60,7 +60,7 @@
                 </td>
                 <td>
                   {% if response.respondent %}
-                    {{ response.respondent.get_full_name|default:response.respondent.username }}
+                    {{ response.respondent.get_full_name|default:response.respondent.username|default:"Unknown" }}
                     {% if response.respondent.role %}
                       <span class="badge bg-info ms-1">{{ response.respondent.get_role_display }}</span>
                     {% endif %}

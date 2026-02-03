@@ -239,14 +239,14 @@
             <li class="nav-item dropdown user-menu">
                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
                     <img src="https://via.placeholder.com/160x160" class="user-image img-circle elevation-2" alt="User Image">
-                    <span class="d-none d-md-inline">{{ request.user.get_full_name|default:request.user.email }}</span>
+                    <span class="d-none d-md-inline">{{ request.user.get_full_name|default:request.user.email|default:"User" }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
                     <!-- User image -->
                     <li class="user-header bg-primary">
                         <img src="https://via.placeholder.com/160x160" class="img-circle elevation-2" alt="User Image">
                         <p>
-                            {{ request.user.get_full_name|default:request.user.email }}
+                            {{ request.user.get_full_name|default:request.user.email|default:"User" }}
                             <small>Health Assistant</small>
                         </p>
                     </li>

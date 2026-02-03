@@ -273,7 +273,7 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle me-1"></i>
-                            {{ request.user.get_full_name|default:request.user.email }}
+                            {{ request.user.get_full_name|default:request.user.email|default:"User" }}
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
@@ -294,7 +294,7 @@
             <div class="col-md-2 sidebar d-none d-md-block">
                 <div class="user-info text-center">
                     <i class="fas fa-user-circle fa-3x mb-2" style="color: var(--medical-primary);"></i>
-                    <h6 class="mb-1">{{ request.user.get_full_name|default:request.user.email }}</h6>
+                    <h6 class="mb-1">{{ request.user.get_full_name|default:request.user.email|default:"User" }}</h6>
                     <small class="text-muted">Health Assistant</small>
                 </div>
                 

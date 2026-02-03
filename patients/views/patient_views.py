@@ -65,11 +65,15 @@ class PatientListView(StaffRequiredMixin, ListView):
         context['search_form'] = PatientSearchForm(self.request.GET or None)
         return context
 
-class PatientDetailView(StaffRequiredMixin, DetailView):
+class PatientDetailView(LoginRequiredMixin, DetailView):
     """View for displaying patient details"""
     model = Patient
-    template_name = 'patients/patient_detail.html'
+    template_name = 'patients/patient_detail_simple.html'
     context_object_name = 'patient'
+    
+    def get_object(self):
+        patient_id = self.kwargs.get('patient_id')
+        return get_object_or_404(Patient, patient_id=patient_id)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -102,34 +106,46 @@ class PatientCreateView(StaffRequiredMixin, SuccessMessageMixin, CreateView):
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse_lazy('patients:detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('patients:detail', kwargs={'patient_id': self.object.patient_id})
 
-class PatientUpdateView(StaffRequiredMixin, SuccessMessageMixin, UpdateView):
+class PatientUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     """View for updating an existing patient"""
     model = Patient
     form_class = PatientForm
     template_name = 'patients/patient_form.html'
     success_message = _('Patient updated successfully')
     
+    def get_object(self):
+        patient_id = self.kwargs.get('patient_id')
+        return get_object_or_404(Patient, patient_id=patient_id)
+    
     def get_success_url(self):
-        return reverse_lazy('patients:detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('patients:detail', kwargs={'patient_id': self.object.patient_id})
 
-class PatientDeleteView(StaffRequiredMixin, SuccessMessageMixin, DeleteView):
+class PatientDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     """View for deleting a patient"""
     model = Patient
     template_name = 'patients/patient_confirm_delete.html'
     success_url = reverse_lazy('patients:list')
     success_message = _('Patient deleted successfully')
     
+    def get_object(self):
+        patient_id = self.kwargs.get('patient_id')
+        return get_object_or_404(Patient, patient_id=patient_id)
+    
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
         return super().delete(request, *args, **kwargs)
 
-class PatientDashboardView(StaffRequiredMixin, DetailView):
+class PatientDashboardView(LoginRequiredMixin, DetailView):
     """View for patient dashboard with all related information"""
     model = Patient
     template_name = 'patients/patient_dashboard.html'
     context_object_name = 'patient'
+    
+    def get_object(self):
+        patient_id = self.kwargs.get('patient_id')
+        return get_object_or_404(Patient, patient_id=patient_id)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -174,5 +190,5 @@ class PatientQuickAddView(LoginRequiredMixin, View):
             patient.created_by = request.user
             patient.save()
             messages.success(request, _('Patient added successfully'))
-            return redirect('patients:dashboard', pk=patient.pk)
+            return redirect('patients:dashboard', patient_id=patient.patient_id)
         return render(request, 'patients/patient_quick_add.html', {'form': form})
