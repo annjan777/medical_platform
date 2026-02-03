@@ -1,0 +1,64 @@
+# Core Django
+Django==3.2.25
+
+# Database
+psycopg2-binary==2.9.7
+
+# Authentication & Security
+django-cors-headers==4.2.0
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.2.2
+
+# Image Processing & File Handling
+Pillow==10.0.0
+
+# Email
+django-anymail==10.2
+
+# Caching
+django-redis==5.2.0
+
+# Development & Debugging
+django-debug-toolbar==4.1.0
+django-extensions==3.2.3
+
+# Environment Variables
+python-decouple==3.8
+
+# Date/Time Utilities
+python-dateutil==2.8.2
+
+# CSV Export
+tablib==3.5.0
+
+# Static File Serving
+whitenoise==6.5.0
+
+# Production Server
+gunicorn==21.2.0
+
+# Monitoring & Logging
+sentry-sdk==1.29.2
+
+# Background Tasks (if needed)
+celery==5.3.1
+redis==4.6.0
+
+# API Documentation (if needed)
+drf-yasg==1.21.7
+
+# Form Handling
+django-crispy-forms==2.0
+crispy-bootstrap5==0.7
+
+# Validation
+django-validators==4.0.0
+
+# Utilities
+django-filter==23.2
+django-mptt==0.14.0
+
+# Development Tools
+flake8==6.0.0
+black==23.7.0
+isort==5.12.0

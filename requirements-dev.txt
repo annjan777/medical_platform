@@ -1,0 +1,26 @@
+# Development Requirements for Medical Platform
+# Install with: pip install -r requirements-dev.txt
+
+# Include production requirements
+-r requirements-prod.txt
+
+# Development & Debugging
+django-debug-toolbar==4.1.0
+django-extensions==3.2.3
+
+# Development Tools
+flake8==6.0.0
+black==23.7.0
+isort==5.12.0
+
+# API Documentation (development only)
+drf-yasg==1.21.7
+
+# Testing
+pytest==7.4.0
+pytest-django==4.5.2
+pytest-cov==4.1.0
+factory-boy==3.3.0
+
+# Database Migrations
+django-migration-testcase==1.1.0
