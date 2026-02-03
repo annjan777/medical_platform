@@ -14,7 +14,7 @@ urlpatterns = [
     # Dashboard (legacy - can be removed if not needed)
     path('dashboard/', views.HealthAssistantDashboardView.as_view(), name='dashboard'),
     
-    # Patient Management
+    # Medical Records
     path('patient/register/', views.patient_register, name='patient_register'),
     
     # Screening Sessions
@@ -33,4 +33,10 @@ urlpatterns = [
     path('api/get-devices/', views.api_get_devices, name='api_get_devices'),
     path('api/get-device/<int:device_id>/', views.api_get_device, name='api_get_device'),
     path('api/create-session/', views.api_create_session, name='api_create_session'),
+    
+    # Questionnaire API Endpoints
+    path('api/questionnaires/', views.api_get_questionnaires, name='api_get_questionnaires'),
+    path('api/questionnaire/<int:questionnaire_id>/', views.api_get_questionnaire, name='api_get_questionnaire'),
+    path('api/submit-questionnaire/', views.api_submit_questionnaire, name='api_submit_questionnaire'),
+    path('api/export-questionnaire-data/', views.api_export_questionnaire_data, name='api_export_questionnaire_data'),
 ]

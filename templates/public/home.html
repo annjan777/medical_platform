@@ -1,105 +1,238 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %}Welcome to HealthScreener Pro{% endblock %}
+{% block title %}Welcome to Medical Data Collection Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --saffron-primary: #f59e0b;
+    --saffron-dark: #d97706;
+    --blue-primary: #3b82f6;
+    --blue-dark: #2563eb;
+    --green-primary: #10b981;
+    --green-dark: #059669;
+    --white: #ffffff;
+    --gray-light: #f8fafc;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #fef3c7 0%, #dbeafe 100%);
+    color: #1f2937;
+    min-height: 500px;
+}
+
+.floating-card {
+    background: white;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.floating-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--blue-primary);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    color: white;
+    font-size: 2rem;
+    transition: transform 0.3s ease;
+}
+
+.feature-icon:hover {
+    transform: scale(1.1);
+}
+
+.feature-icon.saffron {
+    background: var(--saffron-primary);
+}
+
+.feature-icon.blue {
+    background: var(--blue-primary);
+}
+
+.feature-icon.green {
+    background: var(--green-primary);
+}
+
+.testimonial-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: none;
+    transition: transform 0.3s ease;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-3px);
+}
+
+.testimonial-card::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: var(--blue-primary);
+    opacity: 0.3;
+}
+
+.btn-primary-custom {
+    background: var(--saffron-primary);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 30px;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+    background: var(--saffron-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+}
+
+.section-title {
+    color: var(--blue-primary);
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.text-muted-custom {
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="min-h-screen relative overflow-hidden bg-gradient-to-br from-teal-50 via-white to-blue-50">
-    <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-teal-100 blur-3xl opacity-70"></div>
-    <div class="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-blue-100 blur-3xl opacity-70"></div>
-
-    <!-- Hero Section -->
-    <header class="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-4 text-center text-gray-800">
-        <div class="max-w-4xl">
-            <div class="flex items-center justify-center gap-4 mb-4">
-                <i class="fas fa-heartbeat text-teal-600 text-5xl"></i>
-                <h1 class="text-6xl font-extrabold text-gray-900">HealthScreener Pro</h1>
+<!-- Hero Section -->
+<section class="hero-section min-h-screen flex items-center">
+    <div class="container mx-auto px-6">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <!-- Left Content -->
+            <div class="text-gray-800">
+                <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                    <span class="text-amber-600">Advanced Patient Screening</span><br>
+                    <span class="text-blue-600">
+                        Medical Device Data Collection Platform
+                    </span>
+                </h1>
+                
+                <p class="text-xl mb-8 text-gray-600 leading-relaxed">
+                    Transform your healthcare practice with our cutting-edge platform. Seamlessly integrate diagnostic devices, 
+                    manage patient records, and gain actionable insights - all in one secure, intuitive system.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                    <a href="{% url 'login' %}" class="btn-primary-custom">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Access Portal
+                    </a>
+                    <a href="#features" class="border-2 border-amber-600 text-amber-600 px-8 py-4 rounded-lg font-semibold hover:bg-amber-600 hover:text-white transition-colors">
+                        <i class="fas fa-info-circle mr-2"></i> Learn More
+                    </a>
+                </div>
             </div>
-            <p class="text-2xl font-semibold mb-8 text-teal-700">Your Advanced Patient Screening & Medical Device Data Collection Platform</p>
-            <p class="text-lg leading-relaxed mb-10 text-gray-700">
-                HealthScreener Pro is a cutting-edge, web-based system meticulously designed to revolutionize patient screening 
-                and medical data management. It offers seamless integration with diagnostic devices, robust data security, 
-                and intuitive tools for comprehensive clinical oversight, analytics, and research.
+            
+            <!-- Right Content - Health Professional Image -->
+            <div class="relative">
+                <div class="floating-card rounded-lg p-8">
+                    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef" 
+                         alt="Healthcare Professional Using Medical Technology" 
+                         class="rounded-lg w-full h-auto object-cover">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold mb-4 section-title">Powerful Features for Modern Healthcare</h2>
+            <p class="text-xl text-muted-custom max-w-3xl mx-auto">
+                Everything you need to streamline your medical practice and enhance patient care
             </p>
-            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <a href="{% url 'login' %}" class="btn bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 text-lg rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
-                    <i class="fas fa-sign-in-alt mr-2"></i> Access the Portal
-                </a>
-                <a href="#features" class="btn bg-white border border-gray-300 text-teal-700 hover:bg-gray-100 px-8 py-4 text-lg rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
-                    <i class="fas fa-info-circle mr-2"></i> Learn More
-                </a>
-            </div>
         </div>
-    </header>
-
-    <!-- Features Section -->
-    <section id="features" class="relative z-10 py-20 bg-white text-center shadow-inner">
-        <h2 class="text-5xl font-extrabold text-gray-900 mb-16">Empowering Medical Workflows</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-7xl mx-auto px-6">
-            <div class="feature-card p-10 bg-gray-50 rounded-2xl shadow-xl transform transition duration-300 hover:scale-105">
-                <i class="fas fa-user-shield text-6xl text-blue-600 mb-6"></i>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Intelligent Role-Based Access</h3>
-                <p class="text-lg text-gray-700">Tailored dashboards and secure access controls for Super Admins, Health Assistants, and Doctors, ensuring data integrity and operational efficiency.</p>
-            </div>
-            <div class="feature-card p-10 bg-gray-50 rounded-2xl shadow-xl transform transition duration-300 hover:scale-105">
-                <i class="fas fa-notes-medical text-6xl text-green-600 mb-6"></i>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Comprehensive Patient Management</h3>
-                <p class="text-lg text-gray-700">Streamlined patient registration, detailed medical record keeping, and robust privacy features to protect sensitive health information.</p>
-            </div>
-            <div class="feature-card p-10 bg-gray-50 rounded-2xl shadow-xl transform transition duration-300 hover:scale-105">
-                <i class="fas fa-edit text-6xl text-red-600 mb-6"></i>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Dynamic & Adaptable Questionnaires</h3>
-                <p class="text-lg text-gray-700">Create and modify questionnaires on the fly from the admin dashboard, supporting a diverse range of screening products with ease.</p>
-            </div>
-            <div class="feature-card p-10 bg-gray-50 rounded-2xl shadow-xl transform transition duration-300 hover:scale-105">
-                <i class="fas fa-laptop-medical text-6xl text-purple-600 mb-6"></i>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Seamless Device Integration</h3>
-                <p class="text-lg text-gray-700">Real-time data acquisition from up to 5 diverse medical devices, enabling precise diagnostics and efficient workflow automation.</p>
-            </div>
-            <div class="feature-card p-10 bg-gray-50 rounded-2xl shadow-xl transform transition duration-300 hover:scale-105">
-                <i class="fas fa-chart-line text-6xl text-yellow-600 mb-6"></i>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Actionable Clinical Insights</h3>
-                <p class="text-lg text-gray-700">Powerful tools for visualizing screening results, identifying trends, adding clinical notes, and exporting datasets for in-depth research and analysis.</p>
-            </div>
-            <div class="feature-card p-10 bg-gray-50 rounded-2xl shadow-xl transform transition duration-300 hover:scale-105">
-                <i class="fas fa-fingerprint text-6xl text-pink-600 mb-6"></i>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">Uncompromised Security & Auditability</h3>
-                <p class="text-lg text-gray-700">Adherence to stringent medical data privacy standards, secure communication protocols, and comprehensive audit logging for full transparency.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Medical Imagery Section -->
-    <section class="relative z-10 py-20 bg-gradient-to-tr from-blue-700 to-teal-600 text-white text-center">
-        <div class="max-w-7xl mx-auto px-6">
-            <h2 class="text-5xl font-extrabold mb-12">A New Era of Digital Healthcare</h2>
-            <div class="flex flex-col lg:flex-row items-center justify-center gap-12">
-                <div class="lg:w-1/2">
-                    <p class="text-xl leading-relaxed mb-8 opacity-90">
-                        HealthScreener Pro is at the forefront of medical innovation, providing a robust platform that empowers healthcare professionals to deliver superior patient care.
-                        Our intuitive interface and powerful backend ensure that every interaction is efficient, secure, and data-driven.
-                    </p>
-                    <p class="text-xl leading-relaxed opacity-90">
-                        From seamless patient intake to advanced diagnostic data capture and insightful analytics, 
-                        we are building the future of health screening. Join us in transforming healthcare delivery.
-                    </p>
+        
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="text-center group">
+                <div class="feature-icon mx-auto group-hover:scale-110 transition-transform">
+                    <i class="fas fa-user-shield text-white text-2xl"></i>
                 </div>
-                <div class="lg:w-1/2 mt-10 lg:mt-0">
-                    <!-- Placeholder for a medical-themed image -->
-                    <img src="{% static 'images/medical_team.jpg' %}" alt="Medical Team working" class="rounded-2xl shadow-2xl w-full h-auto object-cover">
+                <h3 class="text-xl font-bold mb-3 text-gray-800">Role-Based Access</h3>
+                <p class="text-gray-600">Secure, tailored interfaces for admins, assistants, and doctors with granular permissions</p>
+            </div>
+            
+            <div class="text-center group">
+                <div class="feature-icon green mx-auto group-hover:scale-110 transition-transform">
+                    <i class="fas fa-notes-medical text-white text-2xl"></i>
                 </div>
+                <h3 class="text-xl font-bold mb-3 text-gray-800">Medical Records</h3>
+                <p class="text-gray-600">Comprehensive patient records with privacy protection and seamless data flow</p>
+            </div>
+            
+            <div class="text-center group">
+                <div class="feature-icon saffron mx-auto group-hover:scale-110 transition-transform">
+                    <i class="fas fa-edit text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3 text-gray-800">Dynamic Questionnaires</h3>
+                <p class="text-gray-600">Create and modify screening forms on-the-fly with our intuitive builder</p>
+            </div>
+            
+            <div class="text-center group">
+                <div class="feature-icon mx-auto group-hover:scale-110 transition-transform">
+                    <i class="fas fa-laptop-medical text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3 text-gray-800">Device Integration</h3>
+                <p class="text-gray-600">Real-time data from up to 5 medical devices with automatic syncing</p>
+            </div>
+            
+            <div class="text-center group">
+                <div class="feature-icon green mx-auto group-hover:scale-110 transition-transform">
+                    <i class="fas fa-chart-line text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3 text-gray-800">Analytics & Insights</h3>
+                <p class="text-gray-600">Advanced visualization tools and export capabilities for research</p>
+            </div>
+            
+            <div class="text-center group">
+                <div class="feature-icon blue mx-auto group-hover:scale-110 transition-transform">
+                    <i class="fas fa-fingerprint text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3 text-gray-800">Secure Authentication</h3>
+                <p class="text-gray-600">Multi-factor authentication and encrypted data storage for maximum security</p>
             </div>
         </div>
-    </section>
-
-    <!-- Call to Action -->
-    <section class="relative z-10 py-16 bg-gray-900 text-white text-center">
-        <h2 class="text-4xl font-extrabold mb-6">Ready to Transform Your Practice?</h2>
-        <p class="text-lg leading-relaxed mb-10 opacity-90">Experience the efficiency and reliability of HealthScreener Pro today.</p>
-        <a href="{% url 'login' %}" class="btn bg-green-500 hover:bg-green-600 text-white px-10 py-5 text-xl rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
-            <i class="fas fa-user-plus mr-3"></i> Get Started Now
+    </div>
+</section>
+                <!-- CTA Section -->
+<section class="py-20 bg-gradient-to-r from-amber-600 to-blue-600 text-white">
+    <div class="container mx-auto px-6 text-center">
+        <h2 class="text-4xl font-bold mb-4">Ready to Transform Your Practice?</h2>
+        <p class="text-xl mb-8 opacity-90">Join thousands of healthcare professionals using our platform</p>
+        <a href="{% url 'login' %}" class="bg-white text-amber-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+            <i class="fas fa-rocket mr-2"></i> Get Started Today
         </a>
-    </section>
-</div>
+    </div>
+</section>
 {% endblock %}
 

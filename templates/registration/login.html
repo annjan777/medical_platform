@@ -1,79 +1,175 @@
 {% extends 'base/base.html' %}
 
-{% block title %}Login - HealthScreener Pro{% endblock %}
+{% block title %}Login - Medical Data Collection Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+.login-section {
+    background: linear-gradient(135deg, #fef3c7 0%, #dbeafe 100%);
+}
+.feature-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.feature-icon.saffron {
+    background: #fef3c7;
+    color: #f59e0b;
+}
+.feature-icon.blue {
+    background: #dbeafe;
+    color: #3b82f6;
+}
+.feature-icon.green {
+    background: #d1fae5;
+    color: #10b981;
+}
+.login-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.form-input {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    padding-left: 2.5rem;
+    width: 100%;
+    transition: border-color 0.2s;
+}
+.form-input:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+.btn-primary {
+    background: #f59e0b;
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    width: 100%;
+}
+.btn-primary:hover {
+    background: #d97706;
+}
+.alert-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+.modal-content {
+    background-color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+.close {
+    color: #6b7280;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+.close:hover {
+    color: #374151;
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="min-h-screen relative overflow-hidden">
-  <div class="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-blue-50"></div>
-  <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-teal-100 blur-3xl opacity-70"></div>
-  <div class="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-blue-100 blur-3xl opacity-70"></div>
-
-  <div class="relative min-h-screen flex">
+<div class="min-h-screen">
+  <div class="login-section min-h-screen flex">
     <div class="hidden lg:flex lg:w-1/2 p-12 items-center justify-center">
       <div class="max-w-lg">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-white shadow-soft border border-gray-200 flex items-center justify-center">
-            <i class="fas fa-heartbeat text-teal-600 text-2xl"></i>
+          <div class="w-12 h-12 rounded-lg bg-white shadow-md border border-gray-200 flex items-center justify-center">
+            <i class="fas fa-heartbeat text-amber-600 text-2xl"></i>
           </div>
           <div>
-            <p class="text-sm font-semibold text-teal-700">Patient Management Platform</p>
-            <h1 class="text-3xl font-extrabold text-gray-900">HealthScreener Pro</h1>
+            <p class="text-sm font-semibold text-amber-700">Advanced Patient Screening</p>
+            <h1 class="text-3xl font-bold text-gray-800">Medical Data Collection Platform</h1>
           </div>
         </div>
 
-        <p class="mt-6 text-lg text-gray-700 leading-relaxed">
-          Securely manage patient records and streamline manual data entry with a calm, clinical interface designed for day-to-day medical workflows.
+        <p class="mt-6 text-lg text-gray-600 leading-relaxed">
+          Transform your healthcare practice with our cutting-edge platform. Seamlessly integrate diagnostic devices, manage patient records, and gain actionable insights - all in one secure, intuitive system.
         </p>
 
+        <!-- Internal Access Image -->
+        <div class="mt-8 rounded-lg overflow-hidden border border-gray-200">
+          <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=300&fit=crop" 
+               alt="Medical Professional Access - Internal Use Only" 
+               class="w-full h-auto object-cover">
+          <div class="bg-amber-50 px-4 py-3 border-t border-gray-200">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-lock text-amber-600"></i>
+              <p class="text-sm font-semibold text-amber-800">Internal Access Only</p>
+            </div>
+            <p class="text-xs text-amber-700 mt-1">Authorized medical personnel and administrators</p>
+          </div>
+        </div>
+
         <div class="mt-8 space-y-4">
-          <div class="flex gap-3 items-start">
-            <div class="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center text-teal-700">
-              <i class="fas fa-shield-alt"></i>
-            </div>
-            <div>
-              <p class="font-semibold text-gray-900">Role-based access</p>
-              <p class="text-sm text-gray-600">Admins manage users & full data. Data-entry users add patient records only.</p>
-            </div>
-          </div>
-
-          <div class="flex gap-3 items-start">
-            <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700">
-              <i class="fas fa-notes-medical"></i>
-            </div>
-            <div>
-              <p class="font-semibold text-gray-900">Fast patient entry</p>
-              <p class="text-sm text-gray-600">Simple, clean forms for quick registration and follow-up notes.</p>
-            </div>
-          </div>
-
-          <div class="flex gap-3 items-start">
-            <div class="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700">
-              <i class="fas fa-lock"></i>
-            </div>
-            <div>
-              <p class="font-semibold text-gray-900">Secure authentication</p>
-              <p class="text-sm text-gray-600">Built on Django’s trusted authentication system.</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
 
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10">
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 bg-white">
       <div class="w-full max-w-md">
-        <div class="bg-white/80 backdrop-blur rounded-2xl border border-gray-200 shadow-soft p-8">
+        <div class="login-card rounded-lg p-8">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-2xl font-extrabold text-gray-900">Sign in</h2>
+              <h2 class="text-2xl font-bold text-gray-800">Sign in</h2>
               <p class="mt-1 text-sm text-gray-600">Use your credentials to continue.</p>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-700">
+            <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
               <i class="fas fa-user-md"></i>
             </div>
           </div>
 
           {% if form.errors %}
-          <div class="mt-6 alert alert-error">
+          <div class="mt-6 alert-error">
             <div class="flex items-start">
               <div class="flex-shrink-0" style="margin-top: 2px;"><i class="fas fa-exclamation-circle"></i></div>
               <div class="ml-3">
@@ -88,13 +184,13 @@
             <input type="hidden" name="next" value="{{ next }}">
 
             <div>
-<label for="id_username" class="form-label">Email</label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                    <i class="fas fa-envelope"></i>
-                  </span>
-                  <input id="id_username" name="username" type="email" required autofocus
-                         class="form-input pl-10" placeholder="Enter your email">
+              <label for="id_username" class="form-label">Email</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                  <i class="fas fa-envelope"></i>
+                </span>
+                <input id="id_username" name="username" type="email" required autofocus
+                       class="form-input" placeholder="Enter your email">
               </div>
             </div>
 
@@ -105,20 +201,20 @@
                   <i class="fas fa-key"></i>
                 </span>
                 <input id="id_password" name="password" type="password" autocomplete="current-password" required
-                       class="form-input pl-10" placeholder="Enter your password">
+                       class="form-input" placeholder="Enter your password">
               </div>
             </div>
 
             <div class="flex items-center justify-between pt-2">
               <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" class="h-4 w-4 text-teal-600 border-gray-300 rounded">
+                <input type="checkbox" class="h-4 w-4 text-amber-600 border-gray-300 rounded">
                 Remember me
               </label>
 
-              <a href="#" class="text-sm font-semibold text-teal-700 hover:text-teal-800">Forgot password?</a>
+              <a href="#" onclick="openModal()" class="text-sm font-semibold text-amber-600 hover:text-amber-700">Forgot password?</a>
             </div>
 
-            <button type="submit" class="w-full btn btn-primary" style="padding: 0.75rem 1rem; border-radius: 0.75rem;">
+            <button type="submit" class="btn-primary">
               <span class="mr-2"><i class="fas fa-sign-in-alt"></i></span>
               Sign in
             </button>
@@ -130,10 +226,60 @@
         </div>
 
         <p class="mt-6 text-center text-xs text-gray-500">
-          &copy; {% now "Y" %} HealthScreener Pro
+          &copy; {% now "Y" %} Medical Data Collection Platform
         </p>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Forgot Password Modal -->
+<div id="forgotPasswordModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="text-xl font-bold text-gray-800">Password Reset</h3>
+      <span class="close" onclick="closeModal()">&times;</span>
+    </div>
+    <div class="text-center">
+      <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-user-shield text-amber-600 text-2xl"></i>
+      </div>
+      <h4 class="text-lg font-semibold text-gray-800 mb-2">Contact Your Administrator</h4>
+      <p class="text-gray-600 mb-6">
+        For security reasons, password resets must be handled by your system administrator. Please contact them directly to reset your password.
+      </p>
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center gap-2 mb-2">
+          <i class="fas fa-info-circle text-amber-600"></i>
+          <p class="text-sm font-semibold text-amber-800">Administrator Contact</p>
+        </div>
+        <p class="text-xs text-amber-700">
+          Please reach out to your department administrator or IT support team for assistance with password reset.
+        </p>
+      </div>
+      <button onclick="closeModal()" class="btn-primary">
+        <i class="fas fa-times mr-2"></i>
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openModal() {
+  document.getElementById('forgotPasswordModal').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('forgotPasswordModal').style.display = 'none';
+}
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+  const modal = document.getElementById('forgotPasswordModal');
+  if (event.target == modal) {
+    closeModal();
+  }
+}
+</script>
 {% endblock %}

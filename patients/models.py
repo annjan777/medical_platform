@@ -10,6 +10,9 @@ class Patient(models.Model):
         OTHER = 'O', _('Other')
         UNSPECIFIED = 'U', _('Prefer not to say')
     
+    # Auto-generated patient ID
+    patient_id = models.CharField(_('patient ID'), max_length=20, unique=True, blank=True)
+    
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -52,7 +55,29 @@ class Patient(models.Model):
         verbose_name_plural = _('patients')
     
     def __str__(self):
-        return f"{self.last_name}, {self.first_name}"
+        return f"{self.last_name}, {self.first_name} ({self.patient_id})"
+    
+    def save(self, *args, **kwargs):
+        # Generate patient ID if it doesn't exist
+        if not self.patient_id:
+            self.patient_id = self.generate_patient_id()
+        super().save(*args, **kwargs)
+    
+    def generate_patient_id(self):
+        """Generate a unique patient ID in format MDCP0001, MDCP0002, etc."""
+        from django.db.models import Max
+        
+        # Get the highest current patient ID number
+        last_patient = Patient.objects.aggregate(
+            max_id=Max('id')
+        )['max_id']
+        
+        if last_patient is None:
+            new_number = 1
+        else:
+            new_number = last_patient + 1
+        
+        return f"MDCP{new_number:04d}"
     
     @property
     def full_name(self):

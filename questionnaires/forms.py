@@ -123,9 +123,12 @@ class ResponseForm(forms.ModelForm):
             if self.instance and self.instance.pk:
                 try:
                     answer = self.instance.answers.get(question=question)
-                    if question.question_type in [Question.TYPE_CHECKBOX, Question.TYPE_RADIO, Question.TYPE_SELECT]:
-                        self.initial[field_name] = answer.get_value()
+                    if question.question_type == question.TYPE_MULTIPLE_CHOICE:
+                        # For multiple choice, get the option ID
+                        option = answer.option_answer.first()
+                        self.initial[field_name] = option.id if option else None
                     else:
+                        # For other types, get the text answer
                         self.initial[field_name] = answer.get_value()
                 except Answer.DoesNotExist:
                     pass
@@ -157,15 +160,20 @@ class ResponseForm(forms.ModelForm):
             # For multiple choice, use ChoiceField with RadioSelect
             field_class = forms.ChoiceField
             choices = [(opt.id, opt.text) for opt in question.options.all()]
-            field_kwargs['choices'] = choices
-            field_kwargs['widget'] = forms.RadioSelect()
+            if choices:
+                field_kwargs['choices'] = choices
+                field_kwargs['widget'] = forms.RadioSelect()
+            else:
+                # If no options, fallback to text field
+                field_class = forms.CharField
+                field_kwargs['widget'] = forms.TextInput(attrs={'class': 'form-control'})
         else:
             # Fallback for any other types
             field_class = forms.CharField
             field_kwargs['widget'] = forms.TextInput(attrs={'class': 'form-control'})
         
         field = field_class(**field_kwargs)
-        self.fields[field_name] = field
+        return field
     
     def clean(self):
         cleaned_data = super().clean()
@@ -208,27 +216,20 @@ class ResponseForm(forms.ModelForm):
                 answer.number_answer = None
                 answer.date_answer = None
 
-                if question.question_type in [Question.TYPE_RADIO, Question.TYPE_SELECT]:
-                    # value is QuestionOption.value
+                if question.question_type == question.TYPE_MULTIPLE_CHOICE:
+                    # value is option ID
                     if value:
-                        opt = question.options.filter(value=value).first()
-                        if opt:
+                        try:
+                            opt = question.options.get(id=value)
                             answer.option_answer.add(opt)
-                elif question.question_type == Question.TYPE_CHECKBOX:
-                    values = value if isinstance(value, list) else ([value] if value else [])
-                    if values:
-                        opts = list(question.options.filter(value__in=values))
-                        if opts:
-                            answer.option_answer.add(*opts)
-                elif question.question_type == Question.TYPE_NUMBER:
-                    answer.number_answer = value if value is not None else None
-                elif question.question_type == Question.TYPE_DATE:
-                    answer.date_answer = value if value is not None else None
-                elif question.question_type == Question.TYPE_FILE:
-                    # File handling is managed by Django's ModelForm save via file_answer,
-                    # but keep a fallback string if needed.
-                    answer.text_answer = ''
+                        except QuestionOption.DoesNotExist:
+                            answer.text_answer = str(value) if value else ''
+                elif question.question_type in [question.TYPE_YES_NO, question.TYPE_TRUE_FALSE]:
+                    answer.text_answer = str(value) if value else ''
+                elif question.question_type == question.TYPE_SHORT_ANSWER:
+                    answer.text_answer = str(value) if value else ''
                 else:
+                    # Fallback for any other types
                     answer.text_answer = str(value) if value is not None else ''
                 
                 answer.save()

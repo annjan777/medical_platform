@@ -13,7 +13,7 @@
         <i class="fas fa-shield-alt fa-2x me-3"></i>
         <div>
             <h5 class="mb-1">Welcome to Admin Dashboard</h5>
-            <p class="mb-0">System overview and management controls for HealthScreener Pro</p>
+            <p class="mb-0">System overview and management controls for Medical Data Collection Platform</p>
         </div>
     </div>
 </div>
@@ -30,58 +30,240 @@
                 <div class="text-primary">
                     <i class="fas fa-users fa-2x"></i>
                 </div>
-                    <tbody>
-                        {% for session in recent_screenings_list|slice:":5" %}
-                        <tr>
-                            <td>#{{ session.id|stringformat:"06d" }}</td>
-                            <td>{{ session.patient.get_full_name|default:session.patient.email|default:"Unknown Patient" }}</td>
-                            <td>{{ session.device.name|default:"N/A" }}</td>
-                            <td>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full {% if session.status == 'completed' %}bg-green-900 text-green-200{% elif session.status == 'in_progress' %}bg-blue-900 text-blue-200{% else %}bg-gray-700 text-gray-300{% endif %}">
-                                    {{ session.get_status_display }}
-                                </span>
-                            </td>
-                            <td>{{ session.created_at|date:"M d, Y H:i" }}</td>
-                            <td>
-                                <a href="{% url 'screening:session_detail' session.id %}" class="text-teal-400 hover:text-teal-300 text-sm">View</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-gray-500">
-                                No screening sessions found
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
-
-    <!-- Quick Actions -->
-    <div class="card mt-8">
-        <div class="card-header">
-            <h3 class="text-lg font-semibold text-gray-100">Quick Actions</h3>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-2">Total Patients</h6>
+                    <div class="stat-number text-success">{{ total_patients|intcomma }}</div>
+                </div>
+                <div class="text-success">
+                    <i class="fas fa-user-injured fa-2x"></i>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <a href="{% url 'dashboard:admin:user_create' %}" class="btn btn-primary">
-                    <i class="fas fa-user-plus mr-2"></i> Add User
-                </a>
-                <a href="{% url 'dashboard:admin:device_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus mr-2"></i> Add Device
-                </a>
-                <a href="{% url 'patients:add' %}" class="btn btn-primary">
-                    <i class="fas fa-user-plus mr-2"></i> Add Patient
-                </a>
-                <a href="{% url 'questionnaires:create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus mr-2"></i> New Questionnaire
-                </a>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-2">Total Devices</h6>
+                    <div class="stat-number text-warning">{{ total_devices|intcomma }}</div>
+                </div>
+                <div class="text-warning">
+                    <i class="fas fa-desktop fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted mb-2">Questionnaires</h6>
+                    <div class="stat-number text-info">{{ total_questionnaires|intcomma }}</div>
+                </div>
+                <div class="text-info">
+                    <i class="fas fa-clipboard-list fa-2x"></i>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">Quick Actions</h4>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="quick-action" data-url="{% url 'dashboard:admin:user_create' %}">
+            <i class="fas fa-user-plus"></i>
+            <h5>Add User</h5>
+            <p class="text-muted">Create new user account</p>
+            <span class="badge bg-primary">Users</span>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="quick-action" data-url="{% url 'dashboard:admin:device_create' %}">
+            <i class="fas fa-desktop"></i>
+            <h5>Add Device</h5>
+            <p class="text-muted">Register new device</p>
+            <span class="badge bg-warning">Devices</span>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="quick-action" data-url="{% url 'questionnaires:create' %}">
+            <i class="fas fa-clipboard-list"></i>
+            <h5>New Questionnaire</h5>
+            <p class="text-muted">Create screening form</p>
+            <span class="badge bg-info">Forms</span>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="quick-action" data-url="{% url 'patients:add' %}">
+            <i class="fas fa-user-plus"></i>
+            <h5>Add Patient</h5>
+            <p class="text-muted">Register new patient</p>
+            <span class="badge bg-success">Patients</span>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Activity
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Patient</th>
+                                <th>Device</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in recent_screenings_list|slice:":5" %}
+                            <tr>
+                                <td>#{{ session.id|stringformat:"06d" }}</td>
+                                <td>{{ session.patient.get_full_name|default:session.patient.email|default:"Unknown Patient" }}</td>
+                                <td>{{ session.device.name|default:"N/A" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if session.status == 'completed' %}success{% elif session.status == 'in_progress' %}primary{% else %}secondary{% endif %}">
+                                        {{ session.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ session.created_at|date:"M d, H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                    <p class="mb-0">No recent activity</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    System Health
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Database Status</span>
+                        <span class="badge bg-success">Healthy</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Server Load</span>
+                        <span class="badge bg-info">Normal</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Active Sessions</span>
+                        <span class="badge bg-primary">{{ active_sessions }}</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Storage Used</span>
+                        <span class="badge bg-warning">45%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Quick Links
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-cogs fa-3x text-primary mb-3"></i>
+                            <h6>System Settings</h6>
+                            <p class="text-muted">Configure platform settings</p>
+                            <button class="btn btn-outline-primary btn-sm">Settings</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-file-alt fa-3x text-success mb-3"></i>
+                            <h6>Reports</h6>
+                            <p class="text-muted">View system reports</p>
+                            <button class="btn btn-outline-success btn-sm">Reports</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-headset fa-3x text-info mb-3"></i>
+                            <h6>Documentation</h6>
+                            <p class="text-muted">View help docs</p>
+                            <button class="btn btn-outline-info btn-sm">Docs</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Handle quick action clicks
+    $('.quick-action').click(function() {
+        window.location.href = $(this).data('url') || $(this).attr('onclick').match(/'([^']+)'/)[1];
+    });
+});
+</script>
+{% endblock %}
 
 <style>
 .dashboard-card-container {

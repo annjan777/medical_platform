@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Admin Dashboard{% endblock %} - HealthScreener Pro</title>
+    <title>{% block title %}Admin Dashboard{% endblock %} - Medical Data Collection Platform</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -12,22 +12,30 @@
     
     <style>
         :root {
-            --admin-primary: #6c757d;
-            --admin-primary-dark: #5a6268;
-            --admin-secondary: #007bff;
-            --admin-success: #28a745;
-            --admin-warning: #ffc107;
-            --admin-danger: #dc3545;
-            --admin-light: #f8f9fa;
+            /* Clean White Medical Platform Theme */
+            --admin-primary: #f59e0b;
+            --admin-primary-dark: #d97706;
+            --admin-secondary: #3b82f6;
+            --admin-success: #10b981;
+            --admin-warning: #f59e0b;
+            --admin-danger: #ef4444;
+            --admin-light: #ffffff;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --border-color: #e5e7eb;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
         }
         
         .navbar-custom {
-            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
@@ -42,14 +50,15 @@
         }
         
         .sidebar {
-            background: white;
+            background: var(--bg-secondary);
             min-height: calc(100vh - 56px);
             box-shadow: 2px 0 4px rgba(0,0,0,0.1);
             padding: 20px 0;
+            border-right: 1px solid var(--border-color);
         }
         
         .sidebar .nav-link {
-            color: #495057;
+            color: var(--text-secondary);
             padding: 12px 20px;
             margin: 2px 10px;
             border-radius: 8px;
@@ -57,20 +66,23 @@
         }
         
         .sidebar .nav-link:hover {
-            background-color: var(--admin-light);
-            color: var(--admin-primary);
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
             transform: translateX(5px);
         }
         
         .sidebar .nav-link.active {
-            background-color: var(--admin-primary);
-            color: white;
+            background-color: var(--admin-light);
+            color: var(--admin-primary);
+            border-left: 3px solid var(--admin-primary);
         }
         
         .main-content {
             padding: 15px;
             max-width: 1400px;
             margin: 0 auto;
+            background-color: var(--bg-primary);
+            min-height: calc(100vh - 56px);
         }
         
         .card {
@@ -78,6 +90,8 @@
             border-radius: 8px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.1);
             transition: transform 0.2s ease;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
         }
         
         .card:hover {
@@ -86,34 +100,92 @@
         }
         
         .card-header {
-            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
-            color: white;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             border-radius: 8px 8px 0 0 !important;
             border: none;
             padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
         }
         
-        .btn-primary {
-            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            transition: all 0.3s ease;
+        .card-header h5 {
+            font-weight: 700;
+            color: var(--text-primary);
         }
         
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--admin-primary-dark) 0%, #0056b3 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        /* Fix h5 visibility - Darker text */
+        h5 {
+            color: #111827 !important;
+            font-weight: 700;
+        }
+        
+        .alert h5 {
+            color: #111827 !important;
+            font-weight: 700;
+        }
+        
+        .alert-info h5 {
+            color: #111827 !important;
+            font-weight: 700;
+        }
+        
+        .alert {
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 15px 20px !important;
+            background-color: var(--bg-primary) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        
+        .alert-info {
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+            border-left: 4px solid var(--admin-primary) !important;
+        }
+        
+        .alert h5 {
+            color: #111827 !important;
+            font-weight: 700 !important;
+        }
+        
+        .alert p {
+            color: #374151 !important;
+        }
+        
+        .alert-info h5 {
+            color: #111827 !important;
+            font-weight: 700 !important;
+        }
+        
+        .alert-info p {
+            color: #374151 !important;
+        }
+        
+        /* Override Bootstrap alert styles */
+        .alert-info .alert-heading {
+            color: #111827 !important;
+        }
+        
+        .alert-info .alert-text {
+            color: #374151 !important;
+        }
+        
+        /* Override Bootstrap alert-link styles */
+        .alert-info .alert-link {
+            color: #0ea5e9 !important;
+        }
+        
+        .alert-info .alert-link:hover {
+            color: #0284c7 !important;
         }
         
         .stat-card {
-            background: white;
+            background: var(--bg-secondary);
             border-radius: 8px;
             padding: 15px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
-            border-left: 3px solid var(--admin-primary);
+            border: 1px solid var(--border-color);
         }
         
         .stat-card:hover {
@@ -190,18 +262,6 @@
             border: none;
         }
         
-        .alert {
-            border: none;
-            border-radius: 8px;
-            padding: 15px 20px;
-        }
-        
-        .alert-info {
-            background-color: var(--admin-light);
-            color: var(--admin-primary);
-            border-left: 4px solid var(--admin-primary);
-        }
-        
         .breadcrumb {
             background: transparent;
             padding: 0;
@@ -219,6 +279,138 @@
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 0.75rem;
+        }
+        
+        /* Form Controls */
+        .form-control {
+            background-color: white;
+            border: 1px solid #ced4da;
+            color: #495057;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        .form-control:focus {
+            border-color: var(--admin-primary);
+            box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+            outline: 0;
+        }
+        
+        .form-label {
+            color: #495057;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn {
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--admin-primary);
+            border-color: var(--admin-primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--admin-primary-dark);
+            border-color: var(--admin-primary-dark);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #5a6268;
+            color: white;
+        }
+        
+        .btn-outline-primary {
+            color: var(--admin-primary);
+            border-color: var(--admin-primary);
+            background-color: transparent;
+        }
+        
+        .btn-outline-primary:hover {
+            color: white;
+            background-color: var(--admin-primary);
+            border-color: var(--admin-primary);
+        }
+        
+        .btn-outline-secondary {
+            color: #6c757d;
+            border-color: #6c757d;
+            background-color: transparent;
+        }
+        
+        .btn-outline-secondary:hover {
+            color: white;
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        
+        .btn-outline-success {
+            color: #28a745;
+            border-color: #28a745;
+            background-color: transparent;
+        }
+        
+        .btn-outline-success:hover {
+            color: white;
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .btn-outline-info {
+            color: #17a2b8;
+            border-color: #17a2b8;
+            background-color: transparent;
+        }
+        
+        .btn-outline-info:hover {
+            color: white;
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        
+        /* Fix text visibility issues */
+        .text-primary {
+            color: #212529 !important;
+        }
+        
+        .text-secondary {
+            color: #6c757d !important;
+        }
+        
+        .text-muted {
+            color: #6c757d !important;
+        }
+        
+        .card-header h5 {
+            color: white !important;
+            font-weight: 600 !important;
+        }
+        
+        .card-title {
+            color: #212529 !important;
+            font-weight: 600 !important;
+        }
+        
+        .table th {
+            color: #212529 !important;
+        }
+        
+        .table td {
+            color: #495057 !important;
         }
         
         @media (max-width: 768px) {
@@ -302,6 +494,7 @@
             <div class="col-md-2 sidebar d-none d-md-block">
                 <div class="user-info text-center">
                     <i class="fas fa-user-shield fa-3x mb-2" style="color: var(--admin-primary);"></i>
+                    <p class="mb-0">System overview and management controls for Medical Data Collection Platform</p>
                     <h6 class="mb-1">{{ request.user.get_full_name|default:request.user.email }}</h6>
                     <small class="text-muted">Administrator</small>
                 </div>

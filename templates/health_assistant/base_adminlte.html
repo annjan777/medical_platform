@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Health Assistant Portal{% endblock %} - HealthScreener Pro</title>
+    <title>{% block title %}Health Assistant Portal{% endblock %} - Medical Data Collection Platform</title>
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -319,7 +319,7 @@
                         </a>
                     </li>
                     
-                    <!-- Patient Management -->
+                    <!-- Medical Records -->
                     <li class="nav-item">
                         <a href="{% url 'health_assistant:landing' %}" class="nav-link {% if request.resolver_match.url_name == 'landing' %}active{% endif %}">
                             <i class="nav-icon fas fa-user-plus"></i>
@@ -424,7 +424,7 @@
 
     <!-- Footer -->
     <footer class="main-footer">
-        <strong>Copyright &copy; 2024 <a href="#">HealthScreener Pro</a>.</strong>
+        <strong>Copyright &copy; 2024 <a href="#">Medical Data Collection Platform</a>.</strong>
         All rights reserved.
         <div class="float-right d-none d-sm-inline-block">
             <b>Version</b> 1.0.0

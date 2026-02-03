@@ -137,7 +137,7 @@ class UserCreateView(CreateView):
             from django.core.mail import send_mail
             from django.conf import settings
             
-            subject = 'Your HealthScreener Pro Account Has Been Created'
+            subject = 'Your Medical Data Collection Platform Account Has Been Created'
             message = f'''Hello {user.get_full_name() or user.email},
             
 Your account has been created by an administrator. Here are your login details:
@@ -148,7 +148,7 @@ Password: {password}
 Please log in and change your password immediately.
 
 Best regards,
-HealthScreener Pro Team'''
+Medical Data Collection Platform Team'''
             
             send_mail(
                 subject=subject,

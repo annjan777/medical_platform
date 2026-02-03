@@ -255,9 +255,37 @@ def questionnaire_start(request, pk):
             response.questionnaire = questionnaire
             if request.user.is_authenticated:
                 response.respondent = request.user
+            
+            # Handle patient association
+            patient_id = request.POST.get('patient_id')
+            if patient_id:
+                from patients.models import Patient
+                try:
+                    patient = Patient.objects.get(id=patient_id)
+                    response.patient = patient
+                except Patient.DoesNotExist:
+                    pass
+            
             response.save()
             form.save_answers()
-            return redirect('questionnaires:questionnaire_thank_you', pk=response.pk)
+            
+            # Return JSON response for AJAX requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Questionnaire submitted successfully!',
+                    'response_id': response.pk
+                })
+            else:
+                return redirect('questionnaires:questionnaire_thank_you', pk=response.pk)
+        else:
+            # Return JSON response for AJAX requests with errors
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Please correct the errors below.',
+                    'errors': form.errors
+                })
     else:
         form = ResponseForm(questionnaire)
     

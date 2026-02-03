@@ -1,6 +1,6 @@
 {% extends "health_assistant/base_clean.html" %}
 
-{% block page_title %}Health Assistant - Patient Screening{% endblock %}
+{% block page_title %}Health Assistant - Medical Data Collection{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,9 +11,9 @@
                 <div>
                     <h2 class="mb-1">
                         <i class="fas fa-user-nurse me-2 text-primary"></i>
-                        Patient Screening Workflow
+                        Medical Data Collection Workflow
                     </h2>
-                    <p class="text-muted mb-0">Register patient and conduct screening questionnaire</p>
+                    <p class="text-muted mb-0">Register patient and conduct medical data collection questionnaire</p>
                 </div>
                 <div>
                     <a href="{% url 'health_assistant:dashboard' %}" class="btn btn-outline-secondary">
@@ -321,11 +321,14 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-info" id="exportDataBtn">
+                        <i class="fas fa-download me-2"></i>Export Data
+                    </button>
+                    <button type="button" class="btn btn-success" id="registerAnotherPatientBtn">
+                        <i class="fas fa-user-plus me-2"></i>Register Another Patient
+                    </button>
                     <button type="button" class="btn btn-primary" id="newScreeningBtn">
                         <i class="fas fa-plus me-2"></i>Start New Screening
-                    </button>
-                    <button type="button" class="btn btn-info" id="viewDashboardBtn">
-                        <i class="fas fa-tachometer-alt me-2"></i>View Dashboard
                     </button>
                 </div>
             </div>
@@ -427,6 +430,60 @@
 
 {% block extra_js %}
 <script>
+        // Common functions
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function showAlert(message, type = 'info') {
+            const alertDiv = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Add to top of content area
+            $('.main-content').prepend(alertDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+        
+        function showLoading(element) {
+            const originalContent = element.html();
+            element.html('<i class="fas fa-spinner fa-spin me-2"></i>Loading...');
+            element.prop('disabled', true);
+            return originalContent;
+        }
+        
+        function hideLoading(element, originalContent) {
+            element.html(originalContent);
+            element.prop('disabled', false);
+        }
+        
+        // Initialize tooltips
+        $(document).ready(function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+<script>
 let currentPatient = null;
 let selectedQuestionnaire = null;
 
@@ -437,13 +494,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('patientSearchInput');
     
     // Patient search
-    searchBtn.addEventListener('click', searchPatients);
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchPatients();
-        }
-    });
+    if (searchBtn) {
+        searchBtn.addEventListener('click', searchPatients);
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchPatients();
+            }
+        });
+    }
     
     // Patient registration
     patientForm.addEventListener('submit', function(e) {
@@ -457,10 +519,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('submitQuestionnaireBtn').addEventListener('click', submitQuestionnaire);
     
     // Success modal buttons
+    document.getElementById('registerAnotherPatientBtn').addEventListener('click', function() {
+        bootstrap.Modal.getInstance(document.getElementById('successModal')).hide();
+        resetWorkflow();
+    });
+    
     document.getElementById('newScreeningBtn').addEventListener('click', function() {
         bootstrap.Modal.getInstance(document.getElementById('successModal')).hide();
         resetWorkflow();
     });
+    
+    document.getElementById('exportDataBtn').addEventListener('click', exportQuestionnaireData);
     
     document.getElementById('viewDashboardBtn').addEventListener('click', function() {
         window.location.href = '{% url "health_assistant:dashboard" %}';
@@ -647,34 +716,41 @@ function updateProgressIndicator(step) {
 function loadQuestionnaires() {
     const listDiv = document.getElementById('questionnaireList');
     
-    // Load available questionnaires
-    fetch('/questionnaires/api/list/', {
+    fetch('/health-assistant/api/questionnaires/', {
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
         }
     })
     .then(response => response.json())
     .then(data => {
-        if (data.questionnaires && data.questionnaires.length > 0) {
-            listDiv.innerHTML = data.questionnaires.map(q => `
-                <div class="card questionnaire-card mb-2" onclick="selectQuestionnaire(${q.id}, '${q.title.replace(/'/g, "\\'")}', ${q.question_count || 0})">
-                    <div class="card-body">
-                        <h6 class="card-title mb-1">${q.title}</h6>
-                        <p class="card-text small text-muted">${q.description || 'No description'}</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge bg-primary">${q.question_count || 0} questions</span>
-                            <i class="fas fa-chevron-right text-muted"></i>
+        if (data.success) {
+            const questionnaireList = document.getElementById('questionnaireList');
+            questionnaireList.innerHTML = '';
+            
+            if (data.questionnaires.length === 0) {
+                questionnaireList.innerHTML = '<div class="alert alert-info">No questionnaires available.</div>';
+                return;
+            }
+            
+            data.questionnaires.forEach(questionnaire => {
+                const questionnaireCard = document.createElement('div');
+                questionnaireCard.className = 'col-md-6 col-lg-4 mb-3';
+                questionnaireCard.innerHTML = `
+                    <div class="card questionnaire-card h-100" data-questionnaire-id="${questionnaire.id}" data-questionnaire-title="${questionnaire.title}" onclick="selectQuestionnaire(${questionnaire.id}, '${questionnaire.title.replace(/'/g, "\\'")}')">
+                        <div class="card-body">
+                            <h6 class="card-title">${questionnaire.title}</h6>
+                            <p class="card-text small text-muted">${questionnaire.description || 'No description available'}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary">${questionnaire.question_count} questions</span>
+                                <i class="fas fa-arrow-right text-primary"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+                questionnaireList.appendChild(questionnaireCard);
+            });
         } else {
-            listDiv.innerHTML = `
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    No questionnaires available. Please contact administrator.
-                </div>
-            `;
+            showAlert('Error loading questionnaires: ' + data.message, 'danger');
         }
     })
     .catch(error => {
@@ -704,35 +780,24 @@ function startQuestionnaire() {
     
     showStep3();
     
-    // Load questionnaire content
+    // Load questionnaire content directly via API
     const contentDiv = document.getElementById('questionnaireContent');
     contentDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2">Loading questionnaire...</p></div>';
     
     document.getElementById('questionnaireTitle').textContent = selectedQuestionnaire.title;
     
-    fetch(`/questionnaires/${selectedQuestionnaire.id}/start/`, {
+    // Fetch questionnaire data directly
+    fetch(`/health-assistant/api/questionnaire/${selectedQuestionnaire.id}/`, {
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
         }
     })
-    .then(response => response.text())
-    .then(html => {
-        // Extract the questionnaire form from the response
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        const questionnaireForm = tempDiv.querySelector('form');
-        
-        if (questionnaireForm) {
-            contentDiv.innerHTML = questionnaireForm.outerHTML;
-            
-            // Add patient info to the form
-            const patientInfo = document.createElement('input');
-            patientInfo.type = 'hidden';
-            patientInfo.name = 'patient_id';
-            patientInfo.value = currentPatient.id;
-            contentDiv.querySelector('form').appendChild(patientInfo);
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            renderQuestionnaire(data.questionnaire);
         } else {
-            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaire content.</div>';
+            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaire: ' + data.message + '</div>';
         }
     })
     .catch(error => {
@@ -741,8 +806,95 @@ function startQuestionnaire() {
     });
 }
 
+function renderQuestionnaire(questionnaire) {
+    const contentDiv = document.getElementById('questionnaireContent');
+    
+    // Build questionnaire HTML directly
+    let questionnaireHTML = `
+        <form id="healthAssistantQuestionnaireForm" class="space-y-6">
+            <input type="hidden" name="questionnaire_id" value="${questionnaire.id}">
+            <input type="hidden" name="patient_id" value="${currentPatient.id}">
+            ${questionnaire.questions.map((question, index) => `
+                <div class="question-container" data-question-id="${question.id}">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            ${index + 1}. ${question.question_text}
+                            ${question.is_required ? '<span class="text-danger">*</span>' : ''}
+                        </label>
+                        ${renderQuestionField(question)}
+                    </div>
+                </div>
+            `).join('')}
+        </form>
+    `;
+    
+    contentDiv.innerHTML = questionnaireHTML;
+    
+    console.log('Questionnaire rendered directly on landing page');
+    console.log('Patient ID:', currentPatient.id);
+    console.log('Questionnaire ID:', questionnaire.id);
+}
+
+function renderQuestionField(question) {
+    switch(question.question_type) {
+        case 'yes_no':
+            return `
+                <div class="mt-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="question_${question.id}" value="yes" id="question_${question.id}_yes" ${question.is_required ? 'required' : ''}>
+                        <label class="form-check-label" for="question_${question.id}_yes">Yes</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="question_${question.id}" value="no" id="question_${question.id}_no" ${question.is_required ? 'required' : ''}>
+                        <label class="form-check-label" for="question_${question.id}_no">No</label>
+                    </div>
+                </div>
+            `;
+            
+        case 'true_false':
+            return `
+                <div class="mt-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="question_${question.id}" value="true" id="question_${question.id}_true" ${question.is_required ? 'required' : ''}>
+                        <label class="form-check-label" for="question_${question.id}_true">True</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="question_${question.id}" value="false" id="question_${question.id}_false" ${question.is_required ? 'required' : ''}>
+                        <label class="form-check-label" for="question_${question.id}_false">False</label>
+                    </div>
+                </div>
+            `;
+            
+        case 'multiple_choice':
+            return `
+                <div class="mt-2">
+                    ${question.options.map(option => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="question_${question.id}" value="${option.id}" id="question_${question.id}_option_${option.id}" ${question.is_required ? 'required' : ''}>
+                            <label class="form-check-label" for="question_${question.id}_option_${option.id}">${option.text}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+        case 'short_answer':
+            return `
+                <div class="mt-2">
+                    <textarea class="form-control" name="question_${question.id}" rows="3" placeholder="Enter your answer..." ${question.is_required ? 'required' : ''}></textarea>
+                </div>
+            `;
+            
+        default:
+            return `
+                <div class="mt-2">
+                    <input type="text" class="form-control" name="question_${question.id}" placeholder="Enter your answer..." ${question.is_required ? 'required' : ''}>
+                </div>
+            `;
+    }
+}
+
 function submitQuestionnaire() {
-    const form = document.querySelector('#questionnaireContent form');
+    const form = document.getElementById('healthAssistantQuestionnaireForm');
     const submitBtn = document.getElementById('submitQuestionnaireBtn');
     
     if (!form) {
@@ -750,14 +902,26 @@ function submitQuestionnaire() {
         return;
     }
     
+    // Validate form
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // Debug: Log form details
+    console.log('Submitting questionnaire form:');
+    console.log('Patient ID:', currentPatient.id);
+    console.log('Questionnaire ID:', selectedQuestionnaire.id);
+    
     // Show loading state
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
     
-    // Submit form
+    // Collect form data
     const formData = new FormData(form);
     
-    fetch(form.action, {
+    // Submit to our new API endpoint
+    fetch('/health-assistant/api/submit-questionnaire/', {
         method: 'POST',
         body: formData,
         headers: {
@@ -765,17 +929,34 @@ function submitQuestionnaire() {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        
+        // Check if response is JSON or HTML
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            // If it's HTML, it means the AJAX handling failed
+            return response.text().then(html => {
+                throw new Error('Server returned HTML instead of JSON. AJAX handling may have failed.');
+            });
+        }
+    })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
             showSuccessModal();
         } else {
             showAlert(data.message || 'Submission failed. Please try again.', 'danger');
+            if (data.errors) {
+                console.log('Form errors:', data.errors);
+            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('An error occurred during submission. Please try again.', 'danger');
+        showAlert('An error occurred during submission: ' + error.message, 'danger');
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -797,6 +978,73 @@ function showSuccessModal() {
     modal.show();
 }
 
+function exportQuestionnaireData() {
+    if (!currentPatient || !selectedQuestionnaire) {
+        showAlert('No data available for export', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    const exportBtn = document.getElementById('exportDataBtn');
+    const originalText = exportBtn.innerHTML;
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
+    
+    // Fetch the latest response data
+    fetch(`/health-assistant/api/export-questionnaire-data/?patient_id=${currentPatient.id}&questionnaire_id=${selectedQuestionnaire.id}`, {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Create CSV content
+            const csvContent = generateCSV(data.responses);
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `questionnaire_data_${currentPatient.patient_id}_${currentPatient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Data exported successfully!', 'success');
+        } else {
+            showAlert('Export failed: ' + data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Export error:', error);
+        showAlert('Export failed. Please try again.', 'danger');
+    })
+    .finally(() => {
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = originalText;
+    });
+}
+
+function generateCSV(responses) {
+    let csv = 'Patient ID,Patient Name,Questionnaire,Question,Answer,Date Submitted\n';
+    
+    responses.forEach(response => {
+        response.answers.forEach(answer => {
+            csv += '"' + response.patient_id + '",';
+            csv += '"' + response.patient_name + '",';
+            csv += '"' + response.questionnaire_title + '",';
+            csv += '"' + answer.question_text + '",';
+            csv += '"' + answer.answer_text + '",';
+            csv += '"' + response.created_at + '"\n';
+        });
+    });
+    
+    return csv;
+}
+
 function resetWorkflow() {
     // Reset all variables
     currentPatient = null;
@@ -811,6 +1059,7 @@ function resetWorkflow() {
     // Reset progress
     updateProgressIndicator(1);
     showStep1();
+}
 }
 
 function getCookie(name) {

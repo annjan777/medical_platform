@@ -1,68 +1,76 @@
 {% extends 'base/base.html' %}
 
-{% block title %}{{ patient.get_full_name }} - HealthScreener Pro{% endblock %}
+{% block title %}{{ patient.get_full_name }} - Medical Data Collection Platform{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto">
-  <div class="card">
-    <div class="card-header flex items-center justify-between">
+<div class="container mx-auto px-4 py-8">
+  <div class="bg-white rounded-lg shadow-md">
+    <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
       <div>
-        <h2 class="text-lg font-semibold">{{ patient.get_full_name }}</h2>
-        <p class="text-sm text-gray-500">Patient Details</p>
+        <h2 class="text-2xl font-bold text-gray-900">{{ patient.get_full_name }}</h2>
+        <p class="text-sm text-gray-600">Patient Details</p>
       </div>
       <div class="flex space-x-2">
-        <a href="{% url 'patients:update' patient.pk %}" class="btn btn-secondary">
-          <i class="fas fa-edit mr-1"></i> Edit
+        <a href="{% url 'patients:update' patient.pk %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+          <i class="fas fa-edit mr-2"></i> Edit
         </a>
-        <a href="{% url 'patients:list' %}" class="btn btn-outline">
-          <i class="fas fa-arrow-left mr-1"></i> Back to List
+        <a href="{% url 'patients:list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+          <i class="fas fa-arrow-left mr-2"></i> Back to List
         </a>
       </div>
     </div>
 
-    <div class="card-body">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="p-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Personal Information</h3>
           <div class="space-y-4">
-            <div>
-              <p class="text-sm font-medium text-gray-500">Full Name</p>
-              <p class="mt-1">{{ patient.get_full_name }}</p>
+            <div class="flex justify-between py-2">
+              <span class="text-sm font-medium text-gray-500 w-1/3">Full Name</span>
+              <span class="text-sm text-gray-900 w-2/3 text-right">{{ patient.get_full_name|default:"Not provided" }}</span>
             </div>
             {% if patient.date_of_birth %}
-            <div>
-              <p class="text-sm font-medium text-gray-500">Date of Birth</p>
-              <p class="mt-1">{{ patient.date_of_birth|date:"F j, Y" }}</p>
+            <div class="flex justify-between py-2">
+              <span class="text-sm font-medium text-gray-500 w-1/3">Date of Birth</span>
+              <span class="text-sm text-gray-900 w-2/3 text-right">{{ patient.date_of_birth|date:"F j, Y" }}</span>
             </div>
             {% endif %}
             {% if patient.gender %}
-            <div>
-              <p class="text-sm font-medium text-gray-500">Gender</p>
-              <p class="mt-1">{{ patient.get_gender_display }}</p>
+            <div class="flex justify-between py-2">
+              <span class="text-sm font-medium text-gray-500 w-1/3">Gender</span>
+              <span class="text-sm text-gray-900 w-2/3 text-right">{{ patient.get_gender_display }}</span>
+            </div>
+            {% endif %}
+            {% if patient.medical_record_number %}
+            <div class="flex justify-between py-2">
+              <span class="text-sm font-medium text-gray-500 w-1/3">Medical Record #</span>
+              <span class="text-sm text-gray-900 w-2/3 text-right">{{ patient.medical_record_number }}</span>
             </div>
             {% endif %}
           </div>
         </div>
 
         <div>
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Contact Information</h3>
           <div class="space-y-4">
-            {% if patient.phone %}
-            <div>
-              <p class="text-sm font-medium text-gray-500">Phone</p>
-              <p class="mt-1">{{ patient.phone }}</p>
+            <div class="flex justify-between py-2">
+              <span class="text-sm font-medium text-gray-500 w-1/3">Phone</span>
+              <span class="text-sm text-gray-900 w-2/3 text-right">{{ patient.phone|default:"Not provided" }}</span>
             </div>
-            {% endif %}
-            {% if patient.email %}
-            <div>
-              <p class="text-sm font-medium text-gray-500">Email</p>
-              <p class="mt-1">{{ patient.email }}</p>
+            <div class="flex justify-between py-2">
+              <span class="text-sm font-medium text-gray-500 w-1/3">Email</span>
+              <span class="text-sm text-gray-900 w-2/3 text-right">{{ patient.email|default:"Not provided" }}</span>
             </div>
-            {% endif %}
             {% if patient.address %}
-            <div>
-              <p class="text-sm font-medium text-gray-500">Address</p>
-              <p class="mt-1 whitespace-pre-line">{{ patient.address }}</p>
+            <div class="flex justify-between py-2">
+              <span class="text-sm font-medium text-gray-500 w-1/3">Address</span>
+              <span class="text-sm text-gray-900 w-2/3 text-right whitespace-pre-line">{{ patient.address }}</span>
+            </div>
+            {% endif %}
+            {% if patient.emergency_contact %}
+            <div class="flex justify-between py-2">
+              <span class="text-sm font-medium text-gray-500 w-1/3">Emergency Contact</span>
+              <span class="text-sm text-gray-900 w-2/3 text-right">{{ patient.emergency_contact }}</span>
             </div>
             {% endif %}
           </div>
@@ -70,10 +78,10 @@
       </div>
 
       {% if patient.notes %}
-      <div class="mt-8">
-        <h3 class="text-lg font-medium text-gray-900 mb-2">Notes</h3>
+      <div class="mt-8 pt-6 border-t border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900 mb-4 pb-2 border-b border-gray-200">Medical Notes</h3>
         <div class="bg-gray-50 p-4 rounded-lg">
-          <p class="whitespace-pre-line">{{ patient.notes }}</p>
+          <p class="text-sm text-gray-700 whitespace-pre-line">{{ patient.notes }}</p>
         </div>
       </div>
       {% endif %}
@@ -81,14 +89,19 @@
       <div class="mt-8 pt-6 border-t border-gray-200">
         <div class="flex justify-between items-center">
           <div>
-            <p class="text-sm text-gray-500">Created on {{ patient.created_at|date:"F j, Y" }}</p>
+            <p class="text-sm text-gray-500">Created on {{ patient.created_at|date:"F j, Y, g:i A" }}</p>
             {% if patient.updated_at %}
             <p class="text-sm text-gray-500">Last updated {{ patient.updated_at|timesince }} ago</p>
             {% endif %}
           </div>
-          <a href="{% url 'patients:delete' patient.pk %}" class="text-red-600 hover:text-red-800 text-sm font-medium">
-            <i class="fas fa-trash-alt mr-1"></i> Delete Patient
-          </a>
+          <div class="flex space-x-2">
+            <a href="{% url 'patients:dashboard' patient.pk %}" class="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100">
+              <i class="fas fa-chart-line mr-2"></i> Dashboard
+            </a>
+            <a href="{% url 'patients:delete' patient.pk %}" class="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100">
+              <i class="fas fa-trash-alt mr-2"></i> Delete Patient
+            </a>
+          </div>
         </div>
       </div>
     </div>
