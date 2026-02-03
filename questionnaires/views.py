@@ -165,7 +165,7 @@ class ResponseListView(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = Response.objects.select_related('questionnaire', 'respondent')
+        queryset = Response.objects.select_related('questionnaire', 'respondent', 'patient')
         
         # Filter by questionnaire if specified
         questionnaire_id = self.request.GET.get('questionnaire')
@@ -177,7 +177,12 @@ class ResponseListView(LoginRequiredMixin, ListView):
         if respondent_id:
             queryset = queryset.filter(respondent_id=respondent_id)
             
-        return queryset.order_by('-submitted_at')
+        # Filter by patient if specified
+        patient_id = self.request.GET.get('patient')
+        if patient_id:
+            queryset = queryset.filter(patient__patient_id=patient_id)
+            
+        return queryset.order_by('-submitted_at', '-started_at')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

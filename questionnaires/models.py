@@ -226,7 +226,12 @@ class Response(models.Model):
         verbose_name_plural = 'responses'
     
     def __str__(self):
-        return f"Response to {self.questionnaire} by {self.respondent or 'Anonymous'}"
+        if self.patient:
+            return f"Response to {self.questionnaire.title} by {self.patient.patient_id} - {self.patient.first_name} {self.patient.last_name}"
+        elif self.respondent:
+            return f"Response to {self.questionnaire.title} by {self.respondent.username}"
+        else:
+            return f"Response to {self.questionnaire.title} by Anonymous"
     
     def get_absolute_url(self):
         return reverse('questionnaires:response_detail', args=[str(self.id)])

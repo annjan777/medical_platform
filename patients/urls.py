@@ -24,27 +24,27 @@ urlpatterns = [
     path('', PatientListView.as_view(), name='list'),
     path('add/', PatientCreateView.as_view(), name='add'),
     path('quick-add/', PatientQuickAddView.as_view(), name='quick_add'),
-    path('<int:pk>/', PatientDetailView.as_view(), name='detail'),
-    path('<int:pk>/update/', PatientUpdateView.as_view(), name='update'),
-    path('<int:pk>/delete/', PatientDeleteView.as_view(), name='delete'),
-    path('<int:pk>/dashboard/', PatientDashboardView.as_view(), name='dashboard'),
+    path('<str:patient_id>/', PatientDetailView.as_view(), name='detail'),
+    path('<str:patient_id>/update/', PatientUpdateView.as_view(), name='update'),
+    path('<str:patient_id>/delete/', PatientDeleteView.as_view(), name='delete'),
+    path('<str:patient_id>/dashboard/', PatientDashboardView.as_view(), name='dashboard'),
     
     # Medical Record URLs
-    path('<int:patient_pk>/medical-record/', MedicalRecordUpdateView.as_view(), name='medical_record_update'),
+    path('<str:patient_id>/medical-record/', MedicalRecordUpdateView.as_view(), name='medical_record_update'),
     
     # Vital Signs URLs
-    path('<int:patient_pk>/vitals/add/', VitalSignsCreateView.as_view(), name='vitals_add'),
-    path('<int:patient_pk>/vitals/<int:pk>/update/', VitalSignsUpdateView.as_view(), name='vitals_update'),
-    path('<int:patient_pk>/vitals/<int:pk>/delete/', VitalSignsDeleteView.as_view(), name='vitals_delete'),
+    path('<str:patient_id>/vitals/add/', VitalSignsCreateView.as_view(), name='vitals_add'),
+    path('<str:patient_id>/vitals/<int:pk>/update/', VitalSignsUpdateView.as_view(), name='vitals_update'),
+    path('<str:patient_id>/vitals/<int:pk>/delete/', VitalSignsDeleteView.as_view(), name='vitals_delete'),
     
     # Patient Note URLs
-    path('<int:patient_pk>/notes/add/', PatientNoteCreateView.as_view(), name='note_add'),
-    path('<int:patient_pk>/notes/<int:pk>/update/', PatientNoteUpdateView.as_view(), name='note_update'),
-    path('<int:patient_pk>/notes/<int:pk>/delete/', PatientNoteDeleteView.as_view(), name='note_delete'),
+    path('<str:patient_id>/notes/add/', PatientNoteCreateView.as_view(), name='note_add'),
+    path('<str:patient_id>/notes/<int:pk>/update/', PatientNoteUpdateView.as_view(), name='note_update'),
+    path('<str:patient_id>/notes/<int:pk>/delete/', PatientNoteDeleteView.as_view(), name='note_delete'),
     
     # Document URLs
-    path('<int:patient_pk>/documents/upload/', DocumentUploadView.as_view(), name='document_upload'),
-    path('<int:patient_pk>/documents/<int:pk>/update/', DocumentUpdateView.as_view(), name='document_update'),
-    path('<int:patient_pk>/documents/<int:pk>/delete/', DocumentDeleteView.as_view(), name='document_delete'),
-    path('<int:patient_pk>/documents/<int:pk>/download/', DocumentDownloadView.as_view(), name='document_download'),
+    path('<str:patient_id>/documents/upload/', DocumentUploadView.as_view(), name='document_upload'),
+    path('<str:patient_id>/documents/<int:pk>/update/', DocumentUpdateView.as_view(), name='document_update'),
+    path('<str:patient_id>/documents/<int:pk>/delete/', DocumentDeleteView.as_view(), name='document_delete'),
+    path('<str:patient_id>/documents/<int:pk>/download/', DocumentDownloadView.as_view(), name='document_download'),
 ]

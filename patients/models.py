@@ -10,8 +10,8 @@ class Patient(models.Model):
         OTHER = 'O', _('Other')
         UNSPECIFIED = 'U', _('Prefer not to say')
     
-    # Auto-generated patient ID
-    patient_id = models.CharField(_('patient ID'), max_length=20, unique=True, blank=True)
+    # Auto-generated patient ID (nullable for migration)
+    patient_id = models.CharField(_('patient ID'), max_length=20, unique=True, null=True, blank=True)
     
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -50,7 +50,7 @@ class Patient(models.Model):
     )
     
     class Meta:
-        ordering = ['last_name', 'first_name']
+        ordering = ['patient_id']
         verbose_name = _('patient')
         verbose_name_plural = _('patients')
     
@@ -69,13 +69,20 @@ class Patient(models.Model):
         
         # Get the highest current patient ID number
         last_patient = Patient.objects.aggregate(
-            max_id=Max('id')
+            max_id=Max('patient_id')
         )['max_id']
         
         if last_patient is None:
             new_number = 1
         else:
-            new_number = last_patient + 1
+            # Extract the numeric part from the last patient ID
+            import re
+            match = re.search(r'(\d+)', last_patient)
+            if match:
+                last_number = int(match.group(1))
+                new_number = last_number + 1
+            else:
+                new_number = 1
         
         return f"MDCP{new_number:04d}"
     

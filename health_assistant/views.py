@@ -414,112 +414,48 @@ def api_create_session(request):
                 'message': 'Screening session created successfully'
             })
         except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)}, status=400)
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 @login_required
-def api_get_questionnaires(request):
-    """API endpoint to get available questionnaires"""
-    if request.user.role != User.Role.HEALTH_ASSISTANT:
-        return JsonResponse({'error': 'Access denied'}, status=403)
-    
-    try:
-        # Optimize with annotate to get question count in a single query
-        from django.db.models import Count
-        
-        questionnaires = Questionnaire.objects.filter(is_active=True).annotate(
-            question_count=Count('questions')
-        ).order_by('title')
-        
-        questionnaire_list = []
-        
-        for questionnaire in questionnaires:
-            questionnaire_list.append({
-                'id': questionnaire.id,
-                'title': questionnaire.title,
-                'description': questionnaire.description,
-                'question_count': questionnaire.question_count  # Now from annotation
-            })
-        
-        return JsonResponse({
-            'success': True,
-            'questionnaires': questionnaire_list
-        })
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)}, status=500)
-
-
-@login_required
-def api_get_questionnaire(request, questionnaire_id):
-    """API endpoint to get questionnaire details with questions"""
-    if request.user.role != User.Role.HEALTH_ASSISTANT:
-        return JsonResponse({'error': 'Access denied'}, status=403)
-    
-    try:
-        # Optimize with prefetch_related to avoid N+1 queries on options
-        questionnaire = get_object_or_404(
-            Questionnaire.objects.prefetch_related('questions__options'), 
-            id=questionnaire_id, 
-            is_active=True
-        )
-        
-        questions_data = []
-        for question in questionnaire.questions.order_by('order'):
-            question_data = {
-                'id': question.id,
-                'question_text': question.question_text,
-                'question_type': question.question_type,
-                'is_required': question.is_required,
-                'options': []
-            }
-            
-            # Add options for multiple choice questions (now cached due to prefetch_related)
-            if question.question_type == question.TYPE_MULTIPLE_CHOICE:
-                for option in question.options.order_by('order'):
-                    question_data['options'].append({
-                        'id': option.id,
-                        'text': option.text
-                    })
-            
-            questions_data.append(question_data)
-        
-        return JsonResponse({
-            'success': True,
-            'questionnaire': {
-                'id': questionnaire.id,
-                'title': questionnaire.title,
-                'description': questionnaire.description,
-                'questions': questions_data
-            }
-        })
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)}, status=500)
-
-
-@login_required
 def api_submit_questionnaire(request):
-    """API endpoint to submit questionnaire responses"""
+    """Simple API endpoint to submit questionnaire responses"""
     if request.user.role != User.Role.HEALTH_ASSISTANT:
         return JsonResponse({'error': 'Access denied'}, status=403)
     
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
     
     try:
-        # Get form data
+        # Get required data
         questionnaire_id = request.POST.get('questionnaire_id')
         patient_id = request.POST.get('patient_id')
         
         if not questionnaire_id or not patient_id:
-            return JsonResponse({'success': False, 'message': 'Missing required data'}, status=400)
+            return JsonResponse({'success': False, 'message': 'Missing questionnaire ID or patient ID'}, status=400)
         
-        # Get questionnaire and patient
+        # Debug: Print received data
+        print(f"DEBUG: questionnaire_id={questionnaire_id}, patient_id={patient_id}")
+        print(f"DEBUG: All POST data: {dict(request.POST)}")
+        
+        # Get objects
         questionnaire = get_object_or_404(Questionnaire, id=questionnaire_id, is_active=True)
-        patient = get_object_or_404(Patient, id=patient_id)
         
-        # Import here to avoid circular imports
+        # Try to get patient by patient_id (string) first, then by id (integer)
+        try:
+            patient = Patient.objects.get(patient_id=patient_id)
+        except Patient.DoesNotExist:
+            try:
+                patient = Patient.objects.get(id=int(patient_id))
+            except (Patient.DoesNotExist, ValueError):
+                return JsonResponse({'success': False, 'message': 'Patient not found'}, status=404)
+        
+        print(f"DEBUG: Found patient: {patient}")
+        print(f"DEBUG: Found questionnaire: {questionnaire}")
+        
+        # Import questionnaire models
         from questionnaires.models import Response, Answer
         
         # Create response
@@ -528,41 +464,56 @@ def api_submit_questionnaire(request):
             patient=patient,
             respondent=request.user,
             is_complete=True,
-            ip_address=request.META.get('REMOTE_ADDR'),
+            ip_address=request.META.get('REMOTE_ADDR', ''),
             user_agent=request.META.get('HTTP_USER_AGENT', '')[:500]
         )
         
-        # Process answers
-        questions = questionnaire.questions.order_by('order')
-        for question in questions:
-            field_name = f'question_{question.id}'
-            answer_value = request.POST.get(field_name)
-            
-            if answer_value:
-                # Create answer
-                answer = Answer.objects.create(
-                    response=response,
-                    question=question,
-                    text_answer=''
-                )
-                
-                # Save answer based on question type
-                if question.question_type == question.TYPE_MULTIPLE_CHOICE:
-                    # For multiple choice, save the option
-                    try:
-                        option = question.options.get(id=answer_value)
-                        answer.option_answer.add(option)
-                    except:
-                        answer.text_answer = str(answer_value)
-                else:
-                    # For other types, save as text
-                    answer.text_answer = str(answer_value)
-                
-                answer.save()
+        print(f"DEBUG: Created response: {response.id}")
+        
+        # Process all form data
+        answer_count = 0
+        for key, value in request.POST.items():
+            if key.startswith('question_') and value:
+                try:
+                    question_id = key.split('_')[1]
+                    question = questionnaire.questions.get(id=question_id)
+                    
+                    print(f"DEBUG: Processing question {question_id}: {value}")
+                    
+                    # Create answer
+                    answer = Answer.objects.create(
+                        response=response,
+                        question=question,
+                        text_answer=''
+                    )
+                    
+                    # Handle different question types
+                    if question.question_type == question.TYPE_MULTIPLE_CHOICE:
+                        # For multiple choice, try to get the option
+                        try:
+                            option = question.options.get(id=value)
+                            answer.option_answer.add(option)
+                            print(f"DEBUG: Added option {option}")
+                        except:
+                            answer.text_answer = str(value)
+                            print(f"DEBUG: Added text answer {value}")
+                    else:
+                        # For text answers
+                        answer.text_answer = str(value)
+                        print(f"DEBUG: Added text answer {value}")
+                    
+                    answer.save()
+                    answer_count += 1
+                    
+                except (ValueError, Question.DoesNotExist) as e:
+                    print(f"DEBUG: Error processing question {question_id}: {e}")
+                    continue  # Skip invalid question data
+        
+        print(f"DEBUG: Created {answer_count} answers")
         
         return JsonResponse({
             'success': True,
-            'message': 'Questionnaire submitted successfully!',
+            'message': f'Questionnaire submitted successfully! {answer_count} answers saved.',
             'response_id': response.id
         })
         
@@ -570,62 +521,7 @@ def api_submit_questionnaire(request):
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 
-@login_required
-def api_export_questionnaire_data(request):
-    """API endpoint to export questionnaire data"""
-    if request.user.role != User.Role.HEALTH_ASSISTANT:
-        return JsonResponse({'error': 'Access denied'}, status=403)
-    
-    try:
-        patient_id = request.GET.get('patient_id')
-        questionnaire_id = request.GET.get('questionnaire_id')
-        
-        if not patient_id or not questionnaire_id:
-            return JsonResponse({'success': False, 'message': 'Missing required parameters'}, status=400)
-        
-        # Get objects
-        patient = get_object_or_404(Patient, id=patient_id)
-        questionnaire = get_object_or_404(Questionnaire, id=questionnaire_id, is_active=True)
-        
-        # Import here to avoid circular imports
-        from questionnaires.models import Response, Answer
-        
-        # Get responses
-        responses = Response.objects.filter(
-            patient=patient,
-            questionnaire=questionnaire
-        ).order_by('-created_at')
-        
-        export_data = []
-        for response in responses:
-            response_data = {
-                'patient_id': patient.patient_id,
-                'patient_name': patient.name,
-                'questionnaire_title': questionnaire.title,
-                'created_at': response.submitted_at.strftime('%Y-%m-%d %H:%M:%S') if response.submitted_at else response.started_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'answers': []
-            }
-            
-            # Get answers for this response
-            answers = Answer.objects.filter(response=response).order_by('question__order')
-            for answer in answers:
-                answer_text = answer.text_answer
-                if answer.option_answer.exists():
-                    # If there are option answers, use the option text
-                    option = answer.option_answer.first()
-                    answer_text = option.text if option else answer_text
-                
-                response_data['answers'].append({
-                    'question_text': answer.question.question_text,
-                    'answer_text': answer_text
-                })
-            
-            export_data.append(response_data)
-        
-        return JsonResponse({
-            'success': True,
-            'responses': export_data
-        })
-        
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+
+

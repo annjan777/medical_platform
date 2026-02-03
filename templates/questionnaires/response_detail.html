@@ -1,26 +1,245 @@
 {% extends "dashboard/admin/base.html" %}
 
-{% block page_title %}Response{% endblock %}
+{% block page_title %}Response Details{% endblock %}
 
 {% block admin_content %}
-<div class="card">
-  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
-    <h2 style="margin:0;">Response</h2>
-    <a class="btn btn-danger" href="{% url 'questionnaires:response_delete' response.pk %}">Delete</a>
-  </div>
-  <div class="card-body">
-    <p><strong>Questionnaire:</strong> {{ response.questionnaire }}</p>
-    <p><strong>Respondent:</strong> {{ response.respondent.email|default:"-" }}</p>
-    <p><strong>Submitted:</strong> {{ response.submitted_at|default:response.started_at }}</p>
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 style="margin:0;">Response Details</h2>
+        <div class="btn-group">
+          <a href="{% url 'questionnaires:response_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+          </a>
+          <a class="btn btn-danger" href="{% url 'questionnaires:response_delete' response.pk %}">
+            <i class="fas fa-trash"></i> Delete
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Response Information -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h5 class="text-muted mb-3">Response Information</h5>
+            <table class="table table-sm">
+              <tr>
+                <td><strong>Questionnaire:</strong></td>
+                <td>{{ response.questionnaire.title }}</td>
+              </tr>
+              <tr>
+                <td><strong>Questionnaire Type:</strong></td>
+                <td>{{ response.questionnaire.get_questionnaire_type_display|default:"-" }}</td>
+              </tr>
+              <tr>
+                <td><strong>Status:</strong></td>
+                <td>
+                  {% if response.is_complete %}
+                    <span class="badge bg-success">Complete</span>
+                  {% else %}
+                    <span class="badge bg-warning">In Progress</span>
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Started:</strong></td>
+                <td>{{ response.started_at|date:"Y-m-d H:i:s" }}</td>
+              </tr>
+              <tr>
+                <td><strong>Submitted:</strong></td>
+                <td>{{ response.submitted_at|date:"Y-m-d H:i:s"|default:"-" }}</td>
+              </tr>
+              {% if response.started_at and response.submitted_at %}
+              <tr>
+                <td><strong>Duration:</strong></td>
+                <td>{{ response.submitted_at|timeuntil:response.started_at }}</td>
+              </tr>
+              {% endif %}
+              <tr>
+                <td><strong>Respondent:</strong></td>
+                <td>
+                  {% if response.respondent %}
+                    {{ response.respondent.get_full_name|default:response.respondent.username }}
+                    {% if response.respondent.role %}
+                      <span class="badge bg-info ms-1">{{ response.respondent.get_role_display }}</span>
+                    {% endif %}
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+              </tr>
+            </table>
+          </div>
+          
+          <div class="col-md-6">
+            <h5 class="text-muted mb-3">Patient Information</h5>
+            {% if response.patient %}
+              <table class="table table-sm">
+                <tr>
+                  <td><strong>Patient ID:</strong></td>
+                  <td><span class="badge bg-primary">{{ response.patient.patient_id }}</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Name:</strong></td>
+                  <td>{{ response.patient.first_name }} {{ response.patient.last_name }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Date of Birth:</strong></td>
+                  <td>{{ response.patient.date_of_birth|date:"Y-m-d" }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Age:</strong></td>
+                  <td>{{ response.patient.age }} years</td>
+                </tr>
+                <tr>
+                  <td><strong>Gender:</strong></td>
+                  <td>{{ response.patient.get_gender_display }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Phone:</strong></td>
+                  <td>{{ response.patient.phone_number|default:"-" }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Email:</strong></td>
+                  <td>{{ response.patient.email|default:"-" }}</td>
+                </tr>
+              </table>
+            {% else %}
+              <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No patient associated with this response.
+              </div>
+            {% endif %}
+          </div>
+        </div>
 
-    <h3>Answers</h3>
-    <ul>
-      {% for a in answers %}
-        <li><strong>{{ a.question.text }}</strong><br>{{ a.get_value }}</li>
-      {% empty %}
-        <li>No answers.</li>
-      {% endfor %}
-    </ul>
+        <!-- Technical Details -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h5 class="text-muted mb-3">Technical Details</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tr>
+                    <td><strong>IP Address:</strong></td>
+                    <td>{{ response.ip_address|default:"-" }}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>User Agent:</strong></td>
+                    <td class="text-break">{{ response.user_agent|default:"-" }}</td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tr>
+                    <td><strong>Response ID:</strong></td>
+                    <td>{{ response.id }}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Session:</strong></td>
+                    <td>{{ response.session|default:"-" }}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Answers -->
+        <div class="row">
+          <div class="col-12">
+            <h5 class="text-muted mb-3">Questionnaire Answers</h5>
+            {% if response.answers.exists %}
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th width="5%">#</th>
+                      <th width="45%">Question</th>
+                      <th width="15%">Type</th>
+                      <th width="35%">Answer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for answer in response.answers.all|dictsort:"question.order" %}
+                      <tr>
+                        <td>{{ answer.question.order }}</td>
+                        <td>
+                          <strong>{{ answer.question.question_text }}</strong>
+                          {% if answer.question.is_required %}
+                            <span class="badge bg-danger ms-1">Required</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <span class="badge bg-secondary">{{ answer.question.get_question_type_display }}</span>
+                        </td>
+                        <td>
+                          {% if answer.text_answer %}
+                            {{ answer.text_answer }}
+                          {% elif answer.option_answer.exists %}
+                            {% for option in answer.option_answer.all %}
+                              <span class="badge bg-info">{{ option.text }}</span>
+                            {% endfor %}
+                          {% else %}
+                            <span class="text-muted">No answer provided</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="4" class="text-center text-muted">No answers found.</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Statistics -->
+              <div class="row mt-3">
+                <div class="col-md-4">
+                  <div class="card bg-light">
+                    <div class="card-body text-center">
+                      <h4 class="mb-1">{{ response.answers.count }}</h4>
+                      <small class="text-muted">Questions Answered</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card bg-light">
+                    <div class="card-body text-center">
+                      <h4 class="mb-1">{{ response.questionnaire.questions.count }}</h4>
+                      <small class="text-muted">Total Questions</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card bg-light">
+                    <div class="card-body text-center">
+                      <h4 class="mb-1">
+                        {% with answered=response.answers.count total=response.questionnaire.questions.count %}
+                          {% if total > 0 %}
+                            {% widthratio answered total 100 %}%
+                          {% else %}
+                            0%
+                          {% endif %}
+                        {% endwith %}
+                      </h4>
+                      <small class="text-muted">Completion Rate</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No answers have been recorded for this response yet.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

@@ -259,10 +259,7 @@
                     </div>
                 </div>
                 
-                <div class="d-flex justify-content-between">
-                    <button type="button" class="btn btn-secondary" id="backToStep1">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Patient Registration
-                    </button>
+                <div class="d-flex justify-content-end">
                     <button type="button" class="btn btn-success" id="startQuestionnaireBtn" disabled>
                         <i class="fas fa-play me-2"></i>Start Questionnaire
                     </button>
@@ -321,12 +318,6 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-info" id="exportDataBtn">
-                        <i class="fas fa-download me-2"></i>Export Data
-                    </button>
-                    <button type="button" class="btn btn-success" id="registerAnotherPatientBtn">
-                        <i class="fas fa-user-plus me-2"></i>Register Another Patient
-                    </button>
                     <button type="button" class="btn btn-primary" id="newScreeningBtn">
                         <i class="fas fa-plus me-2"></i>Start New Screening
                     </button>
@@ -494,18 +485,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('patientSearchInput');
     
     // Patient search
-    if (searchBtn) {
-        searchBtn.addEventListener('click', searchPatients);
-    }
-    
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                searchPatients();
-            }
-        });
-    }
+    searchBtn.addEventListener('click', searchPatients);
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchPatients();
+        }
+    });
     
     // Patient registration
     patientForm.addEventListener('submit', function(e) {
@@ -514,25 +500,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Navigation buttons
-    document.getElementById('backToStep1').addEventListener('click', showStep1);
     document.getElementById('startQuestionnaireBtn').addEventListener('click', startQuestionnaire);
     document.getElementById('submitQuestionnaireBtn').addEventListener('click', submitQuestionnaire);
     
     // Success modal buttons
-    document.getElementById('registerAnotherPatientBtn').addEventListener('click', function() {
-        bootstrap.Modal.getInstance(document.getElementById('successModal')).hide();
-        resetWorkflow();
-    });
-    
     document.getElementById('newScreeningBtn').addEventListener('click', function() {
         bootstrap.Modal.getInstance(document.getElementById('successModal')).hide();
         resetWorkflow();
     });
     
-    document.getElementById('exportDataBtn').addEventListener('click', exportQuestionnaireData);
-    
     document.getElementById('viewDashboardBtn').addEventListener('click', function() {
-        window.location.href = '{% url "health_assistant:dashboard" %}';
+        window.location.href = '/health-assistant/dashboard/';
     });
 });
 
@@ -716,41 +694,34 @@ function updateProgressIndicator(step) {
 function loadQuestionnaires() {
     const listDiv = document.getElementById('questionnaireList');
     
-    fetch('/health-assistant/api/questionnaires/', {
+    // Load available questionnaires
+    fetch('/questionnaires/api/list/', {
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
         }
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            const questionnaireList = document.getElementById('questionnaireList');
-            questionnaireList.innerHTML = '';
-            
-            if (data.questionnaires.length === 0) {
-                questionnaireList.innerHTML = '<div class="alert alert-info">No questionnaires available.</div>';
-                return;
-            }
-            
-            data.questionnaires.forEach(questionnaire => {
-                const questionnaireCard = document.createElement('div');
-                questionnaireCard.className = 'col-md-6 col-lg-4 mb-3';
-                questionnaireCard.innerHTML = `
-                    <div class="card questionnaire-card h-100" data-questionnaire-id="${questionnaire.id}" data-questionnaire-title="${questionnaire.title}" onclick="selectQuestionnaire(${questionnaire.id}, '${questionnaire.title.replace(/'/g, "\\'")}')">
-                        <div class="card-body">
-                            <h6 class="card-title">${questionnaire.title}</h6>
-                            <p class="card-text small text-muted">${questionnaire.description || 'No description available'}</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-primary">${questionnaire.question_count} questions</span>
-                                <i class="fas fa-arrow-right text-primary"></i>
-                            </div>
+        if (data.questionnaires && data.questionnaires.length > 0) {
+            listDiv.innerHTML = data.questionnaires.map(q => `
+                <div class="card questionnaire-card mb-2" onclick="selectQuestionnaire(${q.id}, '${q.title.replace(/'/g, "\\'")}', ${q.question_count || 0})">
+                    <div class="card-body">
+                        <h6 class="card-title mb-1">${q.title}</h6>
+                        <p class="card-text small text-muted">${q.description || 'No description'}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">${q.question_count || 0} questions</span>
+                            <i class="fas fa-chevron-right text-muted"></i>
                         </div>
                     </div>
-                `;
-                questionnaireList.appendChild(questionnaireCard);
-            });
+                </div>
+            `).join('');
         } else {
-            showAlert('Error loading questionnaires: ' + data.message, 'danger');
+            listDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No questionnaires available. Please contact administrator.
+                </div>
+            `;
         }
     })
     .catch(error => {
@@ -780,24 +751,73 @@ function startQuestionnaire() {
     
     showStep3();
     
-    // Load questionnaire content directly via API
+    // Load questionnaire content
     const contentDiv = document.getElementById('questionnaireContent');
     contentDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2">Loading questionnaire...</p></div>';
     
     document.getElementById('questionnaireTitle').textContent = selectedQuestionnaire.title;
     
-    // Fetch questionnaire data directly
-    fetch(`/health-assistant/api/questionnaire/${selectedQuestionnaire.id}/`, {
+    fetch(`/questionnaires/${selectedQuestionnaire.id}/start/`, {
         headers: {
             'X-CSRFToken': getCookie('csrftoken')
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            renderQuestionnaire(data.questionnaire);
+    .then(response => response.text())
+    .then(html => {
+        // Extract the questionnaire form from the response
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const questionnaireForm = tempDiv.querySelector('form');
+        
+        if (questionnaireForm) {
+            contentDiv.innerHTML = questionnaireForm.outerHTML;
+            
+            // Remove unwanted navigation buttons from the loaded form
+            const loadedForm = contentDiv.querySelector('form');
+            
+            // Remove any buttons with text containing "Previous", "Back", "Next", etc.
+            const unwantedButtons = loadedForm.querySelectorAll('button');
+            unwantedButtons.forEach(button => {
+                const buttonText = button.textContent.toLowerCase();
+                if (buttonText.includes('previous') || buttonText.includes('back') || 
+                    buttonText.includes('next') || buttonText.includes('submit') && 
+                    button.id !== 'submitQuestionnaireBtn') {
+                    button.remove();
+                }
+            });
+            
+            // Remove any navigation divs or button groups
+            const navigationElements = loadedForm.querySelectorAll('.d-flex.justify-content-between, .btn-group, .navigation');
+            navigationElements.forEach(element => {
+                // Check if it contains navigation buttons and remove if so
+                const buttons = element.querySelectorAll('button');
+                let hasNavigationButtons = false;
+                buttons.forEach(btn => {
+                    const text = btn.textContent.toLowerCase();
+                    if (text.includes('previous') || text.includes('back') || text.includes('next')) {
+                        hasNavigationButtons = true;
+                    }
+                });
+                if (hasNavigationButtons) {
+                    element.remove();
+                }
+            });
+            
+            // Add patient info to the form
+            const patientInfo = document.createElement('input');
+            patientInfo.type = 'hidden';
+            patientInfo.name = 'patient_id';
+            patientInfo.value = currentPatient.id;
+            loadedForm.appendChild(patientInfo);
+            
+            // Make sure questionnaire_id is in the form
+            const questionnaireInfo = document.createElement('input');
+            questionnaireInfo.type = 'hidden';
+            questionnaireInfo.name = 'questionnaire_id';
+            questionnaireInfo.value = selectedQuestionnaire.id;
+            loadedForm.appendChild(questionnaireInfo);
         } else {
-            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaire: ' + data.message + '</div>';
+            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaire content.</div>';
         }
     })
     .catch(error => {
@@ -894,7 +914,7 @@ function renderQuestionField(question) {
 }
 
 function submitQuestionnaire() {
-    const form = document.getElementById('healthAssistantQuestionnaireForm');
+    const form = document.querySelector('#questionnaireContent form');
     const submitBtn = document.getElementById('submitQuestionnaireBtn');
     
     if (!form) {
@@ -902,25 +922,67 @@ function submitQuestionnaire() {
         return;
     }
     
-    // Validate form
-    if (!form.checkValidity()) {
-        form.reportValidity();
+    // Validate that we have a patient
+    if (!currentPatient) {
+        showAlert('No patient selected. Please register or select a patient first.', 'danger');
         return;
     }
     
-    // Debug: Log form details
-    console.log('Submitting questionnaire form:');
-    console.log('Patient ID:', currentPatient.id);
-    console.log('Questionnaire ID:', selectedQuestionnaire.id);
+    // Validate required questions
+    const requiredQuestions = form.querySelectorAll('[required]');
+    const unansweredRequired = [];
+    
+    requiredQuestions.forEach(question => {
+        const questionType = question.type;
+        const questionName = question.name;
+        let isAnswered = false;
+        
+        if (questionType === 'radio') {
+            // For radio buttons, check if any option in the group is selected
+            const radioGroup = form.querySelectorAll(`input[name="${questionName}"]:checked`);
+            isAnswered = radioGroup.length > 0;
+        } else if (questionType === 'checkbox') {
+            // For checkboxes, check if it's checked
+            isAnswered = question.checked;
+        } else {
+            // For text inputs, textareas, selects
+            isAnswered = question.value.trim() !== '';
+        }
+        
+        if (!isAnswered) {
+            // Find the question text to show in error message
+            const questionLabel = form.querySelector(`label[for="${question.id}"]`) || 
+                               form.querySelector(`label[for="${questionName}"]`) ||
+                               question.closest('.form-group, .question-container, .mb-4')?.querySelector('label, h6, .question-text');
+            
+            let questionText = 'Required question';
+            if (questionLabel) {
+                questionText = questionLabel.textContent.replace(/\*$/, '').trim();
+            }
+            
+            unansweredRequired.push(questionText);
+        }
+    });
+    
+    // If there are unanswered required questions, show error and prevent submission
+    if (unansweredRequired.length > 0) {
+        showAlert(`Please answer the following required questions: ${unansweredRequired.join(', ')}`, 'warning');
+        return;
+    }
     
     // Show loading state
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
     
-    // Collect form data
+    // Create FormData and ensure patient_id is included
     const formData = new FormData(form);
     
-    // Submit to our new API endpoint
+    // Make sure patient_id is in the form data
+    if (!formData.has('patient_id')) {
+        formData.append('patient_id', currentPatient.patient_id);
+    }
+    
+    // Submit to our own API endpoint instead of the questionnaire app
     fetch('/health-assistant/api/submit-questionnaire/', {
         method: 'POST',
         body: formData,
@@ -929,34 +991,17 @@ function submitQuestionnaire() {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => {
-        console.log('Response status:', response.status);
-        
-        // Check if response is JSON or HTML
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            return response.json();
-        } else {
-            // If it's HTML, it means the AJAX handling failed
-            return response.text().then(html => {
-                throw new Error('Server returned HTML instead of JSON. AJAX handling may have failed.');
-            });
-        }
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Response data:', data);
         if (data.success) {
             showSuccessModal();
         } else {
             showAlert(data.message || 'Submission failed. Please try again.', 'danger');
-            if (data.errors) {
-                console.log('Form errors:', data.errors);
-            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('An error occurred during submission: ' + error.message, 'danger');
+        showAlert('An error occurred during submission. Please try again.', 'danger');
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -978,72 +1023,6 @@ function showSuccessModal() {
     modal.show();
 }
 
-function exportQuestionnaireData() {
-    if (!currentPatient || !selectedQuestionnaire) {
-        showAlert('No data available for export', 'warning');
-        return;
-    }
-    
-    // Show loading state
-    const exportBtn = document.getElementById('exportDataBtn');
-    const originalText = exportBtn.innerHTML;
-    exportBtn.disabled = true;
-    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
-    
-    // Fetch the latest response data
-    fetch(`/health-assistant/api/export-questionnaire-data/?patient_id=${currentPatient.id}&questionnaire_id=${selectedQuestionnaire.id}`, {
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Create CSV content
-            const csvContent = generateCSV(data.responses);
-            
-            // Create download link
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `questionnaire_data_${currentPatient.patient_id}_${currentPatient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            
-            showAlert('Data exported successfully!', 'success');
-        } else {
-            showAlert('Export failed: ' + data.message, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Export error:', error);
-        showAlert('Export failed. Please try again.', 'danger');
-    })
-    .finally(() => {
-        exportBtn.disabled = false;
-        exportBtn.innerHTML = originalText;
-    });
-}
-
-function generateCSV(responses) {
-    let csv = 'Patient ID,Patient Name,Questionnaire,Question,Answer,Date Submitted\n';
-    
-    responses.forEach(response => {
-        response.answers.forEach(answer => {
-            csv += '"' + response.patient_id + '",';
-            csv += '"' + response.patient_name + '",';
-            csv += '"' + response.questionnaire_title + '",';
-            csv += '"' + answer.question_text + '",';
-            csv += '"' + answer.answer_text + '",';
-            csv += '"' + response.created_at + '"\n';
-        });
-    });
-    
-    return csv;
-}
 
 function resetWorkflow() {
     // Reset all variables
@@ -1059,7 +1038,6 @@ function resetWorkflow() {
     // Reset progress
     updateProgressIndicator(1);
     showStep1();
-}
 }
 
 function getCookie(name) {
