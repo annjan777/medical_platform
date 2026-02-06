@@ -1,0 +1,23 @@
+# Basic Requirements for Medical Platform
+# Compatible with older Python versions
+
+# Core Django
+Django==3.2.25
+
+# Database
+psycopg2-binary==2.9.7
+
+# REST API
+djangorestframework==3.14.0
+
+# Image Processing
+Pillow==9.5.0
+
+# Environment Variables
+python-decouple==3.8
+
+# Static Files
+whitenoise==6.5.0
+
+# Production Server
+gunicorn==21.2.0

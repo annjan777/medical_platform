@@ -22,7 +22,7 @@ urlpatterns = [
     # Authentication
     # =========================
     path("login/", MedicalLoginView.as_view(), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
+    path("logout/", auth_views.LogoutView.as_view(next_page="/"), name="logout"),
 
     # =========================
     # Dashboards

@@ -22,7 +22,7 @@ AUTHENTICATION_BACKENDS = [
 # Login settings
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = '/'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
