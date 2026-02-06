@@ -1,6 +1,7 @@
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.contrib.auth import logout
 
 # Create your views here.
 
@@ -42,3 +43,9 @@ class MedicalLoginView(LoginView):
             return reverse('dashboard:admin_dashboard')
         else:
             return reverse('patients:add')
+
+
+def custom_logout(request):
+    """Custom logout that mimics Django admin logout behavior"""
+    logout(request)
+    return redirect('/')

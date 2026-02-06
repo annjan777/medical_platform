@@ -7,7 +7,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 
-from accounts.views import MedicalLoginView, home
+from accounts.views import MedicalLoginView, home, custom_logout
 from .admin import admin_site
 
 urlpatterns = [
@@ -22,7 +22,7 @@ urlpatterns = [
     # Authentication
     # =========================
     path("login/", MedicalLoginView.as_view(), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(next_page="/"), name="logout"),
+    path("logout/", custom_logout, name="logout"),
 
     # =========================
     # Dashboards
