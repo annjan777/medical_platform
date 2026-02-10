@@ -7,7 +7,7 @@
 <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-100">Screening Session #{{ session.id|stringformat:"06d" }}</h1>
+        <h1 class="text-3xl font-bold text-black">Screening Session #{{ session.id|stringformat:"06d" }}</h1>
         <div class="flex space-x-4">
             <a href="{% url 'screening:session_list' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left mr-2"></i> Back to Sessions
@@ -23,17 +23,17 @@
     <!-- Session Info Card -->
     <div class="card mb-8">
         <div class="card-header">
-            <h2 class="text-lg font-semibold text-gray-100">Session Information</h2>
+            <h2 class="text-lg font-semibold text-black">Session Information</h2>
         </div>
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
                     <p class="text-gray-400 text-sm">Patient</p>
-                    <p class="text-gray-100 font-medium">{{ session.patient.get_full_name|default:session.patient.email }}</p>
+                    <p class="text-black font-medium">{{ session.patient.get_full_name|default:session.patient.email }}</p>
                 </div>
                 <div>
                     <p class="text-gray-400 text-sm">Screening Type</p>
-                    <p class="text-gray-100 font-medium">{{ session.screening_type.name }}</p>
+                    <p class="text-black font-medium">{{ session.screening_type.name }}</p>
                 </div>
                 <div>
                     <p class="text-gray-400 text-sm">Status</p>
@@ -43,22 +43,22 @@
                 </div>
                 <div>
                     <p class="text-gray-400 text-sm">Device Used</p>
-                    <p class="text-gray-100 font-medium">{{ session.device_used.name|default:"N/A" }}</p>
+                    <p class="text-black font-medium">{{ session.device_used.name|default:"N/A" }}</p>
                 </div>
                 <div>
                     <p class="text-gray-400 text-sm">Scheduled Date</p>
-                    <p class="text-gray-100 font-medium">{{ session.scheduled_date|date:"M d, Y H:i" }}</p>
+                    <p class="text-black font-medium">{{ session.scheduled_date|date:"M d, Y H:i" }}</p>
                 </div>
                 <div>
                     <p class="text-gray-400 text-sm">Conducted By</p>
-                    <p class="text-gray-100 font-medium">{{ session.conducted_by.get_full_name|default:session.conducted_by.email|default:"Not assigned" }}</p>
+                    <p class="text-black font-medium">{{ session.conducted_by.get_full_name|default:session.conducted_by.email|default:"Not assigned" }}</p>
                 </div>
             </div>
             
             {% if session.notes %}
             <div class="mt-6">
                 <p class="text-gray-400 text-sm mb-2">Notes</p>
-                <p class="text-gray-100">{{ session.notes }}</p>
+                <p class="text-black">{{ session.notes }}</p>
             </div>
             {% endif %}
         </div>
@@ -68,13 +68,13 @@
     {% if session.actual_start_time or session.actual_end_time %}
     <div class="card mb-8">
         <div class="card-header">
-            <h2 class="text-lg font-semibold text-gray-100">Timing Information</h2>
+            <h2 class="text-lg font-semibold text-black">Timing Information</h2>
         </div>
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-gray-400 text-sm">Start Time</p>
-                    <p class="text-gray-100 font-medium">
+                    <p class="text-black font-medium">
                         {% if session.actual_start_time %}
                             {{ session.actual_start_time|date:"M d, Y H:i" }}
                         {% else %}
@@ -84,7 +84,7 @@
                 </div>
                 <div>
                     <p class="text-gray-400 text-sm">End Time</p>
-                    <p class="text-gray-100 font-medium">
+                    <p class="text-black font-medium">
                         {% if session.actual_end_time %}
                             {{ session.actual_end_time|date:"M d, Y H:i" }}
                         {% else %}
@@ -96,7 +96,7 @@
             {% if session.duration %}
             <div class="mt-4">
                 <p class="text-gray-400 text-sm">Duration</p>
-                <p class="text-gray-100 font-medium">{{ session.duration }} minutes</p>
+                <p class="text-black font-medium">{{ session.duration }} minutes</p>
             </div>
             {% endif %}
         </div>
@@ -107,7 +107,7 @@
     {% if session.screening_result %}
     <div class="card">
         <div class="card-header">
-            <h2 class="text-lg font-semibold text-gray-100">Screening Results</h2>
+            <h2 class="text-lg font-semibold text-black">Screening Results</h2>
         </div>
         <div class="card-body">
             <div class="mb-4">
@@ -120,14 +120,14 @@
             {% if session.screening_result.findings %}
             <div class="mb-4">
                 <p class="text-gray-400 text-sm mb-2">Findings</p>
-                <p class="text-gray-100">{{ session.screening_result.findings }}</p>
+                <p class="text-black">{{ session.screening_result.findings }}</p>
             </div>
             {% endif %}
             
             {% if session.screening_result.recommendations %}
             <div class="mb-4">
                 <p class="text-gray-400 text-sm mb-2">Recommendations</p>
-                <p class="text-gray-100">{{ session.screening_result.recommendations }}</p>
+                <p class="text-black">{{ session.screening_result.recommendations }}</p>
             </div>
             {% endif %}
         </div>
@@ -138,7 +138,7 @@
     {% if session.attachments.exists %}
     <div class="card">
         <div class="card-header">
-            <h2 class="text-lg font-semibold text-gray-100">Attachments</h2>
+            <h2 class="text-lg font-semibold text-black">Attachments</h2>
         </div>
         <div class="card-body">
             <div class="space-y-4">
@@ -147,7 +147,7 @@
                     <div class="flex items-center">
                         <i class="fas fa-file-alt text-gray-400 mr-3"></i>
                         <div>
-                            <p class="text-gray-100 font-medium">{{ attachment.title }}</p>
+                            <p class="text-black font-medium">{{ attachment.title }}</p>
                             <p class="text-gray-400 text-sm">{{ attachment.description|default:"No description" }}</p>
                         </div>
                     </div>
@@ -285,7 +285,7 @@
     justify-content: space-between;
 }
 
-.text-gray-100 {
+.text-black {
     color: #f3f4f6;
 }
 

@@ -7,7 +7,7 @@
 <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-100">Screening Sessions</h1>
+        <h1 class="text-3xl font-bold text-black">Screening Sessions</h1>
         <a href="{% url 'screening:session_create' %}" class="btn btn-primary">
             <i class="fas fa-plus mr-2"></i> New Screening Session
         </a>
@@ -80,13 +80,13 @@
                                         {{ session.patient.first_name.0 }}{{ session.patient.last_name.0 }}
                                     </div>
                                     <div>
-                                        <p class="text-gray-100 font-medium">{{ session.patient.get_full_name }}</p>
+                                        <p class="text-black font-medium">{{ session.patient.get_full_name }}</p>
                                         <p class="text-gray-400 text-xs">{{ session.patient.email|default:"No email" }}</p>
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <span class="text-gray-100">{{ session.screening_type.name }}</span>
+                                <span class="text-black">{{ session.screening_type.name }}</span>
                             </td>
                             <td>
                                 <span class="px-2 py-1 text-xs font-medium rounded-full {% if session.status == 'completed' %}bg-green-900 text-green-200{% elif session.status == 'in_progress' %}bg-blue-900 text-blue-200{% elif session.status == 'scheduled' %}bg-yellow-900 text-yellow-200{% elif session.status == 'cancelled' %}bg-red-900 text-red-200{% else %}bg-gray-700 text-gray-300{% endif %}">
@@ -94,10 +94,10 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="text-gray-100">{{ session.scheduled_date|date:"M d, Y H:i" }}</span>
+                                <span class="text-black">{{ session.scheduled_date|date:"M d, Y H:i" }}</span>
                             </td>
                             <td>
-                                <span class="text-gray-100">{{ session.device_used.name|default:"N/A" }}</span>
+                                <span class="text-black">{{ session.device_used.name|default:"N/A" }}</span>
                             </td>
                             <td>
                                 <div class="flex space-x-2">
@@ -261,7 +261,7 @@
     color: #fca5a5;
 }
 
-.text-gray-100 {
+.text-black {
     color: #f3f4f6;
 }
 

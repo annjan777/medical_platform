@@ -1,19 +1,19 @@
 /* Modern Admin Theme */
 :root {
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
-    --secondary: #6b7280;
-    --success: #10b981;
-    --info: #3b82f6;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --light: #f9fafb;
-    --dark: #111827;
+    --primary: #10b981;  /* Light medical blue */
+    --primary-hover: #0d6efd;  /* Darker medical blue */
+    --secondary: #6c757d;  /* Light gray */
+    --success: #198754;  /* Green */
+    --info: #0d6efd;  /* Blue */
+    --warning: #ffc107;  /* Yellow */
+    --danger: #dc3545;  /* Red */
+    --light: #f8fafc;  /* Light background */
+    --dark: #111827;  /* Dark text */
 }
 
 /* Header */
 #header {
-    background: var(--dark);
+    background: var(--primary);  /* Light medical blue */
     color: white;
     padding: 0.8rem 1.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

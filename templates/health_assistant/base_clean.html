@@ -12,18 +12,19 @@
     
     <style>
         :root {
-            --medical-primary: #2c7a7b;
-            --medical-primary-dark: #2a696a;
-            --medical-secondary: #4299e1;
-            --medical-light: #f0f8ff;
-            --medical-success: #28a745;
-            --medical-warning: #ffc107;
-            --medical-danger: #dc3545;
+            /* Light Medical Platform Theme */
+            --medical-primary: #10b981;  /* Light medical blue */
+            --medical-primary-dark: #0d6efd;  /* Darker shade */
+            --medical-secondary: #6c757d;  /* Light gray */
+            --medical-light: #f8f9fa;  /* Very light blue */
+            --medical-success: #198754;  /* Green */
+            --medical-warning: #ffc107;  /* Yellow */
+            --medical-danger: #dc3545;  /* Red */
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            background-color: #f8fafc;  /* Light background */
         }
         
         .navbar-custom {
@@ -213,7 +214,37 @@
             color: #6c757d;
         }
         
-        @media (max-width: 768px) {
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28255, 255, 255, 1%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+        }
+        
+        .navbar-toggler {
+            border-color: rgba(255, 255, 255, 0.3);
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .navbar-toggler:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+        }
+        
+        @media (max-width: 991.98px) {
+            .navbar-custom {
+                padding: 0.5rem 1rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            
+            .navbar-brand strong {
+                font-size: 0.9rem;
+            }
+            
             .sidebar {
                 min-height: auto;
                 margin-bottom: 20px;
@@ -226,6 +257,58 @@
             .stat-card {
                 margin-bottom: 15px;
             }
+            
+            .navbar-nav {
+                padding: 1rem 0;
+                background-color: rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                margin-top: 0.5rem;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.75rem 1rem;
+                margin: 0.25rem 0;
+                border-radius: 6px;
+                transition: all 0.3s ease;
+            }
+            
+            .navbar-nav .nav-link:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+            
+            .navbar-nav .dropdown-menu {
+                background-color: var(--medical-primary);
+                border: none;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            
+            .navbar-nav .dropdown-item {
+                color: white;
+                padding: 0.5rem 1rem;
+            }
+            
+            .navbar-nav .dropdown-item:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+            
+            .navbar-nav .dropdown-divider {
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar-brand {
+                font-size: 0.9rem;
+            }
+            
+            .navbar-brand strong {
+                font-size: 0.8rem;
+            }
+            
+            .navbar-brand i {
+                font-size: 1rem;
+            }
         }
     </style>
     
@@ -236,17 +319,18 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
             <a class="navbar-brand" href="{% url 'health_assistant:home' %}">
                 <i class="fas fa-heartbeat me-2"></i>
                 <strong>Medical Data Collection Platform</strong>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-
-                <ul class="navbar-nav me-auto">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto d-lg-none">
+                    <!-- Navigation items only in mobile/tablet view -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'health_assistant:home' %}">
                             <i class="fas fa-tachometer-alt me-1"></i> Dashboard
@@ -269,17 +353,14 @@
                     </li>
                 </ul>
                 
-                <ul class="navbar-nav">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle me-1"></i>
                             {{ request.user.get_full_name|default:request.user.email|default:"User" }}
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
                         </ul>
                     </li>
                 </ul>

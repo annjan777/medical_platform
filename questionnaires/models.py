@@ -89,12 +89,14 @@ class Question(models.Model):
     TYPE_TRUE_FALSE = 'true_false'
     TYPE_MULTIPLE_CHOICE = 'multiple_choice'
     TYPE_SHORT_ANSWER = 'short_answer'
+    TYPE_ATTACHMENT = 'attachment'
     
     QUESTION_TYPES = [
         (TYPE_YES_NO, 'Yes/No'),
         (TYPE_TRUE_FALSE, 'True/False'),
         (TYPE_MULTIPLE_CHOICE, 'Multiple Choice'),
         (TYPE_SHORT_ANSWER, 'Short Answer'),
+        (TYPE_ATTACHMENT, 'Attachment'),
     ]
     
     questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE, related_name='questions')
@@ -285,5 +287,7 @@ class Answer(models.Model):
             return self.text_answer
         elif self.question.question_type == Question.TYPE_SHORT_ANSWER:
             return self.text_answer
+        elif self.question.question_type == Question.TYPE_ATTACHMENT:
+            return self.file_answer
         else:
             return self.text_answer

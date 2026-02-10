@@ -13,13 +13,13 @@
     
     <style>
         :root {
-            --admin-primary: #6c757d;
-            --admin-primary-dark: #5a6268;
-            --admin-secondary: #007bff;
-            --admin-success: #28a745;
-            --admin-warning: #ffc107;
-            --admin-danger: #dc3545;
-            --admin-light: #f8f9fa;
+            --admin-primary: #10b981;  /* Light medical blue */
+            --admin-primary-dark: #0d6efd;  /* Darker shade */
+            --admin-secondary: #6c757d;  /* Light gray */
+            --admin-success: #198754;  /* Green */
+            --admin-warning: #ffc107;  /* Yellow */
+            --admin-danger: #dc3545;  /* Red */
+            --admin-light: #f8f9fa;  /* Very light blue */
         }
 
         * {
@@ -30,12 +30,13 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            background-color: #ffffff;  /* White background */
+            color: #000000;  /* Black text for visibility */
         }
         
         .navbar-custom {
             background: var(--admin-primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(14, 165, 233, 0.1);
         }
         
         .navbar-custom .navbar-brand,
@@ -45,28 +46,29 @@
         
         .navbar-custom .nav-link:hover {
             background-color: rgba(255,255,255,0.1);
-            border-radius: 5px;
+            border-radius: 6px;
         }
         
         .sidebar {
-            background: white;
+            background: #ffffff;
             min-height: calc(100vh - 56px);
-            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
             padding: 20px 0;
         }
         
         .sidebar .nav-link {
-            color: #495057;
+            color: #495057;  /* Dark gray text */
             padding: 12px 20px;
             margin: 2px 10px;
             border-radius: 8px;
             transition: all 0.3s ease;
+            font-weight: 500;
         }
         
         .sidebar .nav-link:hover {
             background-color: var(--admin-light);
             color: var(--admin-primary);
-            transform: translateX(5px);
+            transform: translateX(4px);
         }
         
         .sidebar .nav-link.active {
@@ -80,16 +82,26 @@
             margin: 0 auto;
         }
         
+        .admin-main-content {
+            background-color: #ffffff;  /* White background */
+            color: #000000;  /* Black text for visibility */
+            min-height: calc(100vh - 56px);
+        }
+        
         .card {
-            border: none;
+            border: 1px solid #dee2e6;  /* Lighter border */
             border-radius: 8px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .card h2 {
+            color: #000000;  /* Black text for H2 headings */
         }
         
         .card:hover {
             transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .card-header {
@@ -97,8 +109,6 @@
             color: white;
             border-radius: 8px 8px 0 0 !important;
             border: none;
-            padding: 12px 20px;
-        }
         
         .stat-card {
             background: white;
@@ -147,8 +157,8 @@
     <!-- Left Sidebar -->
     <aside class="admin-sidebar">
         <div class="sidebar-header">
-            <i class="fas fa-heartbeat sidebar-logo"></i>
-            <span class="sidebar-title">Medical Data Collection Platform <span style="color: var(--accent-color);">Admin</span></span>
+            <i class="fas fa-shield-alt sidebar-logo"></i>
+            <span class="sidebar-title">Admin</span>
         </div>
         <nav class="sidebar-nav">
             <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-item {% if 'admin/dashboard' in request.path %}active{% endif %}">

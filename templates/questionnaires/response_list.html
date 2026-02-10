@@ -5,7 +5,7 @@
 {% block admin_content %}
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
-    <h2 style="margin:0;">Questionnaire Responses</h2>
+    <h2 style="margin:0; color: #000000;">Questionnaire Responses</h2>
     <div class="d-flex gap-2">
       <select class="form-select form-select-sm" id="questionnaireFilter" style="width: auto;">
         <option value="">All Questionnaires</option>
@@ -16,7 +16,12 @@
         {% endfor %}
       </select>
       <input type="text" class="form-control form-control-sm" id="patientFilter" placeholder="Filter by Patient ID..." value="{{ request.GET.patient }}" style="width: 150px;">
+      <input type="date" class="form-control form-control-sm" id="dateFromFilter" value="{{ request.GET.date_from }}" style="width: auto; color: #212529; background-color: #ffffff;" title="From Date">
+      <input type="date" class="form-control form-control-sm" id="dateToFilter" value="{{ request.GET.date_to }}" style="width: auto; color: #212529; background-color: #ffffff;" title="To Date">
       <button class="btn btn-sm btn-primary" onclick="filterResponses()">Filter</button>
+      <button class="btn btn-sm btn-success" onclick="downloadResponses()" title="Download filtered responses">
+        <i class="fas fa-download me-1"></i> Download
+      </button>
     </div>
   </div>
   <div class="card-body">
@@ -113,10 +118,10 @@
           <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
               <li class="page-item">
-                <a class="page-link" href="?page=1{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}">First</a>
+                <a class="page-link" href="?page=1{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">First</a>
               </li>
               <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}">Previous</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Previous</a>
               </li>
             {% endif %}
             
@@ -126,10 +131,10 @@
             
             {% if page_obj.has_next %}
               <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}">Next</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Next</a>
               </li>
               <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}">Last</a>
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Last</a>
               </li>
             {% endif %}
           </ul>
@@ -140,7 +145,7 @@
         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
         <h4 class="text-muted">No responses found</h4>
         <p class="text-muted">
-          {% if request.GET.questionnaire or request.GET.patient %}
+          {% if request.GET.questionnaire or request.GET.patient or request.GET.date_from or request.GET.date_to %}
             Try adjusting your filters or <a href="{% url 'questionnaires:response_list' %}">clear all filters</a>.
           {% else %}
             No questionnaire responses have been submitted yet.
@@ -155,6 +160,8 @@
 function filterResponses() {
   const questionnaireId = document.getElementById('questionnaireFilter').value;
   const patientId = document.getElementById('patientFilter').value;
+  const dateFrom = document.getElementById('dateFromFilter').value;
+  const dateTo = document.getElementById('dateToFilter').value;
   
   let url = '{% url "questionnaires:response_list" %}?';
   const params = [];
@@ -165,8 +172,40 @@ function filterResponses() {
   if (patientId) {
     params.push('patient=' + patientId);
   }
+  if (dateFrom) {
+    params.push('date_from=' + dateFrom);
+  }
+  if (dateTo) {
+    params.push('date_to=' + dateTo);
+  }
   
   window.location.href = url + params.join('&');
+}
+
+function downloadResponses() {
+  const questionnaireId = document.getElementById('questionnaireFilter').value;
+  const patientId = document.getElementById('patientFilter').value;
+  const dateFrom = document.getElementById('dateFromFilter').value;
+  const dateTo = document.getElementById('dateToFilter').value;
+  
+  let url = '{% url "questionnaires:download_responses" %}?';
+  const params = [];
+  
+  if (questionnaireId) {
+    params.push('questionnaire=' + questionnaireId);
+  }
+  if (patientId) {
+    params.push('patient=' + patientId);
+  }
+  if (dateFrom) {
+    params.push('date_from=' + dateFrom);
+  }
+  if (dateTo) {
+    params.push('date_to=' + dateTo);
+  }
+  
+  // Open download URL in new window/tab
+  window.open(url + params.join('&'), '_blank');
 }
 
 // Auto-filter on change
@@ -176,6 +215,8 @@ document.getElementById('patientFilter').addEventListener('keypress', function(e
     filterResponses();
   }
 });
+document.getElementById('dateFromFilter').addEventListener('change', filterResponses);
+document.getElementById('dateToFilter').addEventListener('change', filterResponses);
 </script>
 {% endblock %}
 

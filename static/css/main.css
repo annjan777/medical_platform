@@ -1,21 +1,21 @@
 :root {
-    --primary: #0d9488;  /* Teal 600 */
-    --primary-light: #f0fdfa;  /* Teal 50 */
-    --primary-dark: #115e59;  /* Teal 800 */
-    --secondary: #3b82f6;  /* Blue 500 */
+    --primary: #10b981;  /* Light medical blue */
+    --primary-light: #f0fdfa;  /* Light blue */
+    --primary-dark: #0d6efd;  /* Darker medical blue */
+    --secondary: #6c757d;  /* Light gray */
     --accent: #8b5cf6;  /* Violet 500 */
-    --success: #10b981;  /* Emerald 500 */
-    --warning: #f59e0b;  /* Amber 500 */
-    --danger: #ef4444;  /* Red 500 */
-    --gray-50: #f9fafb;
+    --success: #198754;  /* Green */
+    --warning: #ffc107;  /* Yellow */
+    --danger: #dc3545;  /* Red */
+    --gray-50: #f8fafc;  /* Light background */
     --gray-100: #f3f4f6;
-    --gray-200: #e5e7eb;
+    --gray-200: #dee2e6;
     --gray-300: #d1d5db;
     --gray-400: #9ca3af;
-    --gray-500: #6b7280;
-    --gray-600: #4b5563;
-    --gray-700: #374151;
-    --gray-800: #1f2937;
+    --gray-500: #6c757d;
+    --gray-600: #495057;
+    --gray-700: #343a40;
+    --gray-800: #212529;
     --gray-900: #111827;
 }
 

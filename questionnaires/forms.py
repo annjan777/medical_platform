@@ -127,6 +127,9 @@ class ResponseForm(forms.ModelForm):
                         # For multiple choice, get the option ID
                         option = answer.option_answer.first()
                         self.initial[field_name] = option.id if option else None
+                    elif question.question_type == question.TYPE_ATTACHMENT:
+                        # For attachment, we don't set initial value (files can't be pre-filled)
+                        self.initial[field_name] = None
                     else:
                         # For other types, get the text answer
                         self.initial[field_name] = answer.get_value()
@@ -156,6 +159,13 @@ class ResponseForm(forms.ModelForm):
             # For short answer, use CharField with Textarea
             field_class = forms.CharField
             field_kwargs['widget'] = forms.Textarea(attrs={'rows': 3, 'class': 'form-control'})
+        elif question.question_type == question.TYPE_ATTACHMENT:
+            # For attachment, use FileField with validation
+            field_class = forms.FileField
+            field_kwargs['widget'] = forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': '.pdf,.xls,.xlsx,.csv,.txt,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp'
+            })
         elif question.question_type == question.TYPE_MULTIPLE_CHOICE:
             # For multiple choice, use ChoiceField with RadioSelect
             field_class = forms.ChoiceField
@@ -224,6 +234,15 @@ class ResponseForm(forms.ModelForm):
                             answer.option_answer.add(opt)
                         except QuestionOption.DoesNotExist:
                             answer.text_answer = str(value) if value else ''
+                elif question.question_type == question.TYPE_ATTACHMENT:
+                    # value is a file
+                    print(f"DEBUG: Processing attachment question {question.id}: {value}")
+                    if value:
+                        print(f"DEBUG: Found file: {value}, size: {value.size}")
+                        answer.file_answer = value
+                        print(f"DEBUG: Saved file to answer")
+                    else:
+                        print(f"DEBUG: No file found for attachment question {question.id}")
                 elif question.question_type in [question.TYPE_YES_NO, question.TYPE_TRUE_FALSE]:
                     answer.text_answer = str(value) if value else ''
                 elif question.question_type == question.TYPE_SHORT_ANSWER:

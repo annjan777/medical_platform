@@ -144,11 +144,6 @@
                                        title="View Details">
                                         <i class="fas fa-chart-bar"></i>
                                     </a>
-                                    <a href="{% url 'questionnaires:builder_edit' questionnaire.pk %}" 
-                                       class="text-green-400 hover:text-green-300" 
-                                       title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
                                     {% if questionnaire.responses.count == 0 %}
                                     <a href="{% url 'questionnaires:delete' questionnaire.pk %}" 
                                        class="text-red-400 hover:text-red-300" 

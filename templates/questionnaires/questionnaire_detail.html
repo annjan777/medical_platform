@@ -5,9 +5,8 @@
 {% block admin_content %}
 <div class="card">
   <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
-    <h2 style="margin:0;">{{ questionnaire.title }} (v{{ questionnaire.version }})</h2>
+    <h2 style="margin:0; color: #000000;">{{ questionnaire.title }} (v{{ questionnaire.version }})</h2>
     <div>
-      <a class="btn btn-secondary" href="{% url 'questionnaires:builder_edit' questionnaire.pk %}">Edit</a>
       <a class="btn btn-primary" href="{% url 'questionnaires:question_create' questionnaire.pk %}">Add question</a>
     </div>
   </div>
@@ -38,10 +37,10 @@
               <a href="{% url 'questionnaires:question_update' q.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
               <a href="{% url 'questionnaires:question_delete' q.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
               <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-outline-secondary move-up" {% if forloop.first %}disabled{% endif %}>
+                <button type="button" class="btn btn-outline-secondary move-up" {% if forloop.first %}disabled{% endif %}">
                   <i class="fas fa-arrow-up"></i>
                 </button>
-                <button type="button" class="btn btn-outline-secondary move-down" {% if forloop.last %}disabled{% endif %}>
+                <button type="button" class="btn btn-outline-secondary move-down" {% if forloop.last %}disabled{% endif %}">
                   <i class="fas fa-arrow-down"></i>
                 </button>
               </div>

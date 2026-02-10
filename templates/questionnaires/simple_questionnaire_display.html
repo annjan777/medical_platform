@@ -14,19 +14,8 @@
             {% endif %}
         </div>
 
-        <!-- Progress Bar -->
-        <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-sm text-gray-600">Progress</span>
-                <span class="text-sm text-gray-600"><span id="currentQuestion">1</span> of <span id="totalQuestions">{{ questions.count }}</span></span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-                <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-        </div>
-
         <!-- Questions Form -->
-        <form id="questionnaireForm" method="post" action="{% url 'questionnaires:questionnaire_start' questionnaire.pk %}" class="space-y-6">
+        <form id="questionnaireForm" method="post" action="{% url 'questionnaires:questionnaire_start' questionnaire.pk %}" class="space-y-6" enctype="multipart/form-data">
             {% csrf_token %}
             {% for question in questions %}
             <div class="question-container bg-white rounded-lg shadow-sm p-6" data-question-id="{{ question.id }}" data-question-order="{{ forloop.counter0 }}">
@@ -94,20 +83,34 @@
                               placeholder="Enter your answer here..."
                               {% if question.is_required %}required{% endif %}></textarea>
                 </div>
+
+                <!-- Attachment Question -->
+                {% elif question.question_type == 'attachment' %}
+                <div>
+                    <div class="border-2 border-dashed border-blue-300 rounded-lg p-4 hover:border-blue-400 transition-colors bg-blue-50 hover:bg-blue-100">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                <input id="question_{{ question.id }}" 
+                                       name="question_{{ question.id }}" 
+                                       type="file" 
+                                       class="form-control"
+                                       accept=".pdf,.xls,.xlsx,.csv,.txt,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp"
+                                       {% if question.is_required %}required{% endif %}>
+                            </div>
+                            <p class="mt-2 text-xs text-gray-500">PDF, XLS, CSV, TXT, DOC, Images (max 10MB)</p>
+                            <p class="mt-2 text-xs text-green-600 font-medium" id="file-name-{{ question.id }}"></p>
+                            <p class="mt-2 text-xs text-red-600 font-medium" id="file-error-{{ question.id }}"></p>
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
             </div>
             {% endfor %}
 
-            <!-- Navigation Buttons -->
-            <div class="flex justify-between items-center">
-                <button type="button" id="prevBtn" onclick="previousQuestion()" class="btn btn-secondary" disabled>
-                    <i class="fas fa-arrow-left mr-2"></i> Previous
-                </button>
-                <button type="button" id="nextBtn" onclick="nextQuestion()" class="btn btn-primary">
-                    Next <i class="fas fa-arrow-right ml-2"></i>
-                </button>
-                <button type="submit" id="submitBtn" class="btn btn-success hidden">
-                    <i class="fas fa-check mr-2"></i> Submit
+            <!-- Submit Button -->
+            <div class="text-center mt-6">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium text-lg transition-colors">
+                    <i class="fas fa-check mr-2"></i>Submit Questionnaire
                 </button>
             </div>
         </form>
@@ -161,7 +164,78 @@ function previousQuestion() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    showQuestion(0);
+    // File validation functions
+    window.showError = function(inputId, message) {
+        const questionContainer = document.querySelector(`[data-question-id="${inputId.replace('question_', '')}"]`);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'file-error mt-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm';
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${message}`;
+        questionContainer.appendChild(errorDiv);
+        
+        // Auto-remove error after 5 seconds
+        setTimeout(function() {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    };
+    
+    window.isAllowedExtension = function(filename) {
+        const allowedExtensions = ['.pdf', '.xls', '.xlsx', '.csv', '.txt', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif', '.bmp'];
+        const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+        return allowedExtensions.includes(extension);
+    };
+    
+    // Handle file upload functionality
+    const attachmentQuestions = document.querySelectorAll('[data-question-id]');
+    attachmentQuestions.forEach(container => {
+        const questionId = container.dataset.questionId;
+        const fileInput = document.getElementById(`question_${questionId}`);
+        const statusMessage = document.getElementById(`file-name-${questionId}`);
+        const errorMessage = document.getElementById(`file-error-${questionId}`);
+        
+        if (fileInput) {
+            // Add event listener for file selection (no separate upload button needed)
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                
+                if (file) {
+                    // Validate file size (10MB limit)
+                    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+                    if (file.size > maxSize) {
+                        errorMessage.textContent = `❌ File "${file.name}" is too large (${(file.size/1024/1024).toFixed(1)}MB). Maximum size is 10MB.`;
+                        errorMessage.style.color = 'red';
+                        statusMessage.textContent = '';
+                        fileInput.value = ''; // Clear the file
+                        return;
+                    }
+                    
+                    // Validate file type
+                    const allowedTypes = ['application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                                      'text/csv', 'text/plain', 'application/msword', 
+                                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                      'image/jpeg', 'image/png', 'image/gif', 'image/bmp'];
+                    
+                    if (!allowedTypes.includes(file.type) && !isAllowedExtension(file.name)) {
+                        errorMessage.textContent = `❌ File "${file.name}" has invalid format. Allowed: PDF, XLS, XLSX, CSV, TXT, DOC, DOCX, JPG, PNG, GIF, BMP`;
+                        errorMessage.style.color = 'red';
+                        statusMessage.textContent = '';
+                        fileInput.value = ''; // Clear the file
+                        return;
+                    }
+                    
+                    // Show success message
+                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                    statusMessage.textContent = `✅ ${file.name} (${fileSize}MB) ready to upload`;
+                    statusMessage.style.color = 'green';
+                    errorMessage.textContent = '';
+                } else {
+                    statusMessage.textContent = '';
+                    errorMessage.textContent = '';
+                }
+            });
+        }
+    });
 });
 
 // Form submission
@@ -177,11 +251,6 @@ document.getElementById('questionnaireForm').addEventListener('submit', function
     
     // Submit the form normally
     this.submit();
-});
-
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    showQuestion(0);
 });
 </script>
 

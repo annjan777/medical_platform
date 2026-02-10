@@ -439,6 +439,7 @@ def api_submit_questionnaire(request):
         # Debug: Print received data
         print(f"DEBUG: questionnaire_id={questionnaire_id}, patient_id={patient_id}")
         print(f"DEBUG: All POST data: {dict(request.POST)}")
+        print(f"DEBUG: All FILES data: {dict(request.FILES)}")
         
         # Get objects
         questionnaire = get_object_or_404(Questionnaire, id=questionnaire_id, is_active=True)
@@ -472,11 +473,17 @@ def api_submit_questionnaire(request):
         
         # Process all form data
         answer_count = 0
+        
+        # First process POST data (for non-attachment questions)
         for key, value in request.POST.items():
             if key.startswith('question_') and value:
                 try:
                     question_id = key.split('_')[1]
                     question = questionnaire.questions.get(id=question_id)
+                    
+                    # Skip attachment questions - they'll be processed from FILES
+                    if question.question_type == question.TYPE_ATTACHMENT:
+                        continue
                     
                     print(f"DEBUG: Processing question {question_id}: {value}")
                     
@@ -508,6 +515,29 @@ def api_submit_questionnaire(request):
                 except (ValueError, Question.DoesNotExist) as e:
                     print(f"DEBUG: Error processing question {question_id}: {e}")
                     continue  # Skip invalid question data
+        
+        # Now process FILES data (for attachment questions)
+        for key, uploaded_file in request.FILES.items():
+            if key.startswith('question_'):
+                try:
+                    question_id = key.split('_')[1]
+                    question = questionnaire.questions.get(id=question_id)
+                    
+                    print(f"DEBUG: Processing attachment question {question_id}: {uploaded_file}")
+                    
+                    # Create answer for attachment
+                    answer = Answer.objects.create(
+                        response=response,
+                        question=question,
+                        file_answer=uploaded_file
+                    )
+                    
+                    print(f"DEBUG: Saved file {uploaded_file.name} to answer")
+                    answer_count += 1
+                    
+                except (ValueError, Question.DoesNotExist) as e:
+                    print(f"DEBUG: Error processing attachment question {question_id}: {e}")
+                    continue
         
         print(f"DEBUG: Created {answer_count} answers")
         

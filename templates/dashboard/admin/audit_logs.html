@@ -8,7 +8,7 @@
 <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-100">Audit Logs</h1>
+        <h1 class="text-3xl font-bold text-black">Audit Logs</h1>
         <div class="flex space-x-4">
             <button onclick="exportLogs()" class="btn btn-secondary">
                 <i class="fas fa-download mr-2"></i> Export Logs
@@ -65,46 +65,6 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="dashboard-stat-card">
-            <div class="stat-content">
-                <p class="text-gray-400 text-sm">Total Logs</p>
-                <h3 class="text-2xl font-bold text-gray-100">{{ audit_logs.paginator.count|intcomma }}</h3>
-            </div>
-            <div class="stat-icon-wrapper icon-purple">
-                <i class="fas fa-list"></i>
-            </div>
-        </div>
-        <div class="dashboard-stat-card">
-            <div class="stat-content">
-                <p class="text-gray-400 text-sm">Today</p>
-                <h3 class="text-2xl font-bold text-gray-100">{{ today_logs|intcomma }}</h3>
-            </div>
-            <div class="stat-icon-wrapper icon-green">
-                <i class="fas fa-calendar-day"></i>
-            </div>
-        </div>
-        <div class="dashboard-stat-card">
-            <div class="stat-content">
-                <p class="text-gray-400 text-sm">This Week</p>
-                <h3 class="text-2xl font-bold text-gray-100">{{ week_logs|intcomma }}</h3>
-            </div>
-            <div class="stat-icon-wrapper icon-orange">
-                <i class="fas fa-calendar-week"></i>
-            </div>
-        </div>
-        <div class="dashboard-stat-card">
-            <div class="stat-content">
-                <p class="text-gray-400 text-sm">This Month</p>
-                <h3 class="text-2xl font-bold text-gray-100">{{ month_logs|intcomma }}</h3>
-            </div>
-            <div class="stat-icon-wrapper icon-green">
-                <i class="fas fa-calendar-alt"></i>
-            </div>
-        </div>
-    </div>
-
     <!-- Audit Logs Table -->
     <div class="card">
         <div class="card-body p-0">
@@ -126,41 +86,41 @@
                         {% for log in audit_logs %}
                         <tr>
                             <td>
-                                <span class="text-gray-100">{{ log.timestamp|date:"M d, Y H:i:s" }}</span>
+                                <span class="text-black">{{ log.timestamp|date:"M d, Y H:i:s" }}</span>
                             </td>
                             <td>
                                 {% if log.user %}
                                 <div class="flex items-center">
-                                    <div class="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-semibold mr-2">
+                                    <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold mr-2">
                                         {{ log.user.first_name.0 }}{{ log.user.last_name.0 }}
                                     </div>
-                                    <span class="text-gray-100">{{ log.user.get_full_name|default:log.user.email }}</span>
+                                    <span class="text-black">{{ log.user.get_full_name|default:log.user.email }}</span>
                                 </div>
                                 {% else %}
                                 <span class="text-gray-500">System</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full {% if log.action == 'create' %}bg-green-900 text-green-200{% elif log.action == 'update' %}bg-blue-900 text-blue-200{% elif log.action == 'delete' %}bg-red-900 text-red-200{% elif log.action == 'login' %}bg-purple-900 text-purple-200{% elif log.action == 'logout' %}bg-gray-700 text-gray-300{% else %}bg-yellow-900 text-yellow-200{% endif %}">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full {% if log.action == 'create' %}bg-green-100 text-green-800{% elif log.action == 'update' %}bg-blue-100 text-blue-800{% elif log.action == 'delete' %}bg-red-100 text-red-800{% elif log.action == 'login' %}bg-purple-100 text-purple-800{% elif log.action == 'logout' %}bg-gray-100 text-gray-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
                                     {{ log.get_action_display }}
                                 </span>
                             </td>
                             <td>
-                                <span class="text-gray-100 font-mono text-sm">{{ log.model }}</span>
+                                <span class="text-black">{{ log.model }}</span>
                             </td>
                             <td>
-                                <span class="text-gray-100">{{ log.object_repr }}</span>
+                                <span class="text-black">{{ log.object_repr }}</span>
                             </td>
                             <td>
-                                <span class="text-gray-400 text-sm">{{ log.ip_address|default:"N/A" }}</span>
+                                <span class="text-black text-sm">{{ log.ip_address|default:"N/A" }}</span>
                             </td>
                             <td>
                                 {% if log.changes %}
-                                <button onclick="showChanges({{ log.id }})" class="text-teal-400 hover:text-teal-300 text-sm">
+                                <button onclick="showChanges({{ log.id }})" class="text-primary hover:text-primary-dark text-sm">
                                     <i class="fas fa-eye"></i> View
                                 </button>
                                 {% else %}
-                                <span class="text-gray-500 text-sm">No changes</span>
+                                <span class="text-black text-sm">No changes</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -172,7 +132,7 @@
             <!-- Pagination -->
             {% if is_paginated %}
             <div class="flex justify-between items-center mt-6 px-4">
-                <div class="text-gray-400 text-sm">
+                <div class="text-black text-sm">
                     Showing {{ audit_logs.start_index }} to {{ audit_logs.end_index }} of {{ audit_logs.paginator.count }} logs
                 </div>
                 <div class="flex space-x-2">
@@ -183,7 +143,7 @@
                         </a>
                     {% endif %}
                     
-                    <span class="text-gray-400 text-sm">
+                    <span class="text-black text-sm">
                         Page {{ audit_logs.number }} of {{ audit_logs.paginator.num_pages }}
                     </span>
                     
@@ -200,8 +160,8 @@
             {% else %}
             <div class="text-center py-12">
                 <i class="fas fa-history text-6xl text-gray-500 mb-4"></i>
-                <h3 class="text-xl font-semibold text-gray-300 mb-2">No audit logs found</h3>
-                <p class="text-gray-500 mb-6">No audit logs match your search criteria.</p>
+                <h3 class="text-xl font-semibold text-black mb-2">No audit logs found</h3>
+                <p class="text-black mb-6">No audit logs match your search criteria.</p>
                 <a href="{% url 'dashboard:admin:audit_logs' %}" class="btn btn-primary">
                     <i class="fas fa-times mr-2"></i> Clear Filters
                 </a>
@@ -213,14 +173,14 @@
 
 <!-- Changes Modal -->
 <div id="changesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+    <div class="bg-gray-100 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-semibold text-gray-100">Audit Log Changes</h3>
+            <h3 class="text-lg font-semibold text-black">Audit Log Changes</h3>
             <button onclick="closeModal()" class="text-gray-400 hover:text-gray-200">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <div id="changesContent" class="text-gray-100">
+        <div id="changesContent" class="text-black">
             <!-- Changes will be loaded here -->
         </div>
     </div>

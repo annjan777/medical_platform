@@ -15,6 +15,9 @@ urlpatterns = [
     path('<int:pk>/start/', views.questionnaire_start, name='questionnaire_start'),
     path('thank-you/<int:pk>/', views.questionnaire_thank_you, name='questionnaire_thank_you'),
     
+    # File upload endpoint
+    path('upload-attachment/', views.upload_attachment, name='upload_attachment'),
+    
     # Builder views
     path('builder/', views_builder.QuestionnaireBuilderView.as_view(), name='builder'),
     path('builder/list/', views_builder.questionnaire_list_builder, name='builder_list'),
@@ -36,6 +39,7 @@ urlpatterns = [
     path('responses/', views.ResponseListView.as_view(), name='response_list'),
     path('responses/<int:pk>/', views.ResponseDetailView.as_view(), name='response_detail'),
     path('responses/<int:pk>/delete/', views.ResponseDeleteView.as_view(), name='response_delete'),
+    path('download-responses/', views.download_responses, name='download_responses'),
     
     # API URLs
     path('api/questions/order/', views.update_question_order, name='update_question_order'),

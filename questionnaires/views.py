@@ -5,11 +5,14 @@ from django.views.generic import (
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+import csv
+import io
+from datetime import datetime
 
 from .models import Questionnaire, Question, QuestionOption, Response, Answer
 from .forms import QuestionnaireForm, QuestionForm, ResponseForm
@@ -180,7 +183,27 @@ class ResponseListView(LoginRequiredMixin, ListView):
         # Filter by patient if specified
         patient_id = self.request.GET.get('patient')
         if patient_id:
-            queryset = queryset.filter(patient__patient_id=patient_id)
+            queryset = queryset.filter(patient__patient_id__icontains=patient_id)
+            
+        # Filter by date range if specified
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        
+        if date_from:
+            try:
+                from datetime import datetime
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                queryset = queryset.filter(started_at__date__gte=date_from_obj)
+            except ValueError:
+                pass  # Invalid date format, ignore filter
+                
+        if date_to:
+            try:
+                from datetime import datetime
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                queryset = queryset.filter(started_at__date__lte=date_to_obj)
+            except ValueError:
+                pass  # Invalid date format, ignore filter
             
         return queryset.order_by('-submitted_at', '-started_at')
     
@@ -254,7 +277,9 @@ def questionnaire_start(request, pk):
     questionnaire = get_object_or_404(Questionnaire, pk=pk, is_active=True)
     
     if request.method == 'POST':
-        form = ResponseForm(questionnaire, request.POST)
+        print(f"DEBUG: POST data: {request.POST}")
+        print(f"DEBUG: FILES data: {request.FILES}")
+        form = ResponseForm(questionnaire, request.POST, request.FILES)
         if form.is_valid():
             response = form.save(commit=False)
             response.questionnaire = questionnaire
@@ -350,3 +375,149 @@ def update_question_order(request):
 def simple_questionnaire_builder(request):
     """Simple questionnaire builder for creating medical screening questionnaires."""
     return render(request, 'questionnaires/simple_questionnaire_builder.html')
+
+
+@require_POST
+@login_required
+def upload_attachment(request):
+    """Handle file upload for attachment questions."""
+    try:
+        if 'fileToUpload' not in request.FILES:
+            return JsonResponse({
+                'success': False,
+                'error': 'No file uploaded'
+            }, status=400)
+        
+        file = request.FILES['fileToUpload']
+        question_id = request.POST.get('question_id')
+        
+        # Validate file size (10MB limit)
+        max_size = 10 * 1024 * 1024  # 10MB in bytes
+        if file.size > max_size:
+            return JsonResponse({
+                'success': False,
+                'error': f'File "{file.name}" is too large ({file.size/1024/1024:.1f}MB). Maximum size is 10MB.'
+            }, status=400)
+        
+        # Validate file type
+        allowed_types = [
+            'application/pdf', 'application/vnd.ms-excel', 
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/csv', 'text/plain', 'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/jpeg', 'image/png', 'image/gif', 'image/bmp'
+        ]
+        
+        if file.content_type not in allowed_types:
+            return JsonResponse({
+                'success': False,
+                'error': f'File "{file.name}" has invalid format. Allowed: PDF, XLS, XLSX, CSV, TXT, DOC, DOCX, JPG, PNG, GIF, BMP'
+            }, status=400)
+        
+        # Store file temporarily (will be saved when form is submitted)
+        # For now, just return success with file info
+        file_size_mb = file.size / 1024 / 1024
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'File "{file.name}" ({file_size_mb:.2f}MB) uploaded successfully',
+            'filename': file.name,
+            'size': file_size_mb
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Upload failed: {str(e)}'
+        }, status=500)
+
+
+@login_required
+def download_responses(request):
+    """Download filtered questionnaire responses as CSV."""
+    # Get filter parameters
+    questionnaire_id = request.GET.get('questionnaire')
+    patient_id = request.GET.get('patient')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    # Filter responses
+    responses = Response.objects.all().select_related('questionnaire', 'patient', 'respondent').prefetch_related('answers__question', 'answers__option_answer')
+    
+    if questionnaire_id:
+        responses = responses.filter(questionnaire_id=questionnaire_id)
+    if patient_id:
+        responses = responses.filter(patient__patient_id__icontains=patient_id)
+    
+    # Filter by date range if specified
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            responses = responses.filter(started_at__date__gte=date_from_obj)
+        except ValueError:
+            pass  # Invalid date format, ignore filter
+            
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            responses = responses.filter(started_at__date__lte=date_to_obj)
+        except ValueError:
+            pass  # Invalid date format, ignore filter
+    
+    # Create CSV content
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    header = [
+        'Response ID', 'Patient ID', 'Patient Name', 'Questionnaire', 
+        'Respondent', 'Status', 'Started At'
+    ]
+    
+    # Add question columns
+    if responses.exists():
+        first_response = responses.first()
+        questions = first_response.questionnaire.questions.all().order_by('order')
+        for question in questions:
+            header.append(f'Q{question.order}: {question.question_text[:50]}...')
+    
+    writer.writerow(header)
+    
+    # Write data rows
+    for response in responses:
+        row = [
+            response.id,
+            response.patient.patient_id if response.patient else '',
+            f"{response.patient.first_name} {response.patient.last_name}" if response.patient else '',
+            response.questionnaire.title,
+            response.respondent.get_full_name() if response.respondent else '',
+            'Complete' if response.is_complete else 'In Progress',
+            response.started_at.strftime('%Y-%m-%d %H:%M:%S') if response.started_at else ''
+        ]
+        
+        # Add answer columns
+        if responses.exists():
+            answers_dict = {answer.question_id: answer for answer in response.answers.all()}
+            for question in questions:
+                answer = answers_dict.get(question.id)
+                if answer:
+                    if answer.file_answer:
+                        # Create downloadable link for file
+                        file_url = request.build_absolute_uri(answer.file_answer.url)
+                        row.append(f"=HYPERLINK(\"{file_url}\",\"{answer.file_answer.name}\")")
+                    elif answer.option_answer.exists():
+                        options = ', '.join([opt.text for opt in answer.option_answer.all()])
+                        row.append(options)
+                    else:
+                        row.append(answer.text_answer or '')
+                else:
+                    row.append('')
+        
+        writer.writerow(row)
+    
+    # Create HTTP response
+    response = HttpResponse(output.getvalue(), content_type='text/csv')
+    filename = f"questionnaire_responses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response

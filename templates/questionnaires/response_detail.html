@@ -7,7 +7,7 @@
   <div class="col-md-8">
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h2 style="margin:0;">Response Details</h2>
+        <h2 style="margin:0; color: #000000;">Response Details</h2>
         <div class="btn-group">
           <a href="{% url 'questionnaires:response_list' %}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i> Back to List
@@ -175,7 +175,16 @@
                           <span class="badge bg-secondary">{{ answer.question.get_question_type_display }}</span>
                         </td>
                         <td>
-                          {% if answer.text_answer %}
+                          {% if answer.file_answer %}
+                            <div class="d-flex align-items-center">
+                              <i class="fas fa-file me-2 text-primary"></i>
+                              <a href="{{ answer.file_answer.url }}" class="btn btn-sm btn-outline-primary me-2" download>
+                                <i class="fas fa-download me-1"></i> Download
+                              </a>
+                              <span class="text-muted">{{ answer.file_answer.name }}</span>
+                              <small class="text-muted ms-2">({{ answer.file_answer.size|filesizeformat }})</small>
+                            </div>
+                          {% elif answer.text_answer %}
                             {{ answer.text_answer }}
                           {% elif answer.option_answer.exists %}
                             {% for option in answer.option_answer.all %}
