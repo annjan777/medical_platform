@@ -1,0 +1,652 @@
+{% extends "health_assistant/base_clean.html" %}
+{% load static %}
+
+{% block title %}Patient Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Patient Management</li>
+{% endblock %}
+
+{% block page_title %}Patient Management{% endblock %}
+
+{% block page_actions %}
+<a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+    <i class="fas fa-plus me-2"></i>Add New Patient
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-search me-2"></i>Search Patients
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="searchInput" class="form-label">Search by Name, ID, or Phone</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Enter patient details...">
+                    <button class="btn btn-outline-secondary" type="button" onclick="searchPatients()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label for="genderFilter" class="form-label">Filter by Gender</label>
+                <select class="form-select" id="genderFilter" onchange="searchPatients()">
+                    <option value="">All Genders</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                    <option value="O">Other</option>
+                    <option value="U">Unspecified</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="dateFrom" class="form-label">Registered From</label>
+                <input type="date" class="form-control" id="dateFrom" onchange="searchPatients()">
+            </div>
+            <div class="col-md-2">
+                <label for="dateTo" class="form-label">To</label>
+                <input type="date" class="form-control" id="dateTo" onchange="searchPatients()">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Patients List -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-users me-2"></i>Patients
+            <span class="badge bg-primary ms-2" id="patientCount">0</span>
+        </h5>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" onclick="exportPatients()">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="loadingSpinner" class="text-center py-4" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading patients...</p>
+        </div>
+        
+        <div id="patientsList">
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Search for Patients</h5>
+                <p class="text-muted">Use the search form above to find patients</p>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <nav id="paginationContainer" aria-label="Page navigation" class="mt-4" style="display: none;">
+            <ul class="pagination justify-content-center" id="paginationList">
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Edit Patient Modal -->
+<div class="modal fade" id="editPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Patient
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPatientForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editFirstName" class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="editFirstName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editLastName" class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="editLastName" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="editDateOfBirth" class="form-label">Date of Birth *</label>
+                            <input type="date" class="form-control" id="editDateOfBirth" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="editGender" class="form-label">Gender *</label>
+                            <select class="form-select" id="editGender" required>
+                                <option value="">Select Gender</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                                <option value="O">Other</option>
+                                <option value="U">Prefer not to say</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="editPhoneNumber" class="form-label">Phone Number *</label>
+                            <input type="tel" class="form-control" id="editPhoneNumber" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editEmail" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="editEmail">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editCity" class="form-label">City</label>
+                            <input type="text" class="form-control" id="editCity">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editAddress" class="form-label">Address</label>
+                        <textarea class="form-control" id="editAddress" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="savePatient()">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="modal fade" id="addPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Add New Patient
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Note:</strong> Phone number is mandatory and must be unique.
+                </div>
+                
+                <!-- Patient Registration Form -->
+                <form method="post" id="addPatientForm" onsubmit="return false;">
+                    {% csrf_token %}
+                    
+                    <!-- Patient Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-user me-2"></i>Patient Information
+                            </h6>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="addFirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="addFirstName" name="first_name" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="addLastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="addLastName" name="last_name" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4 mb-3">
+                                <label for="addDateOfBirth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="addDateOfBirth" name="date_of_birth" required>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="addGender" class="form-label">Gender <span class="text-danger">*</span></label>
+                                <select class="form-select" id="addGender" name="gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                    <option value="O">Other</option>
+                                    <option value="U">Prefer not to say</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="addPhoneNumber" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="addPhoneNumber" name="phone_number" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="addEmail" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="addEmail" name="email">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="addCity" class="form-label">City</label>
+                                <input type="text" class="form-control" id="addCity" name="city">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="addAddress" class="form-label">Address</label>
+                                <textarea class="form-control" id="addAddress" name="address" rows="3"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Consent Checkbox -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="addConsentCheckbox" required>
+                                    <label class="form-check-label" for="addConsentCheckbox">
+                                        I confirm that patient consent has been obtained for medical screening and data collection in accordance with medical privacy regulations.
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="addPatientSubmitBtn">
+                    <i class="fas fa-save me-2"></i>Register Patient and Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.patient-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--medical-primary);
+}
+
+.patient-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.patient-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    background: var(--medical-primary);
+}
+
+.search-highlight {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.action-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+let currentPage = 1;
+let currentPatientId = null;
+
+// Load patients on page load
+document.addEventListener('DOMContentLoaded', function() {
+    searchPatients();
+    
+    // Handle add patient form submission
+    const addPatientSubmitBtn = document.getElementById('addPatientSubmitBtn');
+    if (addPatientSubmitBtn) {
+        addPatientSubmitBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Add patient button clicked!');
+            
+            // Validate consent checkbox
+            const consentCheckbox = document.getElementById('addConsentCheckbox');
+            if (!consentCheckbox || !consentCheckbox.checked) {
+                alert('Please confirm that patient consent has been obtained.');
+                return;
+            }
+            
+            // Show loading state
+            addPatientSubmitBtn.disabled = true;
+            addPatientSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registering...';
+            
+            // Submit form via AJAX
+            const formData = new FormData(document.getElementById('addPatientForm'));
+            
+            fetch('/health-assistant/patient/register/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Add patient response:', data);
+                if (data.success) {
+                    console.log('Patient registered successfully!');
+                    console.log('Patient ID:', data.patient.patient_id);
+                    
+                    // Show success alert with Patient ID
+                    alert(`Patient Registered Successfully!\n\nPatient ID: ${data.patient.patient_id}\nName: ${data.patient.first_name} ${data.patient.last_name}\nAge: ${data.patient.age}\nGender: ${data.patient.gender}\n\nClick OK to continue to screening.`);
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addPatientModal'));
+                    modal.hide();
+                    
+                    // Refresh patient list
+                    searchPatients();
+                    
+                } else {
+                    console.log('Registration failed:', data.message);
+                    alert(data.message || 'Registration failed. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during registration. Please try again.');
+            })
+            .finally(() => {
+                // Reset button state
+                addPatientSubmitBtn.disabled = false;
+                addPatientSubmitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Register Patient and Continue';
+            });
+        });
+    }
+});
+
+function searchPatients(page = 1) {
+    const query = document.getElementById('searchInput').value.trim();
+    const gender = document.getElementById('genderFilter').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    // Show loading
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('patientsList').style.display = 'none';
+    
+    // Build query parameters
+    const params = new URLSearchParams({
+        'q': query,
+        'gender': gender,
+        'date_from': dateFrom,
+        'date_to': dateTo,
+        'page': page
+    });
+    
+    fetch(`/health-assistant/api/patients/?${params.toString()}`, {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayPatients(data.patients);
+        displayPagination(data.pagination);
+        document.getElementById('patientCount').textContent = data.total_count;
+    })
+    .catch(error => {
+        console.error('Error fetching patients:', error);
+        showAlert('Error loading patients', 'danger');
+    })
+    .finally(() => {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('patientsList').style.display = 'block';
+    });
+}
+
+function displayPatients(patients) {
+    const container = document.getElementById('patientsList');
+    
+    if (patients.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Patients Found</h5>
+                <p class="text-muted">Try adjusting your search criteria</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="table-responsive">';
+    html += `
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Registered</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    patients.forEach(patient => {
+        const registrationDate = new Date(patient.created_at).toLocaleDateString();
+        html += `
+            <tr class="patient-card">
+                <td><span class="badge bg-primary">${patient.patient_id}</span></td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="patient-avatar me-2">
+                            ${patient.first_name[0]}${patient.last_name[0]}
+                        </div>
+                        <div>
+                            <div class="fw-medium">${patient.first_name} ${patient.last_name}</div>
+                            ${patient.email ? `<small class="text-muted">${patient.email}</small>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td>${patient.age}</td>
+                <td><span class="badge bg-secondary">${patient.gender_display}</span></td>
+                <td>
+                    ${patient.phone_number ? 
+                        `<span class="text-success">${patient.phone_number}</span>` : 
+                        '<span class="text-muted">No phone</span>'
+                    }
+                </td>
+                <td>${patient.email || '<span class="text-muted">No email</span>'}</td>
+                <td><small>${registrationDate}</small></td>
+                <td>
+                    <div class="action-buttons btn-group">
+                        <button class="btn btn-outline-primary btn-sm" onclick="viewPatient(${patient.id})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="editPatient(${patient.id})" title="Edit Patient">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="startScreening(${patient.id})" title="Start Screening">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function displayPagination(pagination) {
+    const container = document.getElementById('paginationContainer');
+    const list = document.getElementById('paginationList');
+    
+    if (!pagination || pagination.total_pages <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'block';
+    
+    let html = '';
+    
+    // Previous button
+    if (pagination.has_previous) {
+        html += `<li class="page-item">
+            <a class="page-link" href="#" onclick="searchPatients(${pagination.previous_page})">Previous</a>
+        </li>`;
+    }
+    
+    // Page numbers
+    for (let i = 1; i <= pagination.total_pages; i++) {
+        const active = i === pagination.current_page ? 'active' : '';
+        html += `<li class="page-item ${active}">
+            <a class="page-link" href="#" onclick="searchPatients(${i})">${i}</a>
+        </li>`;
+    }
+    
+    // Next button
+    if (pagination.has_next) {
+        html += `<li class="page-item">
+            <a class="page-link" href="#" onclick="searchPatients(${pagination.next_page})">Next</a>
+        </li>`;
+    }
+    
+    list.innerHTML = html;
+}
+
+function viewPatient(patientId) {
+    window.location.href = `/patients/${patientId}/`;
+}
+
+function editPatient(patientId) {
+    currentPatientId = patientId;
+    
+    // Fetch patient data
+    fetch(`/health-assistant/api/patients/${patientId}/`, {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.patient) {
+            const patient = data.patient;
+            document.getElementById('editFirstName').value = patient.first_name;
+            document.getElementById('editLastName').value = patient.last_name;
+            document.getElementById('editDateOfBirth').value = patient.date_of_birth;
+            document.getElementById('editGender').value = patient.gender;
+            document.getElementById('editPhoneNumber').value = patient.phone_number;
+            document.getElementById('editEmail').value = patient.email || '';
+            document.getElementById('editCity').value = patient.city || '';
+            document.getElementById('editAddress').value = patient.address || '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('editPatientModal'));
+            modal.show();
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching patient:', error);
+        showAlert('Error loading patient details', 'danger');
+    });
+}
+
+function savePatient() {
+    if (!currentPatientId) return;
+    
+    const formData = {
+        'first_name': document.getElementById('editFirstName').value,
+        'last_name': document.getElementById('editLastName').value,
+        'date_of_birth': document.getElementById('editDateOfBirth').value,
+        'gender': document.getElementById('editGender').value,
+        'phone_number': document.getElementById('editPhoneNumber').value,
+        'email': document.getElementById('editEmail').value,
+        'city': document.getElementById('editCity').value,
+        'address': document.getElementById('editAddress').value,
+        'csrfmiddlewaretoken': getCookie('csrftoken')
+    };
+    
+    fetch(`/health-assistant/api/patients/${currentPatientId}/update/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Patient updated successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editPatientModal')).hide();
+            searchPatients(currentPage); // Refresh current page
+        } else {
+            showAlert(data.message || 'Error updating patient', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating patient:', error);
+        showAlert('Error updating patient', 'danger');
+    });
+}
+
+function startScreening(patientId) {
+    // Redirect to landing page with patient pre-selected
+    window.location.href = `/health-assistant/landing/?patient_id=${patientId}`;
+}
+
+function exportPatients() {
+    const query = document.getElementById('searchInput').value.trim();
+    const gender = document.getElementById('genderFilter').value;
+    
+    const params = new URLSearchParams({
+        'q': query,
+        'gender': gender,
+        'export': 'csv'
+    });
+    
+    window.open(`/health-assistant/api/patients/export/?${params.toString()}`, '_blank');
+}
+</script>
+{% endblock %}

@@ -10,6 +10,7 @@ urlpatterns = [
     # Dedicated Pages
     path('questionnaires/', views.questionnaires_page, name='questionnaires'),
     path('landing/', views.landing_page, name='landing'),
+    path('patients/', views.patient_list, name='patient_list'),
     
     # Dashboard (legacy - can be removed if not needed)
     path('dashboard/', views.HealthAssistantDashboardView.as_view(), name='dashboard'),
@@ -27,7 +28,9 @@ urlpatterns = [
     path('api/today-stats/', views.api_today_stats, name='api_today_stats'),
     path('api/recent-activity/', views.api_recent_activity, name='api_recent_activity'),
     path('api/search-patients/', views.api_search_patients, name='api_search_patients'),
+    path('api/test-auth/', views.api_test_auth, name='api_test_auth'),
     path('api/get-patient/<int:patient_id>/', views.api_get_patient, name='api_get_patient'),
+    path('api/patients/<int:patient_id>/update/', views.api_patient_update, name='api_patient_update'),
     path('api/get-screening-types/', views.api_get_screening_types, name='api_get_screening_types'),
     path('api/get-screening-type/<int:screening_type_id>/', views.api_get_screening_type, name='api_get_screening_type'),
     path('api/get-devices/', views.api_get_devices, name='api_get_devices'),

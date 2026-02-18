@@ -26,11 +26,14 @@ from patients.models import Patient
 from devices.models import Device
 
 # Screening Type Views
-class ScreeningTypeListView(LoginRequiredMixin, ListView):
+class ScreeningTypeListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = ScreeningType
     template_name = 'screening/screeningtype_list.html'
     context_object_name = 'screening_types'
     paginate_by = 20
+    
+    def test_func(self):
+        return self.request.user.is_staff
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -45,10 +48,13 @@ class ScreeningTypeListView(LoginRequiredMixin, ListView):
         return queryset.order_by('name')
 
 
-class ScreeningTypeDetailView(LoginRequiredMixin, DetailView):
+class ScreeningTypeDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = ScreeningType
     template_name = 'screening/screeningtype_detail.html'
     context_object_name = 'screening_type'
+    
+    def test_func(self):
+        return self.request.user.is_staff
 
 
 class ScreeningTypeCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
@@ -93,41 +99,54 @@ class ScreeningTypeDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteVie
 
 
 # Screening Session Views
-class ScreeningSessionListView(LoginRequiredMixin, ListView):
+class ScreeningSessionListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = ScreeningSession
     template_name = 'screening/session_list.html'
     context_object_name = 'sessions'
     paginate_by = 20
     
+    def test_func(self):
+        return self.request.user.is_staff
+    
     def get_queryset(self):
-        queryset = super().get_queryset().select_related('patient', 'screening_type', 'conducted_by')
+        queryset = ScreeningSession.objects.select_related(
+            'patient', 'screening_type', 'created_by'
+        )
         
-        # Filter by status if provided
-        status_filter = self.request.GET.get('status')
-        if status_filter:
-            queryset = queryset.filter(status=status_filter)
-            
-        # Search functionality
-        search_query = self.request.GET.get('search', '')
-        if search_query:
-            queryset = queryset.filter(
-                Q(patient__first_name__icontains=search_query) |
-                Q(patient__last_name__icontains=search_query) |
-                Q(screening_type__name__icontains=search_query) |
-                Q(notes__icontains=search_query)
-            )
-            
-        # For non-staff users, only show their own screenings
-        if not self.request.user.is_staff:
-            queryset = queryset.filter(created_by=self.request.user)
-            
+        # Filter by patient
+        patient_id = self.request.GET.get('patient')
+        if patient_id:
+            queryset = queryset.filter(patient_id=patient_id)
+        
+        # Filter by screening type
+        screening_type_id = self.request.GET.get('screening_type')
+        if screening_type_id:
+            queryset = queryset.filter(screening_type_id=screening_type_id)
+        
+        # Filter by status
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        # Filter by date range
+        date_from = self.request.GET.get('date_from')
+        if date_from:
+            queryset = queryset.filter(scheduled_date__gte=date_from)
+        
+        date_to = self.request.GET.get('date_to')
+        if date_to:
+            queryset = queryset.filter(scheduled_date__lte=date_to)
+        
         return queryset.order_by('-scheduled_date')
 
 
-class ScreeningSessionDetailView(LoginRequiredMixin, DetailView):
+class ScreeningSessionDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = ScreeningSession
     template_name = 'screening/session_detail.html'
     context_object_name = 'session'
+    
+    def test_func(self):
+        return self.request.user.is_staff
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

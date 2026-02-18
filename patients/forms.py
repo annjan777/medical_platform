@@ -25,10 +25,16 @@ class PatientForm(BaseForm):
     class Meta:
         model = Patient
         fields = [
-            'first_name', 'last_name', 'date_of_birth', 'gender',
-            'email', 'phone_number', 'address'
+            'patient_id', 'first_name', 'last_name', 'date_of_birth', 'gender',
+            'email', 'phone_number', 'address', 'city', 'state', 'postal_code', 'country',
+            'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation'
         ]
         widgets = {
+            'patient_id': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Auto-generated or manual',
+                'readonly': True
+            }),
             'date_of_birth': forms.DateInput(
                 attrs={
                     'type': 'date',
@@ -39,6 +45,13 @@ class PatientForm(BaseForm):
             ),
             'address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'state': forms.TextInput(attrs={'class': 'form-control'}),
+            'postal_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'country': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_relation': forms.TextInput(attrs={'class': 'form-control'}),
         }
     
     def clean_date_of_birth(self):

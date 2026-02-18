@@ -7,7 +7,7 @@
 <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-100">{{ page_title|default:"Questionnaire Builder" }}</h1>
+        <h1 class="h2 mb-0">{{ page_title|default:"Questionnaire Builder" }}</h1>
         <div class="flex space-x-4">
             <button onclick="saveQuestionnaire()" class="btn btn-primary">
                 <i class="fas fa-save mr-2"></i> {% if questionnaire %}Update{% else %}Save{% endif %} Questionnaire
@@ -20,13 +20,13 @@
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="form-label">Questionnaire Title *</label>
+                    <label class="form-label fw-semibold">Questionnaire Title *</label>
                     <input type="text" id="questionnaireTitle" class="form-input" 
                            placeholder="e.g., Medical Screening Form"
                            value="{% if questionnaire %}{{ questionnaire.title }}{% endif %}">
                 </div>
                 <div>
-                    <label class="form-label">Description</label>
+                    <label class="form-label fw-semibold">Description</label>
                     <textarea id="questionnaireDescription" class="form-textarea" rows="3" 
                               placeholder="Brief description of the questionnaire">{% if questionnaire %}{{ questionnaire.description }}{% endif %}</textarea>
                 </div>
@@ -38,7 +38,7 @@
     <div class="card">
         <div class="card-body" data-questions-data="{% if questions_data %}{{ questions_data|safe }}{% endif %}">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold text-black">Questions</h2>
+                <h2 class="h4 mb-0">Questions</h2>
                 <button onclick="addQuestion()" class="btn btn-secondary">
                     <i class="fas fa-plus mr-2"></i> Add Question
                 </button>
@@ -71,14 +71,14 @@
                 
                 <!-- Question Text -->
                 <div class="mb-4">
-                    <label class="form-label">Question *</label>
+                    <label class="form-label fw-semibold">Question *</label>
                     <textarea class="question-text form-textarea" rows="2" placeholder="Enter your question here"></textarea>
                 </div>
 
                 <!-- Question Type -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="form-label">Question Type *</label>
+                        <label class="form-label fw-semibold">Question Type *</label>
                         <select class="question-type form-select" onchange="handleQuestionTypeChange(this)">
                             <option value="">Select question type</option>
                             <option value="yes_no">Yes/No</option>
@@ -98,7 +98,7 @@
                 <!-- Multiple Choice Options (hidden by default) -->
                 <div class="multiple-choice-options hidden">
                     <div class="flex justify-between items-center mb-4">
-                        <label class="form-label">Options</label>
+                        <label class="form-label fw-semibold">Options</label>
                         <button onclick="addOption(this)" class="btn btn-secondary btn-sm">
                             <i class="fas fa-plus mr-1"></i> Add Option
                         </button>
@@ -114,26 +114,43 @@
 
 <!-- Option Template (hidden) -->
 <template id="optionTemplate">
-    <div class="option-item flex items-center space-x-3">
-        <button onclick="removeOption(this)" class="text-red-400 hover:text-red-300">
-            <i class="fas fa-times"></i>
-        </button>
-        
-        <div class="flex-1">
-            <div class="flex items-center space-x-3">
-                <!-- Text Option -->
-                <input type="text" class="option-text form-input flex-1" placeholder="Enter option text">
-                
-                <!-- OR Divider -->
-                <span class="text-gray-500">OR</span>
-                
-                <!-- Image Option -->
-                <div class="flex items-center space-x-2">
-                    <input type="file" class="option-image hidden" accept="image/*" onchange="handleImageUpload(this)">
-                    <button type="button" onclick="this.previousElementSibling.click()" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-image mr-1"></i> Add Image
-                    </button>
-                    <span class="option-image-name text-sm text-gray-400"></span>
+    <div class="option-item border rounded p-3 mb-2">
+        <div class="d-flex align-items-start gap-3">
+            <button type="button" onclick="removeOption(this)" class="btn btn-sm btn-outline-danger mt-1">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="flex-grow-1">
+                <div class="row align-items-center">
+                    <!-- Text Option -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Text Option</label>
+                        <input type="text" class="option-text form-control form-control-sm" 
+                               placeholder="Enter option text" 
+                               onchange="handleOptionTextChange(this)">
+                    </div>
+                    
+                    <!-- OR Divider -->
+                    <div class="col-auto">
+                        <div class="text-muted small fw-bold">OR</div>
+                    </div>
+                    
+                    <!-- Image Option -->
+                    <div class="col-md-5">
+                        <label class="form-label small fw-semibold">Image Option</label>
+                        <div class="d-flex gap-2">
+                            <input type="file" class="option-image d-none" accept="image/*" 
+                                   onchange="handleImageUpload(this)">
+                            <button type="button" onclick="this.previousElementSibling.click()" 
+                                    class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-image me-1"></i> Choose Image
+                            </button>
+                            <div class="option-image-preview d-none">
+                                <img src="" alt="" class="img-thumbnail" style="max-height: 40px; max-width: 60px;">
+                            </div>
+                        </div>
+                        <div class="option-image-name small text-muted mt-1"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -220,23 +237,65 @@ function removeOption(button) {
 
 function handleImageUpload(input) {
     const file = input.files[0];
-    const nameSpan = input.parentElement.querySelector('.option-image-name');
+    const optionItem = input.closest('.option-item');
+    const nameSpan = optionItem.querySelector('.option-image-name');
+    const previewDiv = optionItem.querySelector('.option-image-preview');
+    const textInput = optionItem.querySelector('.option-text');
     
     if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file');
+            input.value = '';
+            return;
+        }
+        
+        // Validate file size (5MB limit)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('Image file must be less than 5MB');
+            input.value = '';
+            return;
+        }
+        
+        // Show file name
         nameSpan.textContent = file.name;
-        // Clear text input when image is selected
-        const textInput = input.closest('.option-item').querySelector('.option-text');
-        if (textInput) {
-            textInput.value = '';
-            textInput.disabled = true;
-        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = previewDiv.querySelector('img');
+            img.src = e.target.result;
+            previewDiv.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+        
+        // Clear and disable text input
+        textInput.value = '';
+        textInput.disabled = true;
+        textInput.classList.add('bg-light');
     } else {
+        // Hide preview and clear name
         nameSpan.textContent = '';
-        // Enable text input when no image
-        const textInput = input.closest('.option-item').querySelector('.option-text');
-        if (textInput) {
-            textInput.disabled = false;
-        }
+        previewDiv.classList.add('d-none');
+        
+        // Enable text input
+        textInput.disabled = false;
+        textInput.classList.remove('bg-light');
+    }
+}
+
+function handleOptionTextChange(input) {
+    const optionItem = input.closest('.option-item');
+    const imageInput = optionItem.querySelector('.option-image');
+    const previewDiv = optionItem.querySelector('.option-image-preview');
+    const nameSpan = optionItem.querySelector('.option-image-name');
+    
+    // If text is entered, clear image
+    if (input.value.trim()) {
+        imageInput.value = '';
+        previewDiv.classList.add('d-none');
+        nameSpan.textContent = '';
     }
 }
 

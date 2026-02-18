@@ -511,7 +511,7 @@ function searchPatients() {
                                      onclick="selectExistingPatient(${patient.id})">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <strong>${patient.name}</strong>
+                                            <strong>${patient.first_name || ''} ${patient.last_name || ''}</strong>
                                             <br><small class="text-muted">Age: ${patient.age} | Gender: ${patient.gender}</small>
                                             ${patient.phone ? `<br><small class="text-muted">Phone: ${patient.phone}</small>` : ''}
                                         </div>

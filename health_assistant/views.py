@@ -13,8 +13,14 @@ from accounts.models import User
 from patients.models import Patient
 from screening.models import ScreeningSession, ScreeningType
 from devices.models import Device
-from questionnaires.models import Questionnaire
+from questionnaires.models import Questionnaire, Question
 from .forms import PatientRegistrationForm
+
+
+def has_patient_access(user):
+    """Check if user has access to patient management"""
+    allowed_roles = [User.Role.HEALTH_ASSISTANT, User.Role.SUPER_ADMIN, User.Role.DOCTOR]
+    return user.role in allowed_roles
 
 
 def format_time_diff(dt):
@@ -120,19 +126,47 @@ def patient_register(request):
     if request.method == 'POST':
         form = PatientRegistrationForm(request.POST)
         if form.is_valid():
+            # Check for phone number duplicates before saving
+            phone_number = form.cleaned_data.get('phone_number')
+            if phone_number:
+                existing_patients = Patient.objects.filter(
+                    phone_number__icontains=phone_number
+                ).exclude(id=form.instance.id if form.instance.id else None)
+                
+                if existing_patients.exists():
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': False,
+                            'message': f'Phone number {phone_number} already exists. Please use a different number or select existing patient.',
+                            'errors': {'phone_number': 'This phone number is already registered.'}
+                        })
+                    else:
+                        messages.error(request, f'Phone number {phone_number} already exists. Please use a different number or select existing patient.')
+                        return redirect('health_assistant:landing')
+            
             patient = form.save()
+            print(f"DEBUG: Patient saved with ID: {patient.id}")
+            print(f"DEBUG: Patient patient_id: {patient.patient_id}")
+            print(f"DEBUG: Patient first_name: {patient.first_name}")
+            print(f"DEBUG: Patient last_name: {patient.last_name}")
+            
             messages.success(request, f'Patient {patient.full_name} registered successfully!')
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
+                response_data = {
                     'success': True,
                     'patient': {
                         'id': patient.id,
-                        'name': patient.full_name,
+                        'patient_id': patient.patient_id,
+                        'first_name': patient.first_name,
+                        'last_name': patient.last_name,
+                        'date_of_birth': patient.date_of_birth,
                         'age': patient.age,
                         'gender': patient.gender
                     }
-                })
+                }
+                print(f"DEBUG: Response data: {response_data}")
+                return JsonResponse(response_data)
             else:
                 return redirect('health_assistant:landing')
         else:
@@ -149,13 +183,24 @@ def patient_register(request):
 
 
 @login_required
-def screening_session(request):
+def screening_session(request, patient_id=None):
     """Handle screening session creation"""
     if request.user.role != User.Role.HEALTH_ASSISTANT:
         messages.error(request, 'Access denied. Health assistant role required.')
         return redirect('login')
     
-    return render(request, 'health_assistant/screening_session.html')
+    # If patient_id is provided, pre-select the patient
+    selected_patient = None
+    if patient_id:
+        try:
+            selected_patient = Patient.objects.get(id=patient_id)
+        except Patient.DoesNotExist:
+            messages.error(request, 'Patient not found.')
+            return redirect('health_assistant:patient_list')
+    
+    return render(request, 'health_assistant/screening_session.html', {
+        'selected_patient': selected_patient
+    })
 
 
 @login_required
@@ -244,37 +289,123 @@ def api_recent_activity(request):
 
 @login_required
 def api_search_patients(request):
-    """API endpoint to search patients"""
-    if request.user.role != User.Role.HEALTH_ASSISTANT:
+    """API endpoint to search patients with pagination and filtering"""
+    if not has_patient_access(request.user):
         return JsonResponse({'error': 'Access denied'}, status=403)
     
     query = request.GET.get('q', '').strip()
-    if not query:
-        return JsonResponse({'patients': []})
+    gender = request.GET.get('gender', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    page = int(request.GET.get('page', 1))
+    export_format = request.GET.get('export', '')
     
-    patients = Patient.objects.filter(
-        Q(first_name__icontains=query) |
-        Q(last_name__icontains=query) |
-        Q(phone_number__icontains=query)
-    ).order_by('last_name', 'first_name')[:20]
+    # Handle CSV export
+    if export_format == 'csv':
+        return export_patients_csv(query, gender, date_from, date_to)
+    
+    # Build filter conditions
+    filters = Q()
+    if query:
+        # Check if query is a phone number (more flexible detection)
+        cleaned_query = query.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+        is_phone_query = cleaned_query.isdigit() and len(cleaned_query) >= 10
+        
+        if is_phone_query:
+            # Search for exact phone number match first
+            existing_patients = Patient.objects.filter(
+                Q(phone_number__icontains=cleaned_query)
+            ).order_by('created_at')[:20]
+            
+            # If exact phone match found, check for duplicates
+            if existing_patients.count() > 0:
+                patient_data = []
+                for patient in existing_patients:
+                    patient_data.append({
+                        'id': patient.id,
+                        'patient_id': patient.patient_id,
+                        'first_name': patient.first_name,
+                        'last_name': patient.last_name,
+                        'age': patient.age if patient.age is not None else 0,
+                        'gender': patient.gender,
+                        'gender_display': patient.get_gender_display(),
+                        'phone_number': patient.phone_number,
+                        'email': patient.email,
+                        'city': patient.city,
+                        'address': patient.address,
+                        'created_at': patient.created_at.isoformat(),
+                        'is_duplicate_phone': True
+                    })
+                
+                return JsonResponse({
+                    'patients': patient_data,
+                    'has_phone_duplicates': True,
+                    'message': f'Phone number {query} already exists. Please select existing patient or use different number.'
+                })
+        
+        # Regular search by name or partial phone
+        filters |= Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(patient_id__icontains=query) | Q(phone_number__icontains=query)
+    
+    print(f"DEBUG: Search query: '{query}'")
+    print(f"DEBUG: Filters: {filters}")
+    
+    if gender:
+        filters &= Q(gender=gender)
+    if date_from:
+        filters &= Q(created_at__date__gte=date_from)
+    if date_to:
+        filters &= Q(created_at__date__lte=date_to)
+    
+    # Get patients with pagination - if no query, return all patients
+    if not query:
+        patients = Patient.objects.all()
+    else:
+        patients = Patient.objects.filter(filters).order_by('-created_at')
+    
+    print(f"DEBUG: Found {patients.count()} patients")
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    per_page = 20
+    paginator = Paginator(patients, per_page)
+    page_obj = paginator.get_page(page)
     
     patient_data = []
-    for patient in patients:
+    for i, patient in enumerate(page_obj):
+        print(f"DEBUG: Patient {i}: {patient.first_name} {patient.last_name} (ID: {patient.patient_id})")
         patient_data.append({
             'id': patient.id,
-            'name': f"{patient.first_name} {patient.last_name}",
-            'age': patient.age,
+            'patient_id': patient.patient_id,
+            'first_name': patient.first_name,
+            'last_name': patient.last_name,
+            'age': patient.age if patient.age is not None else 0,
             'gender': patient.gender,
-            'phone': patient.phone_number
+            'gender_display': patient.get_gender_display(),
+            'phone_number': patient.phone_number,
+            'email': patient.email,
+            'city': patient.city,
+            'address': patient.address,
+            'created_at': patient.created_at.isoformat()
         })
     
-    return JsonResponse({'patients': patient_data})
+    return JsonResponse({
+        'patients': patient_data,
+        'total_count': paginator.count,
+        'pagination': {
+            'current_page': page_obj.number,
+            'total_pages': paginator.num_pages,
+            'has_previous': page_obj.has_previous(),
+            'has_next': page_obj.has_next(),
+            'previous_page': page_obj.previous_page_number if page_obj.has_previous() else None,
+            'next_page': page_obj.next_page_number if page_obj.has_next() else None,
+        }
+    })
 
 
 @login_required
 def api_get_patient(request, patient_id):
     """API endpoint to get patient details"""
-    if request.user.role != User.Role.HEALTH_ASSISTANT:
+    if not has_patient_access(request.user):
         return JsonResponse({'error': 'Access denied'}, status=403)
     
     try:
@@ -282,16 +413,109 @@ def api_get_patient(request, patient_id):
         return JsonResponse({
             'patient': {
                 'id': patient.id,
-                'name': f"{patient.first_name} {patient.last_name}",
+                'patient_id': patient.patient_id,
+                'first_name': patient.first_name,
+                'last_name': patient.last_name,
                 'age': patient.age,
                 'gender': patient.gender,
-                'phone': patient.phone_number,
+                'gender_display': patient.get_gender_display(),
+                'phone_number': patient.phone_number,
                 'email': patient.email,
-                'address': patient.address
+                'city': patient.city,
+                'address': patient.address,
+                'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else '',
+                'created_at': patient.created_at.isoformat()
             }
         })
     except Patient.DoesNotExist:
         return JsonResponse({'error': 'Patient not found'}, status=404)
+
+
+@login_required
+def api_patient_update(request, patient_id):
+    """API endpoint to update patient"""
+    if not has_patient_access(request.user):
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        patient = Patient.objects.get(id=patient_id)
+        
+        # Update fields
+        patient.first_name = request.POST.get('first_name', patient.first_name)
+        patient.last_name = request.POST.get('last_name', patient.last_name)
+        
+        date_of_birth = request.POST.get('date_of_birth')
+        if date_of_birth:
+            from datetime import datetime
+            patient.date_of_birth = datetime.strptime(date_of_birth, '%Y-%m-%d').date()
+        
+        patient.gender = request.POST.get('gender', patient.gender)
+        patient.phone_number = request.POST.get('phone_number', patient.phone_number)
+        patient.email = request.POST.get('email', patient.email)
+        patient.city = request.POST.get('city', patient.city)
+        patient.address = request.POST.get('address', patient.address)
+        
+        patient.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Patient updated successfully',
+            'patient': {
+                'id': patient.id,
+                'first_name': patient.first_name,
+                'last_name': patient.last_name,
+                'phone_number': patient.phone_number
+            }
+        })
+        
+    except Patient.DoesNotExist:
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+def export_patients_csv(query, gender, date_from, date_to):
+    """Export patients to CSV"""
+    import csv
+    from django.http import HttpResponse
+    
+    # Build filter conditions
+    filters = Q()
+    if query:
+        filters |= Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(patient_id__icontains=query) | Q(phone_number__icontains=query)
+    if gender:
+        filters &= Q(gender=gender)
+    if date_from:
+        filters &= Q(created_at__date__gte=date_from)
+    if date_to:
+        filters &= Q(created_at__date__lte=date_to)
+    
+    patients = Patient.objects.filter(filters).order_by('-created_at')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="patients_export.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Patient ID', 'First Name', 'Last Name', 'Age', 'Gender', 'Phone', 'Email', 'City', 'Address', 'Created'])
+    
+    for patient in patients:
+        writer.writerow([
+            patient.patient_id,
+            patient.first_name,
+            patient.last_name,
+            patient.age,
+            patient.get_gender_display(),
+            patient.phone_number,
+            patient.email or '',
+            patient.city or '',
+            patient.address or '',
+            patient.created_at.strftime('%Y-%m-%d %H:%M')
+        ])
+    
+    return response
 
 
 @login_required
@@ -436,11 +660,6 @@ def api_submit_questionnaire(request):
         if not questionnaire_id or not patient_id:
             return JsonResponse({'success': False, 'message': 'Missing questionnaire ID or patient ID'}, status=400)
         
-        # Debug: Print received data
-        print(f"DEBUG: questionnaire_id={questionnaire_id}, patient_id={patient_id}")
-        print(f"DEBUG: All POST data: {dict(request.POST)}")
-        print(f"DEBUG: All FILES data: {dict(request.FILES)}")
-        
         # Get objects
         questionnaire = get_object_or_404(Questionnaire, id=questionnaire_id, is_active=True)
         
@@ -452,9 +671,6 @@ def api_submit_questionnaire(request):
                 patient = Patient.objects.get(id=int(patient_id))
             except (Patient.DoesNotExist, ValueError):
                 return JsonResponse({'success': False, 'message': 'Patient not found'}, status=404)
-        
-        print(f"DEBUG: Found patient: {patient}")
-        print(f"DEBUG: Found questionnaire: {questionnaire}")
         
         # Import questionnaire models
         from questionnaires.models import Response, Answer
@@ -469,23 +685,17 @@ def api_submit_questionnaire(request):
             user_agent=request.META.get('HTTP_USER_AGENT', '')[:500]
         )
         
-        print(f"DEBUG: Created response: {response.id}")
-        
         # Process all form data
         answer_count = 0
         
-        # First process POST data (for non-attachment questions)
         for key, value in request.POST.items():
-            if key.startswith('question_') and value:
+            if key.startswith('question_'):
                 try:
                     question_id = key.split('_')[1]
                     question = questionnaire.questions.get(id=question_id)
                     
-                    # Skip attachment questions - they'll be processed from FILES
                     if question.question_type == question.TYPE_ATTACHMENT:
                         continue
-                    
-                    print(f"DEBUG: Processing question {question_id}: {value}")
                     
                     # Create answer
                     answer = Answer.objects.create(
@@ -496,34 +706,38 @@ def api_submit_questionnaire(request):
                     
                     # Handle different question types
                     if question.question_type == question.TYPE_MULTIPLE_CHOICE:
-                        # For multiple choice, try to get the option
-                        try:
-                            option = question.options.get(id=value)
-                            answer.option_answer.add(option)
-                            print(f"DEBUG: Added option {option}")
-                        except:
-                            answer.text_answer = str(value)
-                            print(f"DEBUG: Added text answer {value}")
+                        # For choice questions, value is option ID
+                        if isinstance(value, list):
+                            # Multiple choice
+                            for option_id in value:
+                                try:
+                                    option = question.options.get(id=option_id)
+                                    answer.option_answer.add(option)
+                                except:
+                                    answer.text_answer = str(option_id)
+                        else:
+                            # Single choice
+                            try:
+                                option = question.options.get(id=value)
+                                answer.option_answer.add(option)
+                            except:
+                                answer.text_answer = str(value)
                     else:
                         # For text answers
                         answer.text_answer = str(value)
-                        print(f"DEBUG: Added text answer {value}")
                     
                     answer.save()
                     answer_count += 1
                     
                 except (ValueError, Question.DoesNotExist) as e:
-                    print(f"DEBUG: Error processing question {question_id}: {e}")
                     continue  # Skip invalid question data
         
         # Now process FILES data (for attachment questions)
         for key, uploaded_file in request.FILES.items():
-            if key.startswith('question_'):
+            if key.startswith('attachment_'):
                 try:
                     question_id = key.split('_')[1]
                     question = questionnaire.questions.get(id=question_id)
-                    
-                    print(f"DEBUG: Processing attachment question {question_id}: {uploaded_file}")
                     
                     # Create answer for attachment
                     answer = Answer.objects.create(
@@ -532,14 +746,10 @@ def api_submit_questionnaire(request):
                         file_answer=uploaded_file
                     )
                     
-                    print(f"DEBUG: Saved file {uploaded_file.name} to answer")
                     answer_count += 1
                     
                 except (ValueError, Question.DoesNotExist) as e:
-                    print(f"DEBUG: Error processing attachment question {question_id}: {e}")
                     continue
-        
-        print(f"DEBUG: Created {answer_count} answers")
         
         return JsonResponse({
             'success': True,
@@ -551,7 +761,22 @@ def api_submit_questionnaire(request):
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 
+@login_required
+def api_test_auth(request):
+    """Test endpoint to check authentication"""
+    return JsonResponse({
+        'user': request.user.email,
+        'role': request.user.role,
+        'authenticated': request.user.is_authenticated,
+        'session_key': request.session.session_key
+    })
 
 
-
-
+@login_required
+def patient_list(request):
+    """Patient management page for health assistants"""
+    if not has_patient_access(request.user):
+        messages.error(request, 'Access denied. Health assistant role required.')
+        return redirect('login')
+    
+    return render(request, 'health_assistant/patient_list.html')

@@ -21,7 +21,17 @@
           
           <div class="row">
             <div class="col-md-6">
-              <h5 class="text-muted mb-3">Personal Information</h5>
+              <h5 class="text-muted mb-3">Patient Information</h5>
+              
+              <div class="mb-3">
+                <label for="{{ form.patient_id.id_for_label }}" class="form-label">Patient ID</label>
+                <input type="text" name="{{ form.patient_id.name }}" id="{{ form.patient_id.id_for_label }}" 
+                       class="form-control" value="{{ form.patient_id.value|default:'' }}" 
+                       {% if form.instance.pk %}readonly{% endif %}>
+                {% if form.patient_id.errors %}
+                  <div class="text-danger small mt-1">{{ form.patient_id.errors.0 }}</div>
+                {% endif %}
+              </div>
               
               <div class="mb-3">
                 <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name *</label>
@@ -68,10 +78,10 @@
               <h5 class="text-muted mb-3">Contact Information</h5>
               
               <div class="mb-3">
-                <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number *</label>
                 <input type="tel" name="{{ form.phone_number.name }}" id="{{ form.phone_number.id_for_label }}" 
                        class="form-control" value="{{ form.phone_number.value|default:'' }}" 
-                       placeholder="+1 (555) 123-4567">
+                       placeholder="+1 (555) 123-4567" required>
                 {% if form.phone_number.errors %}
                   <div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>
                 {% endif %}
@@ -88,12 +98,89 @@
               </div>
               
               <div class="mb-3">
+                <label for="{{ form.city.id_for_label }}" class="form-label">City</label>
+                <input type="text" name="{{ form.city.name }}" id="{{ form.city.id_for_label }}" 
+                       class="form-control" value="{{ form.city.value|default:'' }}">
+                {% if form.city.errors %}
+                  <div class="text-danger small mt-1">{{ form.city.errors.0 }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
                 <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
                 <textarea name="{{ form.address.name }}" id="{{ form.address.id_for_label }}" 
                           class="form-control" rows="2" placeholder="123 Main St, Apt 4B">{{ form.address.value|default:'' }}</textarea>
                 {% if form.address.errors %}
                   <div class="text-danger small mt-1">{{ form.address.errors.0 }}</div>
                 {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ form.state.id_for_label }}" class="form-label">State/Province</label>
+                <input type="text" name="{{ form.state.name }}" id="{{ form.state.id_for_label }}" 
+                       class="form-control" value="{{ form.state.value|default:'' }}">
+                {% if form.state.errors %}
+                  <div class="text-danger small mt-1">{{ form.state.errors.0 }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ form.postal_code.id_for_label }}" class="form-label">Postal Code</label>
+                <input type="text" name="{{ form.postal_code.name }}" id="{{ form.postal_code.id_for_label }}" 
+                       class="form-control" value="{{ form.postal_code.value|default:'' }}">
+                {% if form.postal_code.errors %}
+                  <div class="text-danger small mt-1">{{ form.postal_code.errors.0 }}</div>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
+                <label for="{{ form.country.id_for_label }}" class="form-label">Country</label>
+                <input type="text" name="{{ form.country.name }}" id="{{ form.country.id_for_label }}" 
+                       class="form-control" value="{{ form.country.value|default:'' }}">
+                {% if form.country.errors %}
+                  <div class="text-danger small mt-1">{{ form.country.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-12">
+                <h5 class="text-muted mb-3">Emergency Contact</h5>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="{{ form.emergency_contact_name.id_for_label }}" class="form-label">Emergency Contact Name</label>
+                  <input type="text" name="{{ form.emergency_contact_name.name }}" id="{{ form.emergency_contact_name.id_for_label }}" 
+                         class="form-control" value="{{ form.emergency_contact_name.value|default:'' }}">
+                  {% if form.emergency_contact_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.emergency_contact_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="{{ form.emergency_contact_phone.id_for_label }}" class="form-label">Emergency Contact Phone</label>
+                  <input type="tel" name="{{ form.emergency_contact_phone.name }}" id="{{ form.emergency_contact_phone.id_for_label }}" 
+                         class="form-control" value="{{ form.emergency_contact_phone.value|default:'' }}">
+                  {% if form.emergency_contact_phone.errors %}
+                    <div class="text-danger small mt-1">{{ form.emergency_contact_phone.errors.0 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="{{ form.emergency_contact_relation.id_for_label }}" class="form-label">Relation to Patient</label>
+                  <input type="text" name="{{ form.emergency_contact_relation.name }}" id="{{ form.emergency_contact_relation.id_for_label }}" 
+                         class="form-control" value="{{ form.emergency_contact_relation.value|default:'' }}">
+                  {% if form.emergency_contact_relation.errors %}
+                    <div class="text-danger small mt-1">{{ form.emergency_contact_relation.errors.0 }}</div>
+                  {% endif %}
+                </div>
               </div>
             </div>
           </div>

@@ -29,7 +29,7 @@ class Patient(models.Model):
         choices=Gender.choices,
         default=Gender.UNSPECIFIED
     )
-    phone_number = models.CharField(_('phone number'), max_length=20, blank=True)
+    phone_number = models.CharField(_('phone number'), max_length=20, unique=True, null=False, blank=False)
     email = models.EmailField(_('email address'), blank=True)
     address = models.TextField(_('address'), blank=True)
     city = models.CharField(_('city'), max_length=100, blank=True)
@@ -96,9 +96,16 @@ class Patient(models.Model):
     
     @property
     def age(self):
-        import datetime
-        today = datetime.date.today()
-        return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
+        """Calculate age from date of birth"""
+        if not self.date_of_birth:
+            return None
+        
+        try:
+            import datetime
+            today = datetime.date.today()
+            return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
+        except (TypeError, ValueError):
+            return None
 
 class MedicalRecord(models.Model):
     patient = models.OneToOneField(

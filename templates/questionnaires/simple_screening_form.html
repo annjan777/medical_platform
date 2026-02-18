@@ -303,19 +303,74 @@
     </div>
 
     <!-- Questions Container -->
-    <div class="questions-container hidden" id="questionsContainer">
-        <form method="post" id="screeningForm">
+    <div class="questions-container" id="questionsContainer">
+        <form method="post" id="screeningForm" action="/health-assistant/api/submit-questionnaire/">
             {% csrf_token %}
+            <input type="hidden" name="questionnaire_id" value="{{ questionnaire.id }}">
+            {% if request.GET.patient_id %}
+                <input type="hidden" name="patient_id" value="{{ request.GET.patient_id }}">
+            {% endif %}
+            
             <div id="questionsList">
-                <!-- Questions will be loaded here -->
+                {% for question in questions %}
+                    <div class="question-item" data-question-id="{{ question.id }}">
+                        <div class="question-text">
+                            <span class="question-number">{{ forloop.counter }}.</span>
+                            {{ question.question_text }}
+                            {% if question.is_required %}<span class="required">*</span>{% endif %}
+                        </div>
+                        
+                        <div class="question-options">
+                            {% if question.question_type == 'yes_no' %}
+                                <div class="option-group">
+                                    <label class="option-label">
+                                        <input type="radio" name="question_{{ question.id }}" value="yes" {% if question.is_required %}required{% endif %}>
+                                        <span class="option-text">Yes</span>
+                                    </label>
+                                    <label class="option-label">
+                                        <input type="radio" name="question_{{ question.id }}" value="no" {% if question.is_required %}required{% endif %}>
+                                        <span class="option-text">No</span>
+                                    </label>
+                                </div>
+                            
+                            {% elif question.question_type == 'multiple_choice' %}
+                                <div class="option-group">
+                                    {% for option in question.options.all %}
+                                        <label class="option-label">
+                                            <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" {% if question.is_required %}required{% endif %}>
+                                            <span class="option-text">{{ option.text }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            
+                            {% elif question.question_type == 'attachment' %}
+                                <div class="file-upload-container">
+                                    <input type="file" name="attachment_{{ question.id }}" id="attachment_{{ question.id }}" class="file-input" accept=".pdf,.xls,.xlsx,.csv,.txt,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp">
+                                    <label for="attachment_{{ question.id }}" class="file-label">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span>Choose file or drag and drop</span>
+                                        <small>PDF, XLS, CSV, TXT, DOC, Images (max 10MB)</small>
+                                    </label>
+                                    <div class="file-preview" id="preview_{{ question.id }}"></div>
+                                </div>
+                            
+                            {% else %}
+                                <div class="text-input-container">
+                                    <input type="text" name="question_{{ question.id }}" class="form-control" placeholder="Enter your answer" {% if question.is_required %}required{% endif %}>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="no-questions">
+                        <p>No questions found for this questionnaire.</p>
+                    </div>
+                {% endfor %}
             </div>
             
             <div class="form-actions">
-                <button type="button" onclick="resetSelection()" class="btn-secondary">
-                    <i class="fas fa-arrow-left mr-2"></i> Back
-                </button>
-                <button type="submit" class="btn-primary" id="submitBtn" disabled>
-                    <i class="fas fa-check mr-2"></i> Submit
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                    <i class="fas fa-check-circle"></i> Submit Questionnaire
                 </button>
             </div>
         </form>
@@ -323,221 +378,59 @@
 </div>
 
 <script>
-let selectedType = null;
-let questionnaireData = {};
-
-function selectQuestionnaireType(type) {
-    selectedType = type;
+// File upload handling
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle file uploads
+    const fileInputs = document.querySelectorAll('.file-input');
     
-    // Update UI
-    document.querySelectorAll('.type-option').forEach(option => {
-        option.classList.remove('selected');
-    });
-    event.currentTarget.classList.add('selected');
-    
-    // Load questions for this type
-    loadQuestions(type);
-}
-
-function loadQuestions(type) {
-    // Sample questionnaire data - in real app, this would come from the server
-    const questionnaires = {
-        medical_history: {
-            title: 'Medical History',
-            questions: [
-                {
-                    id: 1,
-                    text: 'Do you have any chronic medical conditions?',
-                    type: 'text',
-                    options: ['Yes', 'No']
-                },
-                {
-                    id: 2,
-                    text: 'Are you currently taking any medications?',
-                    type: 'text',
-                    options: ['Yes', 'No']
-                },
-                {
-                    id: 3,
-                    text: 'Have you been tested for HIV?',
-                    type: 'text',
-                    options: ['Yes', 'No']
-                }
-            ]
-        },
-        family_history: {
-            title: 'Family History',
-            questions: [
-                {
-                    id: 1,
-                    text: 'Does anyone in your family have cancer?',
-                    type: 'text',
-                    options: ['Yes', 'No']
-                },
-                {
-                    id: 2,
-                    text: 'Any history of heart disease in your family?',
-                    type: 'text',
-                    options: ['Yes', 'No']
-                },
-                {
-                    id: 3,
-                    text: 'Family history of diabetes?',
-                    type: 'text',
-                    options: ['Yes', 'No']
-                }
-            ]
-        },
-        mouth_features: {
-            title: 'Mouth Features',
-            questions: [
-                {
-                    id: 1,
-                    text: 'Do you use tobacco products?',
-                    type: 'text',
-                    options: ['Yes', 'No']
-                },
-                {
-                    id: 2,
-                    text: 'Any sores or lesions in your mouth?',
-                    type: 'image',
-                    options: ['Normal', 'Lesion Type 1', 'Lesion Type 2']
-                },
-                {
-                    id: 3,
-                    text: 'Upload a photo of your mouth if needed',
-                    type: 'file',
-                    options: []
-                }
-            ]
-        }
-    };
-    
-    questionnaireData = questionnaires[type] || {};
-    renderQuestions();
-    
-    // Show questions container
-    document.getElementById('questionsContainer').classList.remove('hidden');
-    document.getElementById('questionsContainer').classList.add('fade-in');
-}
-
-function renderQuestions() {
-    const container = document.getElementById('questionsList');
-    container.innerHTML = '';
-    
-    questionnaireData.questions.forEach((question, index) => {
-        const questionDiv = document.createElement('div');
-        questionDiv.className = 'question-item';
-        
-        let optionsHtml = '';
-        
-        if (question.type === 'text') {
-            optionsHtml = `
-                <div class="question-options">
-                    ${question.options.map(option => `
-                        <label class="option-label">
-                            <input type="radio" name="question_${question.id}" value="${option}" onchange="checkFormComplete()">
-                            <span class="option-text">${option}</span>
-                        </label>
-                    `).join('')}
-                </div>
-            `;
-        } else if (question.type === 'image') {
-            optionsHtml = `
-                <div class="question-options">
-                    ${question.options.map(option => `
-                        <label class="option-label">
-                            <input type="radio" name="question_${question.id}" value="${option}" onchange="checkFormComplete()">
-                            ${option.includes('Lesion') ? `<img src="/static/images/${option.toLowerCase().replace(' ', '_')}.jpg" alt="${option}" class="option-image">` : ''}
-                            <span class="option-text">${option}</span>
-                        </label>
-                    `).join('')}
-                </div>
-            `;
-        } else if (question.type === 'file') {
-            optionsHtml = `
-                <label class="file-upload">
-                    <input type="file" accept="image/*" onchange="handleFileUpload(this, ${question.id})">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Click to upload image or drag and drop</p>
-                    <p class="text-xs text-gray-500">PNG, JPG up to 10MB</p>
-                </label>
-            `;
-        }
-        
-        questionDiv.innerHTML = `
-            <div class="question-text">
-                ${index + 1}. ${question.text}
-            </div>
-            ${optionsHtml}
-        `;
-        
-        container.appendChild(questionDiv);
-    });
-}
-
-function handleFileUpload(input, questionId) {
-    // Handle file upload
-    const file = input.files[0];
-    if (file) {
-        console.log('File uploaded for question', questionId, ':', file.name);
-        checkFormComplete();
-    }
-}
-
-function checkFormComplete() {
-    // Check if all required questions are answered
-    let allAnswered = true;
-    
-    questionnaireData.questions.forEach(question => {
-        if (question.type === 'file') {
-            // File upload questions are optional for this check
-            return;
-        }
-        
-        const answered = document.querySelector(`input[name="question_${question.id}"]:checked`);
-        if (!answered) {
-            allAnswered = false;
-        }
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('preview_' + this.id.replace('attachment_', ''));
+            
+            if (file) {
+                preview.innerHTML = `
+                    <div class="file-info">
+                        <i class="fas fa-file"></i>
+                        <span>${file.name}</span>
+                        <small>(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                    </div>
+                `;
+            } else {
+                preview.innerHTML = '';
+            }
+        });
     });
     
-    document.getElementById('submitBtn').disabled = !allAnswered;
-}
-
-function resetSelection() {
-    selectedType = null;
-    questionnaireData = {};
-    
-    // Reset UI
-    document.querySelectorAll('.type-option').forEach(option => {
-        option.classList.remove('selected');
+    // Form submission
+    const form = document.getElementById('screeningForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Questionnaire submitted successfully!');
+                window.location.href = '/health-assistant/patients/';
+            } else {
+                alert('Error: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error submitting questionnaire');
+        });
     });
-    
-    document.getElementById('questionsContainer').classList.add('hidden');
-    document.getElementById('submitBtn').disabled = true;
-}
-
-document.getElementById('screeningForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
-    
-    // Collect form data
-    const formData = new FormData(this);
-    formData.append('questionnaire_type', selectedType);
-    
-    // In a real app, you'd send this to the server
-    console.log('Submitting questionnaire:', selectedType, formData);
-    
-    // Simulate submission
-    setTimeout(() => {
-        alert('Questionnaire submitted successfully!');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Submit';
-        resetSelection();
-    }, 2000);
 });
 </script>
 {% endblock %}

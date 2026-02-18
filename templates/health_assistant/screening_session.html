@@ -238,7 +238,7 @@ function searchPatients() {
                         <div class="card-body py-2">
                             <div class="row align-items-center">
                                 <div class="col-md-4">
-                                    <strong>${patient.name}</strong>
+                                    <strong>${patient.first_name || ''} ${patient.last_name || ''}</strong>
                                     <br><small class="text-muted">ID: ${patient.external_id || patient.id}</small>
                                 </div>
                                 <div class="col-md-3">

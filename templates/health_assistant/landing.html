@@ -138,10 +138,10 @@
                         
                         <div class="col-md-4 mb-3">
                             <label for="phone_number" class="form-label">
-                                Phone Number
+                                Phone Number <span class="text-danger">*</span>
                             </label>
                             <input type="tel" class="form-control" id="phone_number" name="phone_number" 
-                                   placeholder="Optional contact number">
+                                   placeholder="Enter phone number" required>
                         </div>
                     </div>
                     
@@ -321,6 +321,39 @@
                     <button type="button" class="btn btn-primary" id="newScreeningBtn">
                         <i class="fas fa-plus me-2"></i>Start New Screening
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phone Duplicate Modal -->
+    <div class="modal fade" id="phoneDuplicateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Phone Number Already Exists
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Attention:</strong> This phone number is already registered in the system.
+                    </div>
+                    <div id="duplicatePatientsList"></div>
+                    <div class="mt-3">
+                        <h6>Choose an option:</h6>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" id="selectExistingPatientBtn">
+                                <i class="fas fa-user me-2"></i>Select Existing Patient
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="useDifferentPhoneBtn">
+                                <i class="fas fa-phone me-2"></i>Use Different Phone
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -533,27 +566,14 @@ function searchPatients() {
     .then(response => response.json())
     .then(data => {
         if (data.patients && data.patients.length > 0) {
-            resultsDiv.innerHTML = `
-                <div class="alert alert-warning">
-                    <h6 class="alert-heading">Found ${data.patients.length} existing patient(s)</h6>
-                    <p class="mb-2">Please select an existing patient or continue with new registration:</p>
-                    <div class="list-group">
-                        ${data.patients.map(patient => `
-                            <div class="list-group-item list-group-item-action search-result-item" 
-                                 onclick="selectExistingPatient(${patient.id})">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>${patient.name}</strong>
-                                        <br><small class="text-muted">Age: ${patient.age} | Gender: ${patient.gender}</small>
-                                        ${patient.phone ? `<br><small class="text-muted">Phone: ${patient.phone}</small>` : ''}
-                                    </div>
-                                    <button class="btn btn-sm btn-primary">Select</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+            // Check if there are phone duplicates
+            if (data.has_phone_duplicates) {
+                // Show phone duplicate modal
+                showPhoneDuplicateModal(data.patients, data.message);
+            } else {
+                // Show regular search results
+                showRegularSearchResults(data.patients);
+            }
         } else {
             resultsDiv.innerHTML = `
                 <div class="alert alert-success">
@@ -569,6 +589,123 @@ function searchPatients() {
     });
 }
 
+function showPhoneDuplicateModal(patients, message) {
+    const modal = new bootstrap.Modal(document.getElementById('phoneDuplicateModal'));
+    const patientsList = document.getElementById('duplicatePatientsList');
+    
+    // Show message
+    let html = `
+        <div class="alert alert-warning mb-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${message}
+        </div>
+        <h6>Existing patients with this phone number:</h6>
+        <div class="list-group">
+    `;
+    
+    patients.forEach((patient, index) => {
+        const createdDate = patient.created_at || 'Recently';
+        html += `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${patient.name}</strong>
+                        <br><small class="text-muted">Age: ${patient.age} | Gender: ${patient.gender}</small>
+                        <br><small class="text-muted">Phone: ${patient.phone}</small>
+                        ${createdDate !== 'Recently' ? `<br><small class="text-info">Registered: ${createdDate}</small>` : ''}
+                    </div>
+                    <button class="btn btn-sm btn-primary" onclick="selectDuplicatePatient(${patient.id})">
+                        Select
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    patientsList.innerHTML = html;
+    
+    // Show modal
+    modal.show();
+    
+    // Setup button handlers
+    document.getElementById('selectExistingPatientBtn').onclick = () => {
+        modal.hide();
+        // Clear form and let user select first patient
+        clearPatientForm();
+    };
+    
+    document.getElementById('useDifferentPhoneBtn').onclick = () => {
+        modal.hide();
+        // Focus on phone number field for correction
+        clearPatientForm();
+        document.getElementById('phone_number').focus();
+    };
+    
+    document.getElementById('selectDuplicatePatientBtn').onclick = () => {
+        modal.hide();
+        selectExistingPatient(selectedDuplicatePatientId);
+    };
+}
+
+function selectDuplicatePatient(patientId) {
+    selectedDuplicatePatientId = patientId;
+    const modal = bootstrap.Modal.getInstance(document.getElementById('phoneDuplicateModal'));
+    modal.hide();
+    
+    // Get the selected patient's data to populate search input
+    fetch(`/health-assistant/api/get-patient/${patientId}/`, {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.patient) {
+            // Populate search input with the selected patient's phone for easy reference
+            const searchInput = document.getElementById('patientSearchInput');
+            if (searchInput && data.patient.phone) {
+                searchInput.value = data.patient.phone;
+            }
+            selectExistingPatient(patientId);
+        }
+    });
+}
+
+function showRegularSearchResults(patients) {
+    const resultsDiv = document.getElementById('searchResults');
+    resultsDiv.innerHTML = `
+        <div class="alert alert-warning">
+            <h6 class="alert-heading">
+                <i class="fas fa-info-circle me-2"></i>
+                Found ${patients.length} existing patient(s)
+            </h6>
+            <p class="mb-2">Please select an existing patient or continue with new registration:</p>
+            <div class="list-group">
+                ${patients.map(patient => `
+                    <div class="list-group-item list-group-item-action search-result-item" 
+                         onclick="selectExistingPatient(${patient.id})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${patient.first_name || ''} ${patient.last_name || ''}</strong>
+                                <br><small class="text-muted">Age: ${patient.age} | Gender: ${patient.gender}</small>
+                                ${patient.phone ? `<br><small class="text-muted">Phone: ${patient.phone}</small>` : ''}
+                            </div>
+                            <button class="btn btn-sm btn-primary">Select</button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function selectDuplicatePatient(patientId) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('phoneDuplicateModal'));
+    modal.hide();
+    selectExistingPatient(patientId);
+}
+
 function selectExistingPatient(patientId) {
     fetch(`/health-assistant/api/get-patient/${patientId}/`, {
         headers: {
@@ -580,12 +717,26 @@ function selectExistingPatient(patientId) {
         if (data.patient) {
             currentPatient = data.patient;
             showStep2();
+            
+            // Populate search input with the selected patient's phone for easy reference
+            const searchInput = document.getElementById('patientSearchInput');
+            if (searchInput && data.patient.phone) {
+                searchInput.value = data.patient.phone;
+            }
         }
     })
     .catch(error => {
         console.error('Error getting patient details:', error);
         showAlert('Error loading patient details', 'danger');
     });
+}
+
+function clearPatientForm() {
+    const form = document.getElementById('patientRegistrationForm');
+    form.reset();
+    // Clear any validation errors
+    const alerts = form.querySelectorAll('.alert');
+    alerts.forEach(alert => alert.remove());
 }
 
 function registerPatient() {

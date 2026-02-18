@@ -12,7 +12,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form method="post" id="patientRegistrationForm">
+                <form method="post" id="patientRegistrationForm" onsubmit="return false;">
                     {% csrf_token %}
                     
                     <!-- Patient Information -->
@@ -167,8 +167,8 @@
                                     <button type="reset" class="btn btn-outline-secondary me-2">
                                         <i class="fas fa-redo me-2"></i>Reset Form
                                     </button>
-                                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                                        <i class="fas fa-save me-2"></i>Register Patient
+                                    <button type="button" class="btn btn-primary" id="submitBtn">
+                                        <i class="fas fa-save me-2"></i>Register Patient and Continue
                                     </button>
                                 </div>
                             </div>
@@ -207,19 +207,46 @@
 
 {% block extra_js %}
 <script>
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Patient registration page loaded');
+    
     const form = document.getElementById('patientRegistrationForm');
     const submitBtn = document.getElementById('submitBtn');
-    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
     
-    // Form submission
-    form.addEventListener('submit', function(e) {
+    if (!form || !submitBtn) {
+        console.error('Form or submit button not found!');
+        return;
+    }
+    
+    console.log('Form and button found, adding click handler');
+    
+    // Handle button click instead of form submission
+    submitBtn.addEventListener('click', function(e) {
         e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('Submit button clicked!');
         
         // Validate consent checkbox
         const consentCheckbox = document.getElementById('consentCheckbox');
-        if (!consentCheckbox.checked) {
-            showAlert('Please confirm that patient consent has been obtained.', 'warning');
+        if (!consentCheckbox || !consentCheckbox.checked) {
+            alert('Please confirm that patient consent has been obtained.');
             return;
         }
         
@@ -227,40 +254,35 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registering...';
         
-        // Submit form
+        // Submit form via AJAX
         const formData = new FormData(form);
         
         fetch('{% url "health_assistant:patient_register" %}', {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Registration response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Registration response data:', data);
             if (data.success) {
-                // Show success modal
-                document.getElementById('patientDetails').innerHTML = `
-                    <div class="patient-info">
-                        <strong>Patient ID:</strong> ${data.patient.id}<br>
-                        <strong>Name:</strong> ${data.patient.first_name} ${data.patient.last_name}<br>
-                        <strong>Age:</strong> ${calculateAge(data.patient.date_of_birth)}<br>
-                        <strong>Gender:</strong> ${data.patient.gender}
-                    </div>
-                `;
+                console.log('Registration successful!');
+                console.log('Patient ID from response:', data.patient.patient_id);
                 
-                successModal.show();
+                // Show simple alert instead of modal for now
+                alert(`Patient Registered Successfully!\n\nPatient ID: ${data.patient.patient_id}\nName: ${data.patient.first_name} ${data.patient.last_name}\nAge: ${calculateAge(data.patient.date_of_birth)}\nGender: ${data.patient.gender}\n\nClick OK to continue to screening.`);
                 
-                // Set up start screening button
-                document.getElementById('startScreeningBtn').onclick = function() {
-                    window.location.href = `/health-assistant/screening/${data.patient.id}/`;
-                };
-                
-                // Reset form
-                form.reset();
+                // Redirect to screening after alert
+                window.location.href = `/health-assistant/screening/${data.patient.id}/`;
                 
             } else {
+                console.log('Registration failed:', data.message);
                 showAlert(data.message || 'Registration failed. Please try again.', 'danger');
             }
         })

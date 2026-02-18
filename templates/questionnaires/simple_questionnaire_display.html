@@ -4,13 +4,13 @@
 {% block title %}{{ questionnaire.title }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-8">
+<div class="questionnaire-container">
     <div class="max-w-4xl mx-auto px-4">
         <!-- Header -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ questionnaire.title }}</h1>
+        <div class="questionnaire-header bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h1>{{ questionnaire.title }}</h1>
             {% if questionnaire.description %}
-                <p class="text-gray-600">{{ questionnaire.description }}</p>
+                <p>{{ questionnaire.description }}</p>
             {% endif %}
         </div>
 
@@ -18,59 +18,70 @@
         <form id="questionnaireForm" method="post" action="{% url 'questionnaires:questionnaire_start' questionnaire.pk %}" class="space-y-6" enctype="multipart/form-data">
             {% csrf_token %}
             {% for question in questions %}
-            <div class="question-container bg-white rounded-lg shadow-sm p-6" data-question-id="{{ question.id }}" data-question-order="{{ forloop.counter0 }}">
-                <div class="mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                        {{ forloop.counter }}. {{ question.question_text }}
-                        {% if question.is_required %}<span class="text-red-500">*</span>{% endif %}
-                    </h3>
-                </div>
+            <div class="question-container" data-question-id="{{ question.id }}" data-question-order="{{ forloop.counter0 }}">
+                <h3>
+                    {{ forloop.counter }}. {{ question.question_text }}
+                    {% if question.is_required %}<span class="required">*</span>{% endif %}
+                </h3>
 
                 <!-- Yes/No Question -->
                 {% if question.question_type == 'yes_no' %}
-                <div class="space-y-3">
-                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input type="radio" name="question_{{ question.id }}" value="yes" class="mr-3" {% if question.is_required %}required{% endif %}>
-                        <span class="text-gray-700">Yes</span>
+                <div>
+                    <label class="option-label">
+                        <input type="radio" name="question_{{ question.id }}" value="yes" {% if question.is_required %}required{% endif %}>
+                        <div class="option-content">
+                            <span class="option-text">Yes</span>
+                        </div>
                     </label>
-                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input type="radio" name="question_{{ question.id }}" value="no" class="mr-3" {% if question.is_required %}required{% endif %}>
-                        <span class="text-gray-700">No</span>
+                    <label class="option-label">
+                        <input type="radio" name="question_{{ question.id }}" value="no" {% if question.is_required %}required{% endif %}>
+                        <div class="option-content">
+                            <span class="option-text">No</span>
+                        </div>
                     </label>
                 </div>
 
                 <!-- True/False Question -->
                 {% elif question.question_type == 'true_false' %}
-                <div class="space-y-3">
-                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input type="radio" name="question_{{ question.id }}" value="true" class="mr-3" {% if question.is_required %}required{% endif %}>
-                        <span class="text-gray-700">True</span>
+                <div>
+                    <label class="option-label">
+                        <input type="radio" name="question_{{ question.id }}" value="true" {% if question.is_required %}required{% endif %}>
+                        <div class="option-content">
+                            <span class="option-text">True</span>
+                        </div>
                     </label>
-                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input type="radio" name="question_{{ question.id }}" value="false" class="mr-3" {% if question.is_required %}required{% endif %}>
-                        <span class="text-gray-700">False</span>
+                    <label class="option-label">
+                        <input type="radio" name="question_{{ question.id }}" value="false" {% if question.is_required %}required{% endif %}>
+                        <div class="option-content">
+                            <span class="option-text">False</span>
+                        </div>
                     </label>
                 </div>
 
                 <!-- Multiple Choice Question -->
                 {% elif question.question_type == 'multiple_choice' %}
-                <div class="space-y-3">
+                <div>
                     {% for option in question.options.all %}
-                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" class="mr-3" {% if question.is_required %}required{% endif %}>
-                        
-                        {% if option.option_image %}
-                        <div class="flex-1">
-                            <img src="{{ option.option_image.url }}" alt="{{ option.text|default:option.id }}" 
-                                 class="max-h-32 max-w-full object-contain rounded">
-                            {% if option.text %}
-                            <p class="mt-2 text-sm text-gray-600">{{ option.text }}</p>
+                    <label class="option-label">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" {% if question.is_required %}required{% endif %}>
+                        <div class="option-content">
+                            {% if option.option_image %}
+                            <div>
+                                <img src="{{ option.option_image.url }}" alt="{{ option.text|default:option.id }}" class="option-image">
+                                {% if option.text %}
+                                <p class="option-image-caption">{{ option.text }}</p>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="option-text">{{ option.text }}</span>
                             {% endif %}
                         </div>
-                        {% else %}
-                        <span class="text-gray-700">{{ option.text }}</span>
-                        {% endif %}
                     </label>
+                    {% empty %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No options available for this question. Please add options in the questionnaire builder.
+                    </div>
                     {% endfor %}
                 </div>
 
@@ -78,8 +89,7 @@
                 {% elif question.question_type == 'short_answer' %}
                 <div>
                     <textarea name="question_{{ question.id }}" 
-                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              rows="3" 
+                              class="form-textarea"
                               placeholder="Enter your answer here..."
                               {% if question.is_required %}required{% endif %}></textarea>
                 </div>
@@ -87,20 +97,17 @@
                 <!-- Attachment Question -->
                 {% elif question.question_type == 'attachment' %}
                 <div>
-                    <div class="border-2 border-dashed border-blue-300 rounded-lg p-4 hover:border-blue-400 transition-colors bg-blue-50 hover:bg-blue-100">
-                        <div class="text-center">
-                            <div class="mb-2">
-                                <input id="question_{{ question.id }}" 
-                                       name="question_{{ question.id }}" 
-                                       type="file" 
-                                       class="form-control"
-                                       accept=".pdf,.xls,.xlsx,.csv,.txt,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp"
-                                       {% if question.is_required %}required{% endif %}>
-                            </div>
-                            <p class="mt-2 text-xs text-gray-500">PDF, XLS, CSV, TXT, DOC, Images (max 10MB)</p>
-                            <p class="mt-2 text-xs text-green-600 font-medium" id="file-name-{{ question.id }}"></p>
-                            <p class="mt-2 text-xs text-red-600 font-medium" id="file-error-{{ question.id }}"></p>
+                    <div class="file-upload-area">
+                        <div>
+                            <input id="question_{{ question.id }}" 
+                                   name="question_{{ question.id }}" 
+                                   type="file" 
+                                   accept=".pdf,.xls,.xlsx,.csv,.txt,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp"
+                                   {% if question.is_required %}required{% endif %}>
                         </div>
+                        <p class="file-upload-info">PDF, XLS, CSV, TXT, DOC, Images (max 10MB)</p>
+                        <p class="file-status success" id="file-name-{{ question.id }}"></p>
+                        <p class="file-status error" id="file-error-{{ question.id }}"></p>
                     </div>
                 </div>
                 {% endif %}
@@ -109,8 +116,8 @@
 
             <!-- Submit Button -->
             <div class="text-center mt-6">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium text-lg transition-colors">
-                    <i class="fas fa-check mr-2"></i>Submit Questionnaire
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-check me-2"></i>Submit Questionnaire
                 </button>
             </div>
         </form>
@@ -255,43 +262,210 @@ document.getElementById('questionnaireForm').addEventListener('submit', function
 </script>
 
 <style>
-.btn {
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
+/* Professional Business Styling */
+.questionnaire-container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #ffffff;
+    color: #333333;
+}
+
+.questionnaire-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.questionnaire-header p {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+.question-container {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.question-container h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    line-height: 1.4;
+}
+
+.question-container .required {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Option styling */
+.option-label {
+    display: block;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #ffffff;
+}
+
+.option-label:hover {
+    border-color: #22c55e;
+    background: #f8fff9;
+}
+
+.option-label input[type="radio"]:checked + .option-content {
+    color: #22c55e;
     font-weight: 500;
-    transition: all 0.2s;
 }
 
-.btn-primary {
-    background-color: #3b82f6;
+.option-label input[type="radio"]:checked {
+    accent-color: #22c55e;
+}
+
+.option-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.option-text {
+    font-size: 1rem;
+    color: #495057;
+    margin: 0;
+}
+
+/* Image option styling */
+.option-image {
+    max-height: 120px;
+    max-width: 200px;
+    border-radius: 4px;
+    object-fit: contain;
+    border: 1px solid #dee2e6;
+    display: block;
+    margin: 0.5rem 0;
+}
+
+.option-image-caption {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+}
+
+/* Textarea styling */
+.form-textarea {
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+/* File upload styling */
+.file-upload-area {
+    border: 2px dashed #22c55e;
+    border-radius: 6px;
+    padding: 2rem;
+    text-align: center;
+    background: #f8fff9;
+    transition: all 0.2s ease;
+}
+
+.file-upload-area:hover {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
+
+.file-upload-area input[type="file"] {
+    border: none;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.file-upload-info {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.file-status {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+.file-status.success {
+    color: #22c55e;
+}
+
+.file-status.error {
+    color: #dc3545;
+}
+
+/* Submit button styling */
+.btn-submit {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
     color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 6px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2);
 }
 
-.btn-primary:hover:not(:disabled) {
-    background-color: #2563eb;
+.btn-submit:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px rgba(34, 197, 94, 0.3);
 }
 
-.btn-secondary {
-    background-color: #6b7280;
-    color: white;
-}
-
-.btn-secondary:hover:not(:disabled) {
-    background-color: #4b5563;
-}
-
-.btn-success {
-    background-color: #10b981;
-    color: white;
-}
-
-.btn-success:hover {
-    background-color: #059669;
-}
-
-.btn:disabled {
-    opacity: 0.5;
+.btn-submit:disabled {
+    background: #6c757d;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .question-container {
+        padding: 1.5rem;
+    }
+    
+    .questionnaire-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .option-image {
+        max-height: 100px;
+        max-width: 150px;
+    }
+    
+    .option-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
 }
 </style>
 {% endblock %}

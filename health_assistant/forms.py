@@ -33,7 +33,7 @@ class PatientRegistrationForm(forms.ModelForm):
             }),
             'phone_number': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Phone number (optional)'
+                'placeholder': 'Phone number (required)'
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-control',
@@ -66,10 +66,11 @@ class PatientRegistrationForm(forms.ModelForm):
         self.fields['last_name'].required = True
         self.fields['date_of_birth'].required = True
         self.fields['gender'].required = True
+        self.fields['phone_number'].required = True  # Phone is now mandatory
         
         # Make optional fields clear
         optional_fields = [
-            'phone_number', 'email', 'address', 'city', 
+            'email', 'address', 'city', 
             'state', 'postal_code'
         ]
         for field in optional_fields:

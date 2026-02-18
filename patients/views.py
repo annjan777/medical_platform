@@ -97,6 +97,17 @@ class PatientUpdateView(LoginRequiredMixin, UpdateView):
         return reverse_lazy('patients:detail', kwargs={'patient_id': self.object.patient_id})
     
     def form_valid(self, form):
+        # Save the form directly - no need for commit=False since we're not modifying
+        patient = form.save()
+        
+        # Preserve existing patient_id if it exists
+        if self.object.patient_id and not patient.patient_id:
+            patient.patient_id = self.object.patient_id
+        
+        # Set the created_by user if not already set
+        if not patient.created_by:
+            patient.created_by = self.request.user
+        
         messages.success(self.request, 'Patient updated successfully!')
         return super().form_valid(form)
 

@@ -18,11 +18,14 @@ from .models import Questionnaire, Question, QuestionOption, Response, Answer
 from .forms import QuestionnaireForm, QuestionForm, ResponseForm
 
 # Questionnaire Views
-class QuestionnaireListView(LoginRequiredMixin, ListView):
+class QuestionnaireListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Questionnaire
     template_name = 'questionnaires/questionnaire_list.html'
     context_object_name = 'questionnaires'
     paginate_by = 10
+    
+    def test_func(self):
+        return self.request.user.is_staff
     
     def get_queryset(self):
         return Questionnaire.objects.filter(is_active=True).order_by('-created_at')
@@ -58,10 +61,13 @@ class QuestionnaireUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVie
     def get_success_url(self):
         return reverse_lazy('questionnaires:detail', kwargs={'pk': self.object.pk})
 
-class QuestionnaireDetailView(LoginRequiredMixin, DetailView):
+class QuestionnaireDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Questionnaire
     template_name = 'questionnaires/questionnaire_detail.html'
     context_object_name = 'questionnaire'
+    
+    def test_func(self):
+        return self.request.user.is_staff
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -161,11 +167,14 @@ class QuestionDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 # Response Views
-class ResponseListView(LoginRequiredMixin, ListView):
+class ResponseListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Response
     template_name = 'questionnaires/response_list.html'
     context_object_name = 'responses'
     paginate_by = 20
+    
+    def test_func(self):
+        return self.request.user.is_staff
     
     def get_queryset(self):
         queryset = Response.objects.select_related('questionnaire', 'respondent', 'patient')
@@ -212,10 +221,13 @@ class ResponseListView(LoginRequiredMixin, ListView):
         context['questionnaires'] = Questionnaire.objects.filter(is_active=True)
         return context
 
-class ResponseDetailView(LoginRequiredMixin, DetailView):
+class ResponseDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Response
     template_name = 'questionnaires/response_detail.html'
     context_object_name = 'response'
+    
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user == self.get_object().respondent
     
     def get_queryset(self):
         return Response.objects.select_related('questionnaire', 'respondent')
