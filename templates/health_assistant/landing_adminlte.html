@@ -911,8 +911,6 @@ function registerPatient() {
                 currentPatient = data.patient;
                 showStep2();
                 
-                // Show success modal with Patient ID
-                showSuccessModal();
                 // Show alert with Patient ID
                 alert(`Patient Registered Successfully!\n\nPatient ID: ${data.patient.patient_id}\nName: ${data.patient.first_name} ${data.patient.last_name}\nAge: ${data.patient.age}\nGender: ${data.patient.gender}\n\nClick OK to continue to screening.`);
                 
