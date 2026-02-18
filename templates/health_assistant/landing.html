@@ -429,25 +429,174 @@
     cursor: pointer;
     transition: all 0.2s ease;
     border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .questionnaire-card:hover {
     border-color: var(--medical-primary);
     transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 
 .questionnaire-card.selected {
     border-color: var(--medical-primary);
     background-color: #f0f8ff;
+    transform: translateY(-2px);
 }
 
 .search-result-item {
     cursor: pointer;
     transition: all 0.2s ease;
+    padding: 0.75rem;
+    border-radius: 6px;
 }
 
 .search-result-item:hover {
     background-color: #f8f9fa;
+    transform: translateY(-1px);
+}
+
+/* Enhanced Questionnaire Styling */
+#questionnaireContent .card {
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+#questionnaireContent .card-header {
+    background: linear-gradient(135deg, var(--medical-primary) 0%, #0d6efd 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 1rem 1.5rem;
+}
+
+#questionnaireContent .card-title {
+    color: white;
+    font-weight: 600;
+    margin: 0;
+}
+
+#questionnaireContent .card-body {
+    padding: 2rem;
+}
+
+#questionnaireContent .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+#questionnaireContent .form-control,
+#questionnaireContent .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease;
+}
+
+#questionnaireContent .form-control:focus,
+#questionnaireContent .form-select:focus {
+    border-color: var(--medical-primary);
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+}
+
+#questionnaireContent .form-check {
+    margin-bottom: 1rem;
+}
+
+#questionnaireContent .form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.5rem;
+}
+
+#questionnaireContent .form-check-label {
+    font-weight: 500;
+}
+
+/* Question Specific Styling */
+#questionnaireContent .form-group {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+#questionnaireContent .question-text {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+#questionnaireContent .radio-group,
+#questionnaireContent .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+#questionnaireContent .radio-label,
+#questionnaireContent .checkbox-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+#questionnaireContent .btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+/* Enhanced Loading States */
+#questionnaireContent .loading-placeholder {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+
+#questionnaireContent .loading-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid var(--medical-primary);
+    border-radius: 50%;
+    border-top: 4px solid var(--medical-primary);
+    border-right: 4px solid transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+    .questionnaire-card {
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+    
+    #questionnaireContent .card-body {
+        padding: 1.5rem;
+    }
+    
+    .step-indicator {
+        font-size: 0.8rem;
+    }
+    
+    .step-circle {
+        width: 40px;
+        height: 40px;
+    }
 }
 </style>
 {% endblock %}
@@ -780,6 +929,13 @@ function registerPatient() {
         if (data.success) {
             currentPatient = data.patient;
             showStep2();
+            
+            // Show success modal with Patient ID
+            showSuccessModal();
+            
+            // Show alert with Patient ID
+            alert(`Patient Registered Successfully!\n\nPatient ID: ${data.patient.patient_id}\nName: ${data.patient.first_name} ${data.patient.last_name}\nAge: ${data.patient.age}\nGender: ${data.patient.gender}\n\nClick OK to continue to screening.`);
+            
         } else {
             showAlert(data.message || 'Registration failed. Please try again.', 'danger');
         }
@@ -1163,13 +1319,51 @@ function submitQuestionnaire() {
 function showSuccessModal() {
     const modal = new bootstrap.Modal(document.getElementById('successModal'));
     
-    document.getElementById('successDetails').innerHTML = `
-        <div class="patient-info">
-            <p><strong>Patient:</strong> ${currentPatient.name}</p>
-            <p><strong>Questionnaire:</strong> ${selectedQuestionnaire.title}</p>
-            <p><strong>Completed:</strong> ${new Date().toLocaleString()}</p>
+    $('#successDetails').html(`
+        <div class="text-center mb-4">
+            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+            <h5 class="text-success mb-3">Patient Registered Successfully!</h5>
         </div>
-    `;
+        <div class="patient-info">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <h6 class="text-primary">
+                        <i class="fas fa-id-card me-2"></i>
+                        Patient Information
+                    </h6>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Patient ID:</strong> 
+                    <span class="badge bg-primary fs-6">${currentPatient.patient_id || 'N/A'}</span>
+                </div>
+                <div class="col-md-6">
+                    <strong>Name:</strong> 
+                    ${currentPatient.first_name || ''} ${currentPatient.last_name || ''}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Age:</strong> 
+                    ${currentPatient.age || 'N/A'}
+                </div>
+                <div class="col-md-6">
+                    <strong>Gender:</strong> 
+                    ${currentPatient.gender || 'N/A'}
+                </div>
+            </div>
+        </div>
+        <div class="mt-3">
+            <h6>What's Next?</h6>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i>Patient has been registered</li>
+                <li><i class="fas fa-check text-success me-2"></i>Patient ID assigned: <strong>${currentPatient.patient_id || 'N/A'}</strong></li>
+                <li><i class="fas fa-check text-success me-2"></i>Questionnaire completed</li>
+                <li><i class="fas fa-check text-success me-2"></i>Data saved successfully</li>
+            </ul>
+        </div>
+    `);
     
     modal.show();
 }
