@@ -68,7 +68,7 @@
             <div class="card-body">
                 <form id="patientRegistrationForm" data-register-url="{% url 'health_assistant:patient_register' %}">
                     {% csrf_token %}
-                    
+
                     <!-- Patient Search Section -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -80,8 +80,8 @@
                                 <p class="mb-2">Search for existing patient first to avoid duplicate registrations.</p>
                                 <div class="row">
                                     <div class="col-md-8">
-                                        <input type="text" class="form-control" id="patientSearchInput" 
-                                               placeholder="Search by name, phone, or email...">
+                                        <input type="text" class="form-control" id="patientSearchInput"
+                                            placeholder="Search by name, phone, or email...">
                                     </div>
                                     <div class="col-md-4">
                                         <button type="button" class="btn btn-info" id="searchPatientBtn">
@@ -101,28 +101,28 @@
                                 <i class="fas fa-user me-2"></i>Patient Information
                             </h6>
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <label for="first_name" class="form-label">
                                 First Name <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" id="first_name" name="first_name" required>
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <label for="last_name" class="form-label">
                                 Last Name <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" id="last_name" name="last_name" required>
                         </div>
-                        
+
                         <div class="col-md-4 mb-3">
                             <label for="date_of_birth" class="form-label">
                                 Date of Birth <span class="text-danger">*</span>
                             </label>
                             <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
                         </div>
-                        
+
                         <div class="col-md-4 mb-3">
                             <label for="gender" class="form-label">
                                 Gender <span class="text-danger">*</span>
@@ -135,16 +135,16 @@
                                 <option value="U">Prefer not to say</option>
                             </select>
                         </div>
-                        
+
                         <div class="col-md-4 mb-3">
                             <label for="phone_number" class="form-label">
                                 Phone Number <span class="text-danger">*</span>
                             </label>
-                            <input type="tel" class="form-control" id="phone_number" name="phone_number" 
-                                   placeholder="Enter phone number" required>
+                            <input type="tel" class="form-control" id="phone_number" name="phone_number"
+                                placeholder="Enter phone number" required>
                         </div>
                     </div>
-                    
+
                     <!-- Contact Information -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -152,32 +152,31 @@
                                 <i class="fas fa-phone me-2"></i>Contact Information
                             </h6>
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">
                                 Email Address
                             </label>
-                            <input type="email" class="form-control" id="email" name="email" 
-                                   placeholder="Optional email address">
+                            <input type="email" class="form-control" id="email" name="email"
+                                placeholder="Optional email address">
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <label for="city" class="form-label">
                                 City
                             </label>
-                            <input type="text" class="form-control" id="city" name="city" 
-                                   placeholder="Optional city">
+                            <input type="text" class="form-control" id="city" name="city" placeholder="Optional city">
                         </div>
-                        
+
                         <div class="col-12 mb-3">
                             <label for="address" class="form-label">
                                 Address
                             </label>
-                            <textarea class="form-control" id="address" name="address" rows="2" 
-                                      placeholder="Optional street address"></textarea>
+                            <textarea class="form-control" id="address" name="address" rows="2"
+                                placeholder="Optional street address"></textarea>
                         </div>
                     </div>
-                    
+
                     <!-- Consent Section -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -186,19 +185,21 @@
                                     <i class="fas fa-info-circle me-2"></i>Patient Consent
                                 </h6>
                                 <p class="mb-2">
-                                    By registering this patient, you confirm that you have obtained proper consent 
-                                    for medical screening and data collection in accordance with medical privacy regulations.
+                                    By registering this patient, you confirm that you have obtained proper consent
+                                    for medical screening and data collection in accordance with medical privacy
+                                    regulations.
                                 </p>
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="consentCheckbox" required>
                                     <label class="form-check-label" for="consentCheckbox">
-                                        I confirm that patient consent has been obtained for screening and data collection
+                                        I confirm that patient consent has been obtained for screening and data
+                                        collection
                                     </label>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Form Actions -->
                     <div class="row">
                         <div class="col-12">
@@ -258,7 +259,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="d-flex justify-content-end">
                     <button type="button" class="btn btn-success" id="startQuestionnaireBtn" disabled>
                         <i class="fas fa-play me-2"></i>Start Questionnaire
@@ -281,7 +282,7 @@
                 <div id="questionnaireContent">
                     <!-- Questionnaire will be loaded here -->
                 </div>
-                
+
                 <div class="text-center mt-4">
                     <button type="button" class="btn btn-primary btn-lg" id="submitQuestionnaireBtn">
                         <i class="fas fa-check me-2"></i>Submit Questionnaire
@@ -363,387 +364,399 @@
 
 {% block extra_css %}
 <style>
-.step-indicator {
-    text-align: center;
-    position: relative;
-}
-
-.step-circle {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: #e9ecef;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 8px;
-    font-size: 1.2rem;
-    color: #6c757d;
-    transition: all 0.3s ease;
-}
-
-.step-circle.active {
-    background-color: var(--medical-primary);
-    color: white;
-}
-
-.step-circle.completed {
-    background-color: #28a745;
-    color: white;
-}
-
-.step-label {
-    font-size: 0.9rem;
-    color: #6c757d;
-    font-weight: 500;
-}
-
-.step-connector {
-    height: 2px;
-    background-color: #e9ecef;
-    margin: 25px 0;
-    position: relative;
-    top: -15px;
-}
-
-.workflow-step {
-    animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.patient-card {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.patient-card:hover {
-    background-color: #f8f9fa;
-    transform: translateY(-2px);
-}
-
-.questionnaire-card {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.questionnaire-card:hover {
-    border-color: var(--medical-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-}
-
-.questionnaire-card.selected {
-    border-color: var(--medical-primary);
-    background-color: #f0f8ff;
-    transform: translateY(-2px);
-}
-
-.search-result-item {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 0.75rem;
-    border-radius: 6px;
-}
-
-.search-result-item:hover {
-    background-color: #f8f9fa;
-    transform: translateY(-1px);
-}
-
-/* Enhanced Questionnaire Styling */
-#questionnaireContent .card {
-    border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-}
-
-#questionnaireContent .card-header {
-    background: linear-gradient(135deg, var(--medical-primary) 0%, #0d6efd 100%);
-    color: white;
-    border-radius: 12px 12px 0 0;
-    padding: 1rem 1.5rem;
-}
-
-#questionnaireContent .card-title {
-    color: white;
-    font-weight: 600;
-    margin: 0;
-}
-
-#questionnaireContent .card-body {
-    padding: 2rem;
-}
-
-#questionnaireContent .form-label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-}
-
-#questionnaireContent .form-control,
-#questionnaireContent .form-select {
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
-    transition: border-color 0.2s ease;
-}
-
-#questionnaireContent .form-control:focus,
-#questionnaireContent .form-select:focus {
-    border-color: var(--medical-primary);
-    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
-}
-
-#questionnaireContent .form-check {
-    margin-bottom: 1rem;
-}
-
-#questionnaireContent .form-check-input {
-    width: 1.25rem;
-    height: 1.25rem;
-    margin-right: 0.5rem;
-}
-
-#questionnaireContent .form-check-label {
-    font-weight: 500;
-}
-
-/* Question Specific Styling */
-#questionnaireContent .form-group {
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-}
-
-#questionnaireContent .question-text {
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.75rem;
-    line-height: 1.5;
-}
-
-#questionnaireContent .radio-group,
-#questionnaireContent .checkbox-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-#questionnaireContent .radio-label,
-#questionnaireContent .checkbox-label {
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 0.5rem;
-}
-
-#questionnaireContent .btn {
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-/* Enhanced Loading States */
-#questionnaireContent .loading-placeholder {
-    text-align: center;
-    padding: 3rem 2rem;
-    color: #6c757d;
-}
-
-#questionnaireContent .loading-spinner {
-    width: 3rem;
-    height: 3rem;
-    border: 4px solid var(--medical-primary);
-    border-radius: 50%;
-    border-top: 4px solid var(--medical-primary);
-    border-right: 4px solid transparent;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Responsive Improvements */
-@media (max-width: 768px) {
-    .questionnaire-card {
-        margin-bottom: 1rem;
-        padding: 1rem;
-    }
-    
-    #questionnaireContent .card-body {
-        padding: 1.5rem;
-    }
-    
     .step-indicator {
-        font-size: 0.8rem;
+        text-align: center;
+        position: relative;
     }
-    
+
     .step-circle {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        font-size: 1.2rem;
+        color: #6c757d;
+        transition: all 0.3s ease;
     }
-}
+
+    .step-circle.active {
+        background-color: var(--medical-primary);
+        color: white;
+    }
+
+    .step-circle.completed {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .step-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .step-connector {
+        height: 2px;
+        background-color: #e9ecef;
+        margin: 25px 0;
+        position: relative;
+        top: -15px;
+    }
+
+    .workflow-step {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .patient-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .patient-card:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+    }
+
+    .questionnaire-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .questionnaire-card:hover {
+        border-color: var(--medical-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .questionnaire-card.selected {
+        border-color: var(--medical-primary);
+        background-color: #f0f8ff;
+        transform: translateY(-2px);
+    }
+
+    .search-result-item {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0.75rem;
+        border-radius: 6px;
+    }
+
+    .search-result-item:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+    }
+
+    /* Enhanced Questionnaire Styling */
+    #questionnaireContent .card {
+        border: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    #questionnaireContent .card-header {
+        background: linear-gradient(135deg, var(--medical-primary) 0%, #0d6efd 100%);
+        color: white;
+        border-radius: 12px 12px 0 0;
+        padding: 1rem 1.5rem;
+    }
+
+    #questionnaireContent .card-title {
+        color: white;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    #questionnaireContent .card-body {
+        padding: 2rem;
+    }
+
+    #questionnaireContent .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    #questionnaireContent .form-control,
+    #questionnaireContent .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease;
+    }
+
+    #questionnaireContent .form-control:focus,
+    #questionnaireContent .form-select:focus {
+        border-color: var(--medical-primary);
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+    }
+
+    #questionnaireContent .form-check {
+        margin-bottom: 1rem;
+    }
+
+    #questionnaireContent .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-right: 0.5rem;
+    }
+
+    #questionnaireContent .form-check-label {
+        font-weight: 500;
+    }
+
+    /* Question Specific Styling */
+    #questionnaireContent .form-group {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    #questionnaireContent .question-text {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.75rem;
+        line-height: 1.5;
+    }
+
+    #questionnaireContent .radio-group,
+    #questionnaireContent .checkbox-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    #questionnaireContent .radio-label,
+    #questionnaireContent .checkbox-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    #questionnaireContent .btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    /* Enhanced Loading States */
+    #questionnaireContent .loading-placeholder {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+
+    #questionnaireContent .loading-spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 4px solid var(--medical-primary);
+        border-radius: 50%;
+        border-top: 4px solid var(--medical-primary);
+        border-right: 4px solid transparent;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Responsive Improvements */
+    @media (max-width: 768px) {
+        .questionnaire-card {
+            margin-bottom: 1rem;
+            padding: 1rem;
+        }
+
+        #questionnaireContent .card-body {
+            padding: 1.5rem;
+        }
+
+        .step-indicator {
+            font-size: 0.8rem;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-        // Common functions
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
+    // Common functions
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-            return cookieValue;
         }
-        
-        function showAlert(message, type = 'info') {
-            const alertDiv = `
+        return cookieValue;
+    }
+
+    function showAlert(message, type = 'info') {
+        const alertDiv = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                     ${message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             `;
-            
-            // Add to top of content area
-            $('.main-content').prepend(alertDiv);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                $('.alert').fadeOut();
-            }, 5000);
-        }
-        
-        function showLoading(element) {
-            const originalContent = element.html();
-            element.html('<i class="fas fa-spinner fa-spin me-2"></i>Loading...');
-            element.prop('disabled', true);
-            return originalContent;
-        }
-        
-        function hideLoading(element, originalContent) {
-            element.html(originalContent);
-            element.prop('disabled', false);
-        }
-        
-        // Initialize tooltips
-        $(document).ready(function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        });
-    </script>
-<script>
-let currentPatient = null;
-let selectedQuestionnaire = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize form
-    const patientForm = document.getElementById('patientRegistrationForm');
-    const searchBtn = document.getElementById('searchPatientBtn');
-    const searchInput = document.getElementById('patientSearchInput');
-    
-    // Patient search
-    searchBtn.addEventListener('click', searchPatients);
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchPatients();
-        }
-    });
-    
-    // Patient registration
-    patientForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        registerPatient();
-    });
-    
-    // Navigation buttons
-    document.getElementById('startQuestionnaireBtn').addEventListener('click', startQuestionnaire);
-    document.getElementById('submitQuestionnaireBtn').addEventListener('click', submitQuestionnaire);
-    
-    // Success modal buttons
-    document.getElementById('newScreeningBtn').addEventListener('click', function() {
-        bootstrap.Modal.getInstance(document.getElementById('successModal')).hide();
-        resetWorkflow();
-    });
-    
-    document.getElementById('viewDashboardBtn').addEventListener('click', function() {
-        window.location.href = '/health-assistant/dashboard/';
-    });
-});
+        // Add to top of content area
+        $('.main-content').prepend(alertDiv);
 
-function searchPatients() {
-    const query = document.getElementById('patientSearchInput').value.trim();
-    const resultsDiv = document.getElementById('searchResults');
-    
-    if (!query) {
-        resultsDiv.innerHTML = '';
-        return;
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            $('.alert').fadeOut();
+        }, 5000);
     }
-    
-    resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div> Searching...</div>';
-    
-    fetch(`/health-assistant/api/search-patients/?q=${encodeURIComponent(query)}`, {
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.patients && data.patients.length > 0) {
-            // Check if there are phone duplicates
-            if (data.has_phone_duplicates) {
-                // Show phone duplicate modal
-                showPhoneDuplicateModal(data.patients, data.message);
-            } else {
-                // Show regular search results
-                showRegularSearchResults(data.patients);
+
+    function showLoading(element) {
+        const originalContent = element.html();
+        element.html('<i class="fas fa-spinner fa-spin me-2"></i>Loading...');
+        element.prop('disabled', true);
+        return originalContent;
+    }
+
+    function hideLoading(element, originalContent) {
+        element.html(originalContent);
+        element.prop('disabled', false);
+    }
+
+    // Initialize tooltips
+    $(document).ready(function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+<script>
+    let currentPatient = null;
+    let selectedQuestionnaire = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize form
+        const patientForm = document.getElementById('patientRegistrationForm');
+        const searchBtn = document.getElementById('searchPatientBtn');
+        const searchInput = document.getElementById('patientSearchInput');
+
+        // Patient search
+        searchBtn.addEventListener('click', searchPatients);
+        searchInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchPatients();
             }
-        } else {
-            resultsDiv.innerHTML = `
+        });
+
+        // Patient registration
+        patientForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            registerPatient();
+        });
+
+        // Navigation buttons
+        document.getElementById('startQuestionnaireBtn').addEventListener('click', startQuestionnaire);
+        document.getElementById('submitQuestionnaireBtn').addEventListener('click', submitQuestionnaire);
+
+        // Success modal buttons
+        document.getElementById('newScreeningBtn').addEventListener('click', function () {
+            bootstrap.Modal.getInstance(document.getElementById('successModal')).hide();
+            resetWorkflow();
+        });
+
+        document.getElementById('viewDashboardBtn').addEventListener('click', function () {
+            window.location.href = '/health-assistant/dashboard/';
+        });
+    });
+
+    function searchPatients() {
+        const query = document.getElementById('patientSearchInput').value.trim();
+        const resultsDiv = document.getElementById('searchResults');
+
+        if (!query) {
+            resultsDiv.innerHTML = '';
+            return;
+        }
+
+        resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div> Searching...</div>';
+
+        fetch(`/health-assistant/api/search-patients/?q=${encodeURIComponent(query)}`, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.patients && data.patients.length > 0) {
+                    // Check if there are phone duplicates
+                    if (data.has_phone_duplicates) {
+                        // Show phone duplicate modal
+                        showPhoneDuplicateModal(data.patients, data.message);
+                    } else {
+                        // Show regular search results
+                        showRegularSearchResults(data.patients);
+                    }
+                } else {
+                    resultsDiv.innerHTML = `
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle me-2"></i>
                     No existing patients found. Please proceed with new patient registration.
                 </div>
             `;
-        }
-    })
-    .catch(error => {
-        console.error('Error searching patients:', error);
-        resultsDiv.innerHTML = '<div class="alert alert-danger">Error searching patients. Please try again.</div>';
-    });
-}
+                }
+            })
+            .catch(error => {
+                console.error('Error searching patients:', error);
+                resultsDiv.innerHTML = '<div class="alert alert-danger">Error searching patients. Please try again.</div>';
+            });
+    }
 
-function showPhoneDuplicateModal(patients, message) {
-    const modal = new bootstrap.Modal(document.getElementById('phoneDuplicateModal'));
-    const patientsList = document.getElementById('duplicatePatientsList');
-    
-    // Show message
-    let html = `
+    function showPhoneDuplicateModal(patients, message) {
+        const modal = new bootstrap.Modal(document.getElementById('phoneDuplicateModal'));
+        const patientsList = document.getElementById('duplicatePatientsList');
+
+        // Show message
+        let html = `
         <div class="alert alert-warning mb-3">
             <i class="fas fa-exclamation-triangle me-2"></i>
             ${message}
@@ -751,10 +764,10 @@ function showPhoneDuplicateModal(patients, message) {
         <h6>Existing patients with this phone number:</h6>
         <div class="list-group">
     `;
-    
-    patients.forEach((patient, index) => {
-        const createdDate = patient.created_at || 'Recently';
-        html += `
+
+        patients.forEach((patient, index) => {
+            const createdDate = patient.created_at || 'Recently';
+            html += `
             <div class="list-group-item">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -769,61 +782,61 @@ function showPhoneDuplicateModal(patients, message) {
                 </div>
             </div>
         `;
-    });
-    
-    html += '</div>';
-    patientsList.innerHTML = html;
-    
-    // Show modal
-    modal.show();
-    
-    // Setup button handlers
-    document.getElementById('selectExistingPatientBtn').onclick = () => {
-        modal.hide();
-        // Clear form and let user select first patient
-        clearPatientForm();
-    };
-    
-    document.getElementById('useDifferentPhoneBtn').onclick = () => {
-        modal.hide();
-        // Focus on phone number field for correction
-        clearPatientForm();
-        document.getElementById('phone_number').focus();
-    };
-    
-    document.getElementById('selectDuplicatePatientBtn').onclick = () => {
-        modal.hide();
-        selectExistingPatient(selectedDuplicatePatientId);
-    };
-}
+        });
 
-function selectDuplicatePatient(patientId) {
-    selectedDuplicatePatientId = patientId;
-    const modal = bootstrap.Modal.getInstance(document.getElementById('phoneDuplicateModal'));
-    modal.hide();
-    
-    // Get the selected patient's data to populate search input
-    fetch(`/health-assistant/api/get-patient/${patientId}/`, {
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.patient) {
-            // Populate search input with the selected patient's phone for easy reference
-            const searchInput = document.getElementById('patientSearchInput');
-            if (searchInput && data.patient.phone) {
-                searchInput.value = data.patient.phone;
+        html += '</div>';
+        patientsList.innerHTML = html;
+
+        // Show modal
+        modal.show();
+
+        // Setup button handlers
+        document.getElementById('selectExistingPatientBtn').onclick = () => {
+            modal.hide();
+            // Clear form and let user select first patient
+            clearPatientForm();
+        };
+
+        document.getElementById('useDifferentPhoneBtn').onclick = () => {
+            modal.hide();
+            // Focus on phone number field for correction
+            clearPatientForm();
+            document.getElementById('phone_number').focus();
+        };
+
+        document.getElementById('selectDuplicatePatientBtn').onclick = () => {
+            modal.hide();
+            selectExistingPatient(selectedDuplicatePatientId);
+        };
+    }
+
+    function selectDuplicatePatient(patientId) {
+        selectedDuplicatePatientId = patientId;
+        const modal = bootstrap.Modal.getInstance(document.getElementById('phoneDuplicateModal'));
+        modal.hide();
+
+        // Get the selected patient's data to populate search input
+        fetch(`/health-assistant/api/get-patient/${patientId}/`, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
             }
-            selectExistingPatient(patientId);
-        }
-    });
-}
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.patient) {
+                    // Populate search input with the selected patient's phone for easy reference
+                    const searchInput = document.getElementById('patientSearchInput');
+                    if (searchInput && data.patient.phone) {
+                        searchInput.value = data.patient.phone;
+                    }
+                    selectExistingPatient(patientId);
+                }
+            });
+    }
 
-function showRegularSearchResults(patients) {
-    const resultsDiv = document.getElementById('searchResults');
-    resultsDiv.innerHTML = `
+    function showRegularSearchResults(patients) {
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = `
         <div class="alert alert-warning">
             <h6 class="alert-heading">
                 <i class="fas fa-info-circle me-2"></i>
@@ -847,170 +860,170 @@ function showRegularSearchResults(patients) {
             </div>
         </div>
     `;
-}
-
-function selectDuplicatePatient(patientId) {
-    const modal = bootstrap.Modal.getInstance(document.getElementById('phoneDuplicateModal'));
-    modal.hide();
-    selectExistingPatient(patientId);
-}
-
-function selectExistingPatient(patientId) {
-    fetch(`/health-assistant/api/get-patient/${patientId}/`, {
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.patient) {
-            currentPatient = data.patient;
-            showStep2();
-            
-            // Populate search input with the selected patient's phone for easy reference
-            const searchInput = document.getElementById('patientSearchInput');
-            if (searchInput && data.patient.phone) {
-                searchInput.value = data.patient.phone;
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error getting patient details:', error);
-        showAlert('Error loading patient details', 'danger');
-    });
-}
-
-function clearPatientForm() {
-    const form = document.getElementById('patientRegistrationForm');
-    form.reset();
-    // Clear any validation errors
-    const alerts = form.querySelectorAll('.alert');
-    alerts.forEach(alert => alert.remove());
-}
-
-function registerPatient() {
-    const form = document.getElementById('patientRegistrationForm');
-    const submitBtn = document.getElementById('registerPatientBtn');
-    
-    // Validate consent
-    if (!document.getElementById('consentCheckbox').checked) {
-        showAlert('Please confirm patient consent has been obtained.', 'warning');
-        return;
     }
-    
-    // Show loading state
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registering...';
-    
-    // Submit form
-    const formData = new FormData(form);
-    
-    const registerUrl = form.dataset.registerUrl;
-    
-    fetch(registerUrl, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        // Check if response is JSON or HTML
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            return response.json();
-        } else {
-            // If it's HTML (redirect), treat as success
-            return { success: true, message: 'Registration successful' };
-        }
-    })
-    .then(data => {
-        if (data.success) {
-            currentPatient = data.patient;
-            showStep2();
-            
-            // Show success modal with Patient ID
-            showSuccessModal();
-            
-            // Show alert with Patient ID
-            alert(`Patient Registered Successfully!\n\nPatient ID: ${data.patient.patient_id}\nName: ${data.patient.first_name} ${data.patient.last_name}\nAge: ${data.patient.age}\nGender: ${data.patient.gender}\n\nClick OK to continue to screening.`);
-            
-        } else {
-            showAlert(data.message || 'Registration failed. Please try again.', 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('An error occurred during registration. Please try again.', 'danger');
-    })
-    .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Register Patient & Continue';
-    });
-}
 
-function showStep1() {
-    hideAllSteps();
-    document.getElementById('step1').style.display = 'block';
-    updateProgressIndicator(1);
-}
+    function selectDuplicatePatient(patientId) {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('phoneDuplicateModal'));
+        modal.hide();
+        selectExistingPatient(patientId);
+    }
 
-function showStep2() {
-    hideAllSteps();
-    document.getElementById('step2').style.display = 'block';
-    updateProgressIndicator(2);
-    
-    // Update patient summary
-    if (currentPatient) {
-        document.getElementById('patientSummary').innerHTML = `
+    function selectExistingPatient(patientId) {
+        fetch(`/health-assistant/api/get-patient/${patientId}/`, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.patient) {
+                    currentPatient = data.patient;
+                    showStep2();
+
+                    // Populate search input with the selected patient's phone for easy reference
+                    const searchInput = document.getElementById('patientSearchInput');
+                    if (searchInput && data.patient.phone) {
+                        searchInput.value = data.patient.phone;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error getting patient details:', error);
+                showAlert('Error loading patient details', 'danger');
+            });
+    }
+
+    function clearPatientForm() {
+        const form = document.getElementById('patientRegistrationForm');
+        form.reset();
+        // Clear any validation errors
+        const alerts = form.querySelectorAll('.alert');
+        alerts.forEach(alert => alert.remove());
+    }
+
+    function registerPatient() {
+        const form = document.getElementById('patientRegistrationForm');
+        const submitBtn = document.getElementById('registerPatientBtn');
+
+        // Validate consent
+        if (!document.getElementById('consentCheckbox').checked) {
+            showAlert('Please confirm patient consent has been obtained.', 'warning');
+            return;
+        }
+
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registering...';
+
+        // Submit form
+        const formData = new FormData(form);
+
+        const registerUrl = form.dataset.registerUrl;
+
+        fetch(registerUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                // Check if response is JSON or HTML
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // If it's HTML (redirect), treat as success
+                    return { success: true, message: 'Registration successful' };
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    currentPatient = data.patient;
+                    showStep2();
+
+                    // Show success modal with Patient ID
+                    showSuccessModal();
+
+                    // Show alert with Patient ID
+                    alert(`Patient Registered Successfully!\n\nPatient ID: ${data.patient.patient_id}\nName: ${data.patient.first_name} ${data.patient.last_name}\nAge: ${data.patient.age}\nGender: ${data.patient.gender}\n\nClick OK to continue to screening.`);
+
+                } else {
+                    showAlert(data.message || 'Registration failed. Please try again.', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred during registration. Please try again.', 'danger');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save me-2"></i>Register Patient & Continue';
+            });
+    }
+
+    function showStep1() {
+        hideAllSteps();
+        document.getElementById('step1').style.display = 'block';
+        updateProgressIndicator(1);
+    }
+
+    function showStep2() {
+        hideAllSteps();
+        document.getElementById('step2').style.display = 'block';
+        updateProgressIndicator(2);
+
+        // Update patient summary
+        if (currentPatient) {
+            document.getElementById('patientSummary').innerHTML = `
             <p><strong>Name:</strong> ${currentPatient.name}</p>
             <p><strong>Age:</strong> ${currentPatient.age}</p>
             <p><strong>Gender:</strong> ${currentPatient.gender}</p>
             ${currentPatient.phone ? `<p><strong>Phone:</strong> ${currentPatient.phone}</p>` : ''}
         `;
+        }
+
+        // Load questionnaires
+        loadQuestionnaires();
     }
-    
-    // Load questionnaires
-    loadQuestionnaires();
-}
 
-function showStep3() {
-    hideAllSteps();
-    document.getElementById('step3').style.display = 'block';
-    updateProgressIndicator(3);
-}
+    function showStep3() {
+        hideAllSteps();
+        document.getElementById('step3').style.display = 'block';
+        updateProgressIndicator(3);
+    }
 
-function hideAllSteps() {
-    document.querySelectorAll('.workflow-step').forEach(step => {
-        step.style.display = 'none';
-    });
-}
+    function hideAllSteps() {
+        document.querySelectorAll('.workflow-step').forEach(step => {
+            step.style.display = 'none';
+        });
+    }
 
-function updateProgressIndicator(step) {
-    document.querySelectorAll('.step-circle').forEach((circle, index) => {
-        circle.classList.remove('active', 'completed');
-        if (index < step - 1) {
-            circle.classList.add('completed');
-        } else if (index === step - 1) {
-            circle.classList.add('active');
-        }
-    });
-}
+    function updateProgressIndicator(step) {
+        document.querySelectorAll('.step-circle').forEach((circle, index) => {
+            circle.classList.remove('active', 'completed');
+            if (index < step - 1) {
+                circle.classList.add('completed');
+            } else if (index === step - 1) {
+                circle.classList.add('active');
+            }
+        });
+    }
 
-function loadQuestionnaires() {
-    const listDiv = document.getElementById('questionnaireList');
-    
-    // Load available questionnaires
-    fetch('/questionnaires/api/list/', {
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.questionnaires && data.questionnaires.length > 0) {
-            listDiv.innerHTML = data.questionnaires.map(q => `
+    function loadQuestionnaires() {
+        const listDiv = document.getElementById('questionnaireList');
+
+        // Load available questionnaires
+        fetch('/questionnaires/api/list/', {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.questionnaires && data.questionnaires.length > 0) {
+                    listDiv.innerHTML = data.questionnaires.map(q => `
                 <div class="card questionnaire-card mb-2" onclick="selectQuestionnaire(${q.id}, '${q.title.replace(/'/g, "\\'")}', ${q.question_count || 0})">
                     <div class="card-body">
                         <h6 class="card-title mb-1">${q.title}</h6>
@@ -1022,122 +1035,138 @@ function loadQuestionnaires() {
                     </div>
                 </div>
             `).join('');
-        } else {
-            listDiv.innerHTML = `
+                } else {
+                    listDiv.innerHTML = `
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     No questionnaires available. Please contact administrator.
                 </div>
             `;
-        }
-    })
-    .catch(error => {
-        console.error('Error loading questionnaires:', error);
-        listDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaires. Please try again.</div>';
-    });
-}
-
-function selectQuestionnaire(id, title, questionCount) {
-    selectedQuestionnaire = { id, title, questionCount };
-    
-    // Update UI
-    document.querySelectorAll('.questionnaire-card').forEach(card => {
-        card.classList.remove('selected');
-    });
-    event.currentTarget.classList.add('selected');
-    
-    // Enable start button
-    document.getElementById('startQuestionnaireBtn').disabled = false;
-}
-
-function startQuestionnaire() {
-    if (!selectedQuestionnaire) {
-        showAlert('Please select a questionnaire', 'warning');
-        return;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading questionnaires:', error);
+                listDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaires. Please try again.</div>';
+            });
     }
-    
-    showStep3();
-    
-    // Load questionnaire content
-    const contentDiv = document.getElementById('questionnaireContent');
-    contentDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2">Loading questionnaire...</p></div>';
-    
-    document.getElementById('questionnaireTitle').textContent = selectedQuestionnaire.title;
-    
-    fetch(`/questionnaires/${selectedQuestionnaire.id}/start/`, {
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    })
-    .then(response => response.text())
-    .then(html => {
-        // Extract the questionnaire form from the response
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        const questionnaireForm = tempDiv.querySelector('form');
-        
-        if (questionnaireForm) {
-            contentDiv.innerHTML = questionnaireForm.outerHTML;
-            
-            // Remove unwanted navigation buttons from the loaded form
-            const loadedForm = contentDiv.querySelector('form');
-            
-            // Remove any buttons with text containing "Previous", "Back", "Next", etc.
-            const unwantedButtons = loadedForm.querySelectorAll('button');
-            unwantedButtons.forEach(button => {
-                const buttonText = button.textContent.toLowerCase();
-                if (buttonText.includes('previous') || buttonText.includes('back') || 
-                    buttonText.includes('next') || buttonText.includes('submit') && 
-                    button.id !== 'submitQuestionnaireBtn') {
-                    button.remove();
-                }
-            });
-            
-            // Remove any navigation divs or button groups
-            const navigationElements = loadedForm.querySelectorAll('.d-flex.justify-content-between, .btn-group, .navigation');
-            navigationElements.forEach(element => {
-                // Check if it contains navigation buttons and remove if so
-                const buttons = element.querySelectorAll('button');
-                let hasNavigationButtons = false;
-                buttons.forEach(btn => {
-                    const text = btn.textContent.toLowerCase();
-                    if (text.includes('previous') || text.includes('back') || text.includes('next')) {
-                        hasNavigationButtons = true;
-                    }
-                });
-                if (hasNavigationButtons) {
-                    element.remove();
-                }
-            });
-            
-            // Add patient info to the form
-            const patientInfo = document.createElement('input');
-            patientInfo.type = 'hidden';
-            patientInfo.name = 'patient_id';
-            patientInfo.value = currentPatient.id;
-            loadedForm.appendChild(patientInfo);
-            
-            // Make sure questionnaire_id is in the form
-            const questionnaireInfo = document.createElement('input');
-            questionnaireInfo.type = 'hidden';
-            questionnaireInfo.name = 'questionnaire_id';
-            questionnaireInfo.value = selectedQuestionnaire.id;
-            loadedForm.appendChild(questionnaireInfo);
-        } else {
-            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaire content.</div>';
-        }
-    })
-    .catch(error => {
-        console.error('Error loading questionnaire:', error);
-        contentDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaire. Please try again.</div>';
-    });
-}
 
-function renderQuestionnaire(questionnaire) {
-    const contentDiv = document.getElementById('questionnaireContent');
-    
-    // Build questionnaire HTML directly
-    let questionnaireHTML = `
+    function selectQuestionnaire(id, title, questionCount) {
+        selectedQuestionnaire = { id, title, questionCount };
+
+        // Update UI
+        document.querySelectorAll('.questionnaire-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        event.currentTarget.classList.add('selected');
+
+        // Enable start button
+        document.getElementById('startQuestionnaireBtn').disabled = false;
+    }
+
+    function startQuestionnaire() {
+        if (!selectedQuestionnaire) {
+            showAlert('Please select a questionnaire', 'warning');
+            return;
+        }
+
+        showStep3();
+
+        // Load questionnaire content
+        const contentDiv = document.getElementById('questionnaireContent');
+        contentDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2">Loading questionnaire...</p></div>';
+
+        document.getElementById('questionnaireTitle').textContent = selectedQuestionnaire.title;
+
+        fetch(`/questionnaires/${selectedQuestionnaire.id}/start/`, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+            .then(response => response.text())
+            .then(html => {
+                // Extract the questionnaire form from the response
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                const questionnaireForm = tempDiv.querySelector('form');
+
+                if (questionnaireForm) {
+                    contentDiv.innerHTML = questionnaireForm.outerHTML;
+
+                    // Remove unwanted navigation buttons from the loaded form
+                    const loadedForm = contentDiv.querySelector('form');
+
+                    // Remove any buttons with text containing "Previous", "Back", "Next", etc.
+                    const unwantedButtons = loadedForm.querySelectorAll('button');
+                    unwantedButtons.forEach(button => {
+                        const buttonText = button.textContent.toLowerCase();
+                        if (buttonText.includes('previous') || buttonText.includes('back') ||
+                            buttonText.includes('next') || buttonText.includes('submit') &&
+                            button.id !== 'submitQuestionnaireBtn') {
+                            button.remove();
+                        }
+                    });
+
+                    // Remove any navigation divs or button groups
+                    const navigationElements = loadedForm.querySelectorAll('.d-flex.justify-content-between, .btn-group, .navigation');
+                    navigationElements.forEach(element => {
+                        // Check if it contains navigation buttons and remove if so
+                        const buttons = element.querySelectorAll('button');
+                        let hasNavigationButtons = false;
+                        buttons.forEach(btn => {
+                            const text = btn.textContent.toLowerCase();
+                            if (text.includes('previous') || text.includes('back') || text.includes('next')) {
+                                hasNavigationButtons = true;
+                            }
+                        });
+                        if (hasNavigationButtons) {
+                            element.remove();
+                        }
+                    });
+
+                    // Add patient info to the form
+                    const patientInfo = document.createElement('input');
+                    patientInfo.type = 'hidden';
+                    patientInfo.name = 'patient_id';
+                    patientInfo.value = currentPatient.id;
+                    loadedForm.appendChild(patientInfo);
+
+                    // Make sure questionnaire_id is in the form
+                    const questionnaireInfo = document.createElement('input');
+                    questionnaireInfo.type = 'hidden';
+                    questionnaireInfo.name = 'questionnaire_id';
+                    questionnaireInfo.value = selectedQuestionnaire.id;
+                    loadedForm.appendChild(questionnaireInfo);
+
+                    // Critical fix: innerHTML does not execute <script> tags for security reasons.
+                    // We must manually extract and evaluate the scripts from the fetched HTML snippet.
+                    const scripts = tempDiv.querySelectorAll('script');
+                    scripts.forEach(script => {
+                        const newScript = document.createElement('script');
+                        if (script.src) {
+                            newScript.src = script.src;
+                        } else {
+                            newScript.textContent = script.textContent;
+                        }
+                        document.body.appendChild(newScript);
+                        // Clean up by removing it after execution
+                        document.body.removeChild(newScript);
+                    });
+
+                } else {
+                    contentDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaire content.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading questionnaire:', error);
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error loading questionnaire. Please try again.</div>';
+            });
+    }
+
+    function renderQuestionnaire(questionnaire) {
+        const contentDiv = document.getElementById('questionnaireContent');
+
+        // Build questionnaire HTML directly
+        let questionnaireHTML = `
         <form id="healthAssistantQuestionnaireForm" class="space-y-6">
             <input type="hidden" name="questionnaire_id" value="${questionnaire.id}">
             <input type="hidden" name="patient_id" value="${currentPatient.id}">
@@ -1154,18 +1183,18 @@ function renderQuestionnaire(questionnaire) {
             `).join('')}
         </form>
     `;
-    
-    contentDiv.innerHTML = questionnaireHTML;
-    
-    console.log('Questionnaire rendered directly on landing page');
-    console.log('Patient ID:', currentPatient.id);
-    console.log('Questionnaire ID:', questionnaire.id);
-}
 
-function renderQuestionField(question) {
-    switch(question.question_type) {
-        case 'yes_no':
-            return `
+        contentDiv.innerHTML = questionnaireHTML;
+
+        console.log('Questionnaire rendered directly on landing page');
+        console.log('Patient ID:', currentPatient.id);
+        console.log('Questionnaire ID:', questionnaire.id);
+    }
+
+    function renderQuestionField(question) {
+        switch (question.question_type) {
+            case 'yes_no':
+                return `
                 <div class="mt-2">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="question_${question.id}" value="yes" id="question_${question.id}_yes" ${question.is_required ? 'required' : ''}>
@@ -1177,9 +1206,9 @@ function renderQuestionField(question) {
                     </div>
                 </div>
             `;
-            
-        case 'true_false':
-            return `
+
+            case 'true_false':
+                return `
                 <div class="mt-2">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="question_${question.id}" value="true" id="question_${question.id}_true" ${question.is_required ? 'required' : ''}>
@@ -1191,9 +1220,9 @@ function renderQuestionField(question) {
                     </div>
                 </div>
             `;
-            
-        case 'multiple_choice':
-            return `
+
+            case 'multiple_choice':
+                return `
                 <div class="mt-2">
                     ${question.options.map(option => `
                         <div class="form-check">
@@ -1203,123 +1232,130 @@ function renderQuestionField(question) {
                     `).join('')}
                 </div>
             `;
-            
-        case 'short_answer':
-            return `
+
+            case 'short_answer':
+                return `
                 <div class="mt-2">
                     <textarea class="form-control" name="question_${question.id}" rows="3" placeholder="Enter your answer..." ${question.is_required ? 'required' : ''}></textarea>
                 </div>
             `;
-            
-        default:
-            return `
+
+            default:
+                return `
                 <div class="mt-2">
                     <input type="text" class="form-control" name="question_${question.id}" placeholder="Enter your answer..." ${question.is_required ? 'required' : ''}>
                 </div>
             `;
-    }
-}
-
-function submitQuestionnaire() {
-    const form = document.querySelector('#questionnaireContent form');
-    const submitBtn = document.getElementById('submitQuestionnaireBtn');
-    
-    if (!form) {
-        showAlert('Questionnaire form not found', 'danger');
-        return;
-    }
-    
-    // Validate that we have a patient
-    if (!currentPatient) {
-        showAlert('No patient selected. Please register or select a patient first.', 'danger');
-        return;
-    }
-    
-    // Validate required questions
-    const requiredQuestions = form.querySelectorAll('[required]');
-    const unansweredRequired = [];
-    
-    requiredQuestions.forEach(question => {
-        const questionType = question.type;
-        const questionName = question.name;
-        let isAnswered = false;
-        
-        if (questionType === 'radio') {
-            // For radio buttons, check if any option in the group is selected
-            const radioGroup = form.querySelectorAll(`input[name="${questionName}"]:checked`);
-            isAnswered = radioGroup.length > 0;
-        } else if (questionType === 'checkbox') {
-            // For checkboxes, check if it's checked
-            isAnswered = question.checked;
-        } else {
-            // For text inputs, textareas, selects
-            isAnswered = question.value.trim() !== '';
         }
-        
-        if (!isAnswered) {
-            // Find the question text to show in error message
-            const questionLabel = form.querySelector(`label[for="${question.id}"]`) || 
-                               form.querySelector(`label[for="${questionName}"]`) ||
-                               question.closest('.form-group, .question-container, .mb-4')?.querySelector('label, h6, .question-text');
-            
-            let questionText = 'Required question';
-            if (questionLabel) {
-                questionText = questionLabel.textContent.replace(/\*$/, '').trim();
+    }
+
+    function submitQuestionnaire() {
+        const form = document.querySelector('#questionnaireContent form');
+        const submitBtn = document.getElementById('submitQuestionnaireBtn');
+
+        if (!form) {
+            showAlert('Questionnaire form not found', 'danger');
+            return;
+        }
+
+        // Validate that we have a patient
+        if (!currentPatient) {
+            showAlert('No patient selected. Please register or select a patient first.', 'danger');
+            return;
+        }
+
+        // Validate required questions
+        const requiredQuestions = form.querySelectorAll('[required]');
+        const unansweredRequired = [];
+
+        requiredQuestions.forEach(question => {
+            // CRITICAL FIX: Skip validation if the question is hidden by branching logic
+            // We check the parent question-container to see if it's display: none
+            const container = question.closest('.question-container');
+            if (container && window.getComputedStyle(container).display === 'none') {
+                return; // Skip this hidden field!
             }
-            
-            unansweredRequired.push(questionText);
-        }
-    });
-    
-    // If there are unanswered required questions, show error and prevent submission
-    if (unansweredRequired.length > 0) {
-        showAlert(`Please answer the following required questions: ${unansweredRequired.join(', ')}`, 'warning');
-        return;
-    }
-    
-    // Show loading state
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
-    
-    // Create FormData and ensure patient_id is included
-    const formData = new FormData(form);
-    
-    // Make sure patient_id is in the form data
-    if (!formData.has('patient_id')) {
-        formData.append('patient_id', currentPatient.patient_id);
-    }
-    
-    // Submit to our own API endpoint instead of the questionnaire app
-    fetch('/health-assistant/api/submit-questionnaire/', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showSuccessModal();
-        } else {
-            showAlert(data.message || 'Submission failed. Please try again.', 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('An error occurred during submission. Please try again.', 'danger');
-    })
-    .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Submit Questionnaire';
-    });
-}
 
-function showSuccessModal() {
-    const modal = new bootstrap.Modal(document.getElementById('successModal'));
-    
-    $('#successDetails').html(`
+            const questionType = question.type;
+            const questionName = question.name;
+            let isAnswered = false;
+
+            if (questionType === 'radio') {
+                // For radio buttons, check if any option in the group is selected
+                const radioGroup = form.querySelectorAll(`input[name="${questionName}"]:checked`);
+                isAnswered = radioGroup.length > 0;
+            } else if (questionType === 'checkbox') {
+                // For checkboxes, check if it's checked
+                isAnswered = question.checked;
+            } else {
+                // For text inputs, textareas, selects
+                isAnswered = question.value.trim() !== '';
+            }
+
+            if (!isAnswered) {
+                // Find the question text to show in error message
+                const questionLabel = form.querySelector(`label[for="${question.id}"]`) ||
+                    form.querySelector(`label[for="${questionName}"]`) ||
+                    question.closest('.form-group, .question-container, .mb-4')?.querySelector('label, h6, .question-text');
+
+                let questionText = 'Required question';
+                if (questionLabel) {
+                    questionText = questionLabel.textContent.replace(/\*$/, '').trim();
+                }
+
+                unansweredRequired.push(questionText);
+            }
+        });
+
+        // If there are unanswered required questions, show error and prevent submission
+        if (unansweredRequired.length > 0) {
+            showAlert(`Please answer the following required questions: ${unansweredRequired.join(', ')}`, 'warning');
+            return;
+        }
+
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+
+        // Create FormData and ensure patient_id is included
+        const formData = new FormData(form);
+
+        // Make sure patient_id is in the form data
+        if (!formData.has('patient_id')) {
+            formData.append('patient_id', currentPatient.patient_id);
+        }
+
+        // Submit to our own API endpoint instead of the questionnaire app
+        fetch('/health-assistant/api/submit-questionnaire/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessModal();
+                } else {
+                    showAlert(data.message || 'Submission failed. Please try again.', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred during submission. Please try again.', 'danger');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Submit Questionnaire';
+            });
+    }
+
+    function showSuccessModal() {
+        const modal = new bootstrap.Modal(document.getElementById('successModal'));
+
+        $('#successDetails').html(`
         <div class="text-center mb-4">
             <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
             <h5 class="text-success mb-3">Patient Registered Successfully!</h5>
@@ -1364,40 +1400,40 @@ function showSuccessModal() {
             </ul>
         </div>
     `);
-    
-    modal.show();
-}
+
+        modal.show();
+    }
 
 
-function resetWorkflow() {
-    // Reset all variables
-    currentPatient = null;
-    selectedQuestionnaire = null;
-    
-    // Reset form
-    document.getElementById('patientRegistrationForm').reset();
-    document.getElementById('searchResults').innerHTML = '';
-    document.getElementById('questionnaireList').innerHTML = '';
-    document.getElementById('questionnaireContent').innerHTML = '';
-    
-    // Reset progress
-    updateProgressIndicator(1);
-    showStep1();
-}
+    function resetWorkflow() {
+        // Reset all variables
+        currentPatient = null;
+        selectedQuestionnaire = null;
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+        // Reset form
+        document.getElementById('patientRegistrationForm').reset();
+        document.getElementById('searchResults').innerHTML = '';
+        document.getElementById('questionnaireList').innerHTML = '';
+        document.getElementById('questionnaireContent').innerHTML = '';
+
+        // Reset progress
+        updateProgressIndicator(1);
+        showStep1();
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
+        return cookieValue;
     }
-    return cookieValue;
-}
 </script>
 {% endblock %}

@@ -70,6 +70,9 @@ def save_questionnaire_api(request):
         )
         
         # Create questions
+        # We need to map frontend IDs to database Question objects to link parents
+        question_map = {}
+        
         for question_data in data['questions']:
             question = Question.objects.create(
                 questionnaire=questionnaire,
@@ -79,14 +82,34 @@ def save_questionnaire_api(request):
                 order=question_data['order']
             )
             
+            # Map the frontend ID (used as internal reference) to the created question
+            frontend_id = question_data.get('id')
+            if frontend_id is not None:
+                question_map[str(frontend_id)] = question
+                
+        # Second pass to set parent relationships
+        for question_data in data['questions']:
+            frontend_id = question_data.get('id')
+            parent_id = question_data.get('parent_id')
+            trigger_answer = question_data.get('trigger_answer')
+            
+            if frontend_id is not None and parent_id is not None and str(parent_id) in question_map:
+                question = question_map[str(frontend_id)]
+                question.parent = question_map[str(parent_id)]
+                question.trigger_answer = trigger_answer
+                question.save()
+            
             # Create options for multiple choice questions
             if question_data['type'] == 'multiple_choice':
-                for option_data in question_data['options']:
-                    QuestionOption.objects.create(
-                        question=question,
-                        text=option_data.get('text', ''),
-                        order=option_data['order']
-                    )
+                # We need the saved question object
+                question = question_map.get(str(frontend_id)) if frontend_id is not None else Question.objects.filter(questionnaire=questionnaire, order=question_data['order']).first()
+                if question:
+                    for option_data in question_data['options']:
+                        QuestionOption.objects.create(
+                            question=question,
+                            text=option_data.get('text', ''),
+                            order=option_data['order']
+                        )
         
         return JsonResponse({
             'success': True,
@@ -126,6 +149,9 @@ def edit_questionnaire_builder(request, pk):
             # Delete existing questions and options
             Question.objects.filter(questionnaire=questionnaire).delete()
             
+            # Map frontend IDs to database Question objects to link parents
+            question_map = {}
+            
             # Create new questions
             for question_data in data['questions']:
                 question = Question.objects.create(
@@ -136,14 +162,32 @@ def edit_questionnaire_builder(request, pk):
                     order=question_data['order']
                 )
                 
+                frontend_id = question_data.get('id')
+                if frontend_id is not None:
+                    question_map[str(frontend_id)] = question
+                    
+            # Second pass to set parent relationships
+            for question_data in data['questions']:
+                frontend_id = question_data.get('id')
+                parent_id = question_data.get('parent_id')
+                trigger_answer = question_data.get('trigger_answer')
+                
+                if frontend_id is not None and parent_id is not None and str(parent_id) in question_map:
+                    question = question_map[str(frontend_id)]
+                    question.parent = question_map[str(parent_id)]
+                    question.trigger_answer = trigger_answer
+                    question.save()
+                
                 # Create options for multiple choice questions
                 if question_data['type'] == 'multiple_choice':
-                    for option_data in question_data['options']:
-                        QuestionOption.objects.create(
-                            question=question,
-                            text=option_data.get('text', ''),
-                            order=option_data['order']
-                        )
+                    question = question_map.get(str(frontend_id)) if frontend_id is not None else Question.objects.filter(questionnaire=questionnaire, order=question_data['order']).last()
+                    if question:
+                        for option_data in question_data['options']:
+                            QuestionOption.objects.create(
+                                question=question,
+                                text=option_data.get('text', ''),
+                                order=option_data['order']
+                            )
             
             return JsonResponse({
                 'success': True,
@@ -158,12 +202,20 @@ def edit_questionnaire_builder(request, pk):
     
     # GET request - show edit form
     questions_data = []
-    for question in questionnaire.questions.all():
+    
+    # Send root questions first or order by order to rebuild logically
+    all_questions = list(questionnaire.questions.all().order_by('order', 'id'))
+    
+    for question in all_questions:
         question_data = {
+            'id': question.id,
             'question_text': question.question_text,
             'type': question.question_type,
             'required': question.is_required,
-            'order': question.order
+            'order': question.order,
+            'parent_id': question.parent_id if question.parent else None,
+            'trigger_answer': question.trigger_answer,
+            'display_number': question.get_display_number()
         }
         
         if question.question_type == 'multiple_choice':

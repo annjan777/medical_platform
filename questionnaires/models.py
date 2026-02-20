@@ -102,14 +102,32 @@ class Question(models.Model):
     questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE, related_name='questions')
     question_text = models.TextField()
     question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
+    
+    # Branching fields for Yes/No nested questions
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='follow_ups')
+    
+    # Only applicable when parent's question_type is TYPE_YES_NO
+    TRIGGER_YES = 'yes'
+    TRIGGER_NO = 'no'
+    TRIGGER_CHOICES = [
+        (TRIGGER_YES, 'Yes'),
+        (TRIGGER_NO, 'No'),
+    ]
+    trigger_answer = models.CharField(max_length=10, choices=TRIGGER_CHOICES, null=True, blank=True)
+    
     order = models.PositiveIntegerField(default=0)
     is_required = models.BooleanField(default=True)
     
     class Meta:
-        ordering = ['order']
+        ordering = ['order', 'id']
+        unique_together = ('parent', 'trigger_answer')
+
     
     def __str__(self):
-        return f"{self.questionnaire.title} - {self.text[:50]}..."
+        text = self.question_text[:50] + '...' if len(self.question_text) > 50 else self.question_text
+        if self.parent:
+            return f"{self.questionnaire.title} - {self.get_display_number()}. {text}"
+        return f"{self.questionnaire.title} - {self.order}. {text}"
     
     def get_absolute_url(self):
         return reverse('questionnaires:question_detail', args=[str(self.id)])
@@ -154,6 +172,30 @@ class Question(models.Model):
                 return False
                 
         return True
+        
+    def get_display_number(self):
+        """
+        Recursively compute the display number (e.g., '1', '1.1', '1.2.1') 
+        based on the root order and the trigger path down the tree.
+        """
+        if not self.parent:
+            # Root questions use their direct 'order' (assuming order is 1-indexed here, or adjust dynamically in view)
+            return str(self.order)
+            
+        parent_number = self.parent.get_display_number()
+        
+        # Determine current branch suffix. 1 for 'yes', 2 for 'no' as described in requirements
+        suffix = '1' if self.trigger_answer == self.TRIGGER_YES else '2'
+        
+        return f"{parent_number}.{suffix}"
+        
+    def get_all_descendants(self):
+        """Recursively get all children questions (and their children) for this question."""
+        descendants = []
+        for child in self.follow_ups.all():
+            descendants.append(child)
+            descendants.extend(child.get_all_descendants())
+        return descendants
 
 
 class QuestionOption(models.Model):

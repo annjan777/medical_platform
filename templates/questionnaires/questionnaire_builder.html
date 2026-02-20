@@ -86,6 +86,17 @@
                             <option value="multiple_choice">Multiple Choice</option>
                             <option value="short_answer">Short Answer</option>
                         </select>
+                        <div class="yes-no-actions hidden mt-3">
+                            <p class="text-sm font-semibold mb-2 text-gray-400">Branching Rules (Optional)</p>
+                            <div class="flex space-x-2">
+                                <button type="button" onclick="addFollowUp(this, 'yes')" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-plus mr-1"></i> Add YES follow-up
+                                </button>
+                                <button type="button" onclick="addFollowUp(this, 'no')" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-plus mr-1"></i> Add NO follow-up
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <label class="flex items-center mt-6">
@@ -106,6 +117,11 @@
                     <div class="options-container space-y-3">
                         <!-- Options will be added here -->
                     </div>
+                </div>
+
+                <!-- Follow-up Questions Container -->
+                <div class="followups-container border-l-2 border-indigo-500 pl-4 mt-4 space-y-4 empty:hidden">
+                    <!-- Nested questions added here -->
                 </div>
             </div>
         </div>
@@ -168,8 +184,7 @@ function addQuestion() {
     
     // Set question ID and number
     const questionItem = clone.querySelector('.question-item');
-    questionItem.dataset.questionId = questionCounter;
-    clone.querySelector('.question-number').textContent = questionCounter;
+    questionItem.dataset.questionId = 'new_' + questionCounter;
     
     // Add to container
     const container = document.getElementById('questionsContainer');
@@ -179,44 +194,101 @@ function addQuestion() {
     document.getElementById('emptyState').classList.add('hidden');
     
     // Reorder questions
-    reorderQuestions();
+    updateQuestionNumbers();
+}
+
+function addFollowUp(btn, triggerAnswer) {
+    questionCounter++;
+    const template = document.getElementById('questionTemplate');
+    const clone = template.content.cloneNode(true);
+    
+    // Set question ID and number
+    const questionItem = clone.querySelector('.question-item');
+    questionItem.dataset.questionId = 'new_' + questionCounter;
+    questionItem.dataset.triggerAnswer = triggerAnswer;
+    
+    // Style as followup
+    questionItem.classList.replace('border-gray-700', triggerAnswer === 'yes' ? 'border-green-800' : 'border-red-800');
+    questionItem.style.marginTop = '1rem';
+    
+    // Add label indicator
+    const labelSpan = document.createElement('span');
+    labelSpan.className = `ml-3 px-2 py-1 rounded text-xs font-bold ${triggerAnswer === 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+    labelSpan.textContent = `If ${triggerAnswer.toUpperCase()}`;
+    clone.querySelector('.flex.items-center.space-x-4').appendChild(labelSpan);
+    
+    // Find followups container of parent
+    const parentContainer = btn.closest('.question-item').querySelector('.followups-container');
+    parentContainer.appendChild(clone);
+    
+    // Reorder questions
+    updateQuestionNumbers();
 }
 
 function removeQuestion(button) {
     const questionItem = button.closest('.question-item');
     questionItem.remove();
     
-    // Show empty state if no questions
+    // Show empty state if no top-level questions
     const container = document.getElementById('questionsContainer');
     if (container.children.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
     }
     
     // Reorder questions
-    reorderQuestions();
+    updateQuestionNumbers();
 }
 
-function reorderQuestions() {
-    const questions = document.querySelectorAll('.question-item');
-    questions.forEach((question, index) => {
-        question.querySelector('.question-number').textContent = index + 1;
-    });
+function updateQuestionNumbers() {
+    const buildNumbers = (container, prefix) => {
+        let count = 1;
+        // Immediate children only
+        Array.from(container.children).forEach(item => {
+            if (!item.classList.contains('question-item')) return;
+            const num = prefix ? `${prefix}.${count}` : `${count}`;
+            item.querySelector('.question-number').textContent = num;
+            
+            // Recurse into followups
+            const followupsContainer = item.querySelector('.followups-container');
+            if (followupsContainer) {
+                // Determine suffix based on trigger answer
+                let nextPrefix = num;
+                Array.from(followupsContainer.children).forEach(followup => {
+                    const trigger = followup.dataset.triggerAnswer;
+                    if (trigger === 'yes') followup.querySelector('.question-number').textContent = num + '.1';
+                    if (trigger === 'no') followup.querySelector('.question-number').textContent = num + '.2';
+                    
+                    // Recursive call for deeper nesting
+                    const nestedFollowups = followup.querySelector('.followups-container');
+                    if (nestedFollowups) buildNumbers(nestedFollowups, followup.querySelector('.question-number').textContent);
+                });
+            }
+            if (!prefix) count++;
+        });
+    };
+    buildNumbers(document.getElementById('questionsContainer'), '');
 }
 
 function handleQuestionTypeChange(select) {
     const questionItem = select.closest('.question-item');
     const optionsContainer = questionItem.querySelector('.multiple-choice-options');
+    const yesNoActions = questionItem.querySelector('.yes-no-actions');
     
     if (select.value === 'multiple_choice') {
         optionsContainer.classList.remove('hidden');
+        if (yesNoActions) yesNoActions.classList.add('hidden');
         // Add default options if none exist
         const container = optionsContainer.querySelector('.options-container');
         if (container.children.length === 0) {
             addOption(optionsContainer.querySelector('.btn'));
             addOption(optionsContainer.querySelector('.btn'));
         }
+    } else if (select.value === 'yes_no') {
+        optionsContainer.classList.add('hidden');
+        if (yesNoActions) yesNoActions.classList.remove('hidden');
     } else {
         optionsContainer.classList.add('hidden');
+        if (yesNoActions) yesNoActions.classList.add('hidden');
     }
 }
 
@@ -309,54 +381,76 @@ function saveQuestionnaire() {
     }
     
     const questions = [];
-    const questionItems = document.querySelectorAll('.question-item');
     
-    for (const item of questionItems) {
-        const questionText = item.querySelector('.question-text').value.trim();
-        const questionType = item.querySelector('.question-type').value;
-        const isRequired = item.querySelector('.question-required').checked;
-        
-        if (!questionText || !questionType) {
-            alert('Please complete all question fields');
-            return;
-        }
-        
-        const question = {
-            question_text: questionText,
-            type: questionType,
-            required: isRequired,
-            order: questions.length + 1
-        };
-        
-        // Add options for multiple choice questions
-        if (questionType === 'multiple_choice') {
-            const options = [];
-            const optionItems = item.querySelectorAll('.option-item');
+    // Flatten hierarchy and assign ids/parents
+    const flattenQuestions = (container, parentId = null) => {
+        const items = container.children;
+        Array.from(items).forEach((item) => {
+            if (!item.classList.contains('question-item')) return;
             
-            for (const optionItem of optionItems) {
-                const text = optionItem.querySelector('.option-text').value.trim();
-                const imageInput = optionItem.querySelector('.option-image');
-                const imageFile = imageInput.files[0];
+            const questionText = item.querySelector('.question-text').value.trim();
+            const questionType = item.querySelector('.question-type').value;
+            const isRequired = item.querySelector('.question-required').checked;
+            const itemId = item.dataset.dbId || item.dataset.questionId;
+            const triggerAnswer = item.dataset.triggerAnswer || null;
+            
+            if (!questionText || !questionType) {
+                throw new Error('Please complete all question fields');
+            }
+            
+            const question = {
+                id: itemId,
+                parent_id: parentId,
+                trigger_answer: triggerAnswer,
+                question_text: questionText,
+                type: questionType,
+                required: isRequired,
+                order: questions.length + 1
+            };
+            
+            // Add options for multiple choice questions
+            if (questionType === 'multiple_choice') {
+                const options = [];
+                const optionItems = item.querySelectorAll('.option-item');
                 
-                if (text || imageFile) {
-                    options.push({
-                        text: text,
-                        image_file: imageFile,
-                        order: options.length + 1
-                    });
+                for (const optionItem of optionItems) {
+                    const text = optionItem.querySelector('.option-text').value.trim();
+                    const imageInput = optionItem.querySelector('.option-image');
+                    const imageFile = imageInput && imageInput.files ? imageInput.files[0] : null;
+                    
+                    if (text || imageFile) {
+                        options.push({
+                            text: text,
+                            image_file: imageFile,
+                            order: options.length + 1
+                        });
+                    }
                 }
+                
+                if (options.length < 2) {
+                    throw new Error('Multiple choice questions must have at least 2 options');
+                }
+                
+                question.options = options;
             }
             
-            if (options.length < 2) {
-                alert('Multiple choice questions must have at least 2 options');
-                return;
-            }
+            questions.push(question);
             
-            question.options = options;
-        }
-        
-        questions.push(question);
+            // Recurse into children
+            const followupsContainer = item.querySelector('.followups-container');
+            if (followupsContainer) {
+                flattenQuestions(followupsContainer, itemId);
+            }
+        });
+    };
+    
+    try {
+        flattenQuestions(document.getElementById('questionsContainer'));
+    } catch(e) {
+        alert(e.message);
+        return;
     }
+
     
     if (questions.length === 0) {
         alert('Please add at least one question');
@@ -434,17 +528,90 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear the empty state
         document.getElementById('emptyState').classList.add('hidden');
         
-        // Load existing questions
-        questionsData.forEach(function(questionData, index) {
-            addQuestion(questionData);
+        // Rebuild hierarchy
+        const questionMap = {};
+        const roots = [];
+        
+        // Create maps
+        questionsData.forEach(q => {
+            q.children = [];
+            questionMap[q.id] = q;
         });
+        
+        // Build tree
+        questionsData.forEach(q => {
+            if (q.parent_id && questionMap[q.parent_id]) {
+                questionMap[q.parent_id].children.push(q);
+            } else {
+                roots.push(q);
+            }
+        });
+        
+        // Render tree
+        const renderTree = (nodeData, containerNode, isFollowUp = false) => {
+            const itemNode = addQuestionNode(nodeData, containerNode, isFollowUp);
+            if (nodeData.children && nodeData.children.length > 0) {
+                const followupsContainer = itemNode.querySelector('.followups-container');
+                nodeData.children.forEach(child => renderTree(child, followupsContainer, true));
+            }
+        };
+        
+        const container = document.getElementById('questionsContainer');
+        roots.forEach(r => renderTree(r, container, false));
+        
+        updateQuestionNumbers();
+        
     } else {
         // Add initial question for new questionnaires
         addQuestion();
     }
 });
 
-// Modified addQuestion function to support loading existing data
+function addQuestionNode(existingData, parentContainer, isFollowUp) {
+    questionCounter++;
+    const template = document.getElementById('questionTemplate');
+    const clone = template.content.cloneNode(true);
+    
+    // Set question ID
+    const questionItem = clone.querySelector('.question-item');
+    questionItem.dataset.questionId = 'existing_' + questionCounter;
+    
+    if (existingData) {
+        questionItem.dataset.dbId = existingData.id;
+        
+        clone.querySelector('.question-text').value = existingData.question_text || existingData.text || '';
+        clone.querySelector('.question-type').value = existingData.type || '';
+        clone.querySelector('.question-required').checked = existingData.required || false;
+        
+        if (isFollowUp) {
+            questionItem.dataset.triggerAnswer = existingData.trigger_answer;
+            questionItem.classList.replace('border-gray-700', existingData.trigger_answer === 'yes' ? 'border-green-800' : 'border-red-800');
+            questionItem.style.marginTop = '1rem';
+            
+            const labelSpan = document.createElement('span');
+            labelSpan.className = `ml-3 px-2 py-1 rounded text-xs font-bold ${existingData.trigger_answer === 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            labelSpan.textContent = `If ${existingData.trigger_answer.toUpperCase()}`;
+            clone.querySelector('.flex.items-center.space-x-4').appendChild(labelSpan);
+        }
+        
+        // Handle question type change to show options if needed
+        const questionTypeSelect = clone.querySelector('.question-type');
+        setTimeout(() => {
+            handleQuestionTypeChange(questionTypeSelect);
+            if (existingData.type === 'multiple_choice' && existingData.options) {
+                const optionsContainer = questionItem.querySelector('.options-container');
+                existingData.options.forEach(optionData => {
+                    addOptionWithText(questionItem, optionData.text, optionData.order);
+                });
+            }
+        }, 0);
+    }
+    
+    parentContainer.appendChild(clone);
+    return parentContainer.lastElementChild;
+}
+
+// Deprecated since we use addQuestionNode for rendering, keeping it around just in case
 function addQuestion(existingData = null) {
     questionCounter++;
     const template = document.getElementById('questionTemplate');
@@ -482,8 +649,7 @@ function addQuestion(existingData = null) {
     // Hide empty state
     document.getElementById('emptyState').classList.add('hidden');
     
-    // Reorder questions
-    reorderQuestions();
+    updateQuestionNumbers();
 }
 
 // Helper function to add option with existing text

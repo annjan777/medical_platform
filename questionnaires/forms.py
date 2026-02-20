@@ -188,10 +188,43 @@ class ResponseForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         
-        # Validate required fields
+        # Helper function to check if a question is actually active (should be displayed)
+        # based on the branching logic of its parents.
+        def is_branch_active(question):
+            if not question.parent:
+                return True
+                
+            # Getting the parent's answer from the currently submitted form data
+            parent_field_name = f'question_{question.parent.id}'
+            
+            # Use self.data (raw POST) because cleaned_data might not have it if parent failed validation
+            parent_answer = self.data.get(parent_field_name)
+            
+            # If the parent answer matches the trigger, this branch is active thus far.
+            # But we must also check if the parent itself is active! (recursion)
+            if parent_answer == question.trigger_answer:
+                return is_branch_active(question.parent)
+                
+            return False
+
+        # Validate required fields, but ONLY if they are part of an active branch
         for question in self.questions:
             field_name = f'question_{question.id}'
-            if question.is_required and not cleaned_data.get(field_name):
+            
+            # Check if this question is active based on the parent tree
+            is_active = is_branch_active(question)
+            
+            if not is_active:
+                # If question is NOT active, ignore any errors Django found for it
+                if field_name in self._errors:
+                    del self._errors[field_name]
+                    
+                # Remove the field entirely so it doesn't get saved as an empty answer
+                if field_name in cleaned_data:
+                    del cleaned_data[field_name]
+                    
+            elif question.is_required and not cleaned_data.get(field_name):
+                # If it IS active, IS required, and IS empty, enforce validation
                 self.add_error(field_name, 'This field is required.')
         
         return cleaned_data

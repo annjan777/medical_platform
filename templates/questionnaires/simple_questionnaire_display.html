@@ -10,462 +10,360 @@
         <div class="questionnaire-header bg-white rounded-lg shadow-sm p-6 mb-6">
             <h1>{{ questionnaire.title }}</h1>
             {% if questionnaire.description %}
-                <p>{{ questionnaire.description }}</p>
+            <p>{{ questionnaire.description }}</p>
             {% endif %}
         </div>
 
         <!-- Questions Form -->
-        <form id="questionnaireForm" method="post" action="{% url 'questionnaires:questionnaire_start' questionnaire.pk %}" class="space-y-6" enctype="multipart/form-data">
+        <form id="questionnaireForm" method="post"
+            action="{% url 'questionnaires:questionnaire_start' questionnaire.pk %}" class="space-y-6"
+            enctype="multipart/form-data">
             {% csrf_token %}
             {% for question in questions %}
-            <div class="question-container" data-question-id="{{ question.id }}" data-question-order="{{ forloop.counter0 }}">
-                <h3>
-                    {{ forloop.counter }}. {{ question.question_text }}
-                    {% if question.is_required %}<span class="required">*</span>{% endif %}
-                </h3>
+            <div class="question-container form-group card border-0 shadow-sm mb-4" data-question-id="{{ question.id }}"
+                data-question-order="{{ forloop.counter0 }}" {% if question.parent %}
+                data-parent-id="{{ question.parent.id }}" data-trigger-answer="{{ question.trigger_answer }}"
+                style="display: none;" {% endif %}>
 
-                <!-- Yes/No Question -->
-                {% if question.question_type == 'yes_no' %}
-                <div>
-                    <label class="option-label">
-                        <input type="radio" name="question_{{ question.id }}" value="yes" {% if question.is_required %}required{% endif %}>
-                        <div class="option-content">
-                            <span class="option-text">Yes</span>
-                        </div>
-                    </label>
-                    <label class="option-label">
-                        <input type="radio" name="question_{{ question.id }}" value="no" {% if question.is_required %}required{% endif %}>
-                        <div class="option-content">
-                            <span class="option-text">No</span>
-                        </div>
-                    </label>
-                </div>
+                <div class="card-body p-4">
+                    <h5 class="question-text mb-4">
+                        <span class="badge bg-primary me-2">{{ question.get_display_number }}</span>
+                        {{ question.question_text }}
+                        {% if question.is_required %}<span class="text-danger ms-1">*</span>{% endif %}
+                    </h5>
 
-                <!-- True/False Question -->
-                {% elif question.question_type == 'true_false' %}
-                <div>
-                    <label class="option-label">
-                        <input type="radio" name="question_{{ question.id }}" value="true" {% if question.is_required %}required{% endif %}>
-                        <div class="option-content">
-                            <span class="option-text">True</span>
+                    <!-- Yes/No Question -->
+                    {% if question.question_type == 'yes_no' %}
+                    <div class="radio-group ms-2">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}"
+                                id="q{{ question.id }}_yes" value="yes" {{ question.is_required|yesno:'required,' }}>
+                            <label class="form-check-label radio-label fs-5" for="q{{ question.id }}_yes">
+                                Yes
+                            </label>
                         </div>
-                    </label>
-                    <label class="option-label">
-                        <input type="radio" name="question_{{ question.id }}" value="false" {% if question.is_required %}required{% endif %}>
-                        <div class="option-content">
-                            <span class="option-text">False</span>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}"
+                                id="q{{ question.id }}_no" value="no" {{ question.is_required|yesno:'required,' }}>
+                            <label class="form-check-label radio-label fs-5" for="q{{ question.id }}_no">
+                                No
+                            </label>
                         </div>
-                    </label>
-                </div>
+                    </div>
 
-                <!-- Multiple Choice Question -->
-                {% elif question.question_type == 'multiple_choice' %}
-                <div>
-                    {% for option in question.options.all %}
-                    <label class="option-label">
-                        <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" {% if question.is_required %}required{% endif %}>
-                        <div class="option-content">
-                            {% if option.option_image %}
-                            <div>
-                                <img src="{{ option.option_image.url }}" alt="{{ option.text|default:option.id }}" class="option-image">
-                                {% if option.text %}
-                                <p class="option-image-caption">{{ option.text }}</p>
+                    <!-- True/False Question -->
+                    {% elif question.question_type == 'true_false' %}
+                    <div class="radio-group ms-2">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}"
+                                id="q{{ question.id }}_true" value="true" {{ question.is_required|yesno:'required,' }}>
+                            <label class="form-check-label radio-label fs-5" for="q{{ question.id }}_true">
+                                True
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}"
+                                id="q{{ question.id }}_false" value="false" {{ question.is_required|yesno:'required,'
+                                }}>
+                            <label class="form-check-label radio-label fs-5" for="q{{ question.id }}_false">
+                                False
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Multiple Choice Question -->
+                    {% elif question.question_type == 'multiple_choice' %}
+                    <div class="radio-group ms-2">
+                        {% for option in question.options.all %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}"
+                                id="opt_{{ option.id }}" value="{{ option.id }}" {{
+                                question.is_required|yesno:'required,' }}>
+                            <label class="form-check-label radio-label fs-5 d-flex align-items-center"
+                                for="opt_{{ option.id }}">
+                                {% if option.option_image %}
+                                <div class="me-3">
+                                    <img src="{{ option.option_image.url }}" alt="{{ option.text|default:option.id }}"
+                                        class="img-thumbnail" style="max-height: 100px;">
+                                    {% if option.text %}
+                                    <span class="d-block mt-1 text-muted small">{{ option.text }}</span>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <span>{{ option.text }}</span>
                                 {% endif %}
-                            </div>
-                            {% else %}
-                            <span class="option-text">{{ option.text }}</span>
-                            {% endif %}
+                            </label>
                         </div>
-                    </label>
-                    {% empty %}
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        No options available for this question. Please add options in the questionnaire builder.
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <!-- Short Answer Question -->
-                {% elif question.question_type == 'short_answer' %}
-                <div>
-                    <textarea name="question_{{ question.id }}" 
-                              class="form-textarea"
-                              placeholder="Enter your answer here..."
-                              {% if question.is_required %}required{% endif %}></textarea>
-                </div>
-
-                <!-- Attachment Question -->
-                {% elif question.question_type == 'attachment' %}
-                <div>
-                    <div class="file-upload-area">
-                        <div>
-                            <input id="question_{{ question.id }}" 
-                                   name="question_{{ question.id }}" 
-                                   type="file" 
-                                   accept=".pdf,.xls,.xlsx,.csv,.txt,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp"
-                                   {% if question.is_required %}required{% endif %}>
+                        {% empty %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No options available for this question. Please add options in the questionnaire builder.
                         </div>
-                        <p class="file-upload-info">PDF, XLS, CSV, TXT, DOC, Images (max 10MB)</p>
-                        <p class="file-status success" id="file-name-{{ question.id }}"></p>
-                        <p class="file-status error" id="file-error-{{ question.id }}"></p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Short Answer Question -->
+                    {% elif question.question_type == 'short_answer' %}
+                    <div class="mt-2">
+                        <textarea name="question_{{ question.id }}" class="form-control form-control-lg border-2"
+                            rows="3" placeholder="Type your answer here..." {{ question.is_required|yesno:'required,'
+                            }}></textarea>
+                    </div>
+
+                    <!-- Attachment Question -->
+                    {% elif question.question_type == 'attachment' %}
+                    <div class="mt-2">
+                        <div class="p-4 border-2 border-dashed rounded bg-light text-center">
+                            <label for="question_{{ question.id }}"
+                                class="form-label text-primary fw-bold cursor-pointer">
+                                <i class="fas fa-cloud-upload-alt fa-2x mb-2 d-block"></i>
+                                Select a file to upload
+                            </label>
+                            <input class="form-control d-none" id="question_{{ question.id }}"
+                                name="question_{{ question.id }}" type="file"
+                                accept=".pdf,.xls,.xlsx,.csv,.txt,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp" {{
+                                question.is_required|yesno:'required,' }}>
+                            <div class="text-muted small mt-2">Supported formats: PDF, XLS, CSV, TXT, DOC, Images (max
+                                10MB)</div>
+                            <div class="mt-3 font-weight-bold text-success" id="file-name-{{ question.id }}"></div>
+                            <div class="mt-2 text-danger" id="file-error-{{ question.id }}"></div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-                {% endif %}
-            </div>
-            {% endfor %}
+                {% endfor %}
 
-            <!-- Submit Button -->
-            <div class="text-center mt-6">
-                <button type="submit" class="btn-submit">
-                    <i class="fas fa-check me-2"></i>Submit Questionnaire
-                </button>
-            </div>
+                <!-- Submit Button -->
+                <div class="text-center mt-5 mb-4">
+                    <button type="submit" class="btn btn-success btn-lg px-5 py-3 rounded-pill shadow-sm"
+                        style="font-size: 1.1rem; letter-spacing: 0.5px;">
+                        <i class="fas fa-check-circle me-2"></i> Submit Medical Questionnaire
+                    </button>
+                </div>
         </form>
     </div>
 </div>
 
 <script>
-let currentQuestionIndex = 0;
-const totalQuestions = {{ questions.count }};
-const questionContainers = document.querySelectorAll('.question-container');
+    // We don't use pagination-based showQuestion indexing anymore because of conditional display.
+    // Instead, visibility is managed by CSS dynamically.
+    // If pagination was intended, logic needs to only show Top-Level questions + triggered children. 
+    // For now, simple_questionnaire_display shows all questions by default.
 
-function showQuestion(index) {
-    // Hide all questions
-    questionContainers.forEach(container => {
-        container.style.display = 'none';
-    });
-    
-    // Show current question
-    questionContainers[index].style.display = 'block';
-    
-    // Update progress
-    const progress = ((index + 1) / totalQuestions) * 100;
-    document.getElementById('progressBar').style.width = progress + '%';
-    document.getElementById('currentQuestion').textContent = index + 1;
-    
-    // Update buttons
-    document.getElementById('prevBtn').disabled = index === 0;
-    
-    if (index === totalQuestions - 1) {
-        document.getElementById('nextBtn').classList.add('hidden');
-        document.getElementById('submitBtn').classList.remove('hidden');
-    } else {
-        document.getElementById('nextBtn').classList.remove('hidden');
-        document.getElementById('submitBtn').classList.add('hidden');
-    }
-}
+    // We must initialize immediately if loaded via AJAX, or wait for DOM if loaded natively.
+    function initQuestionnaireLogic() {
+        // Hide all followups initially (already done inline with style="display:none;")
+        // Setup event listeners for yes/no questions
+        const yesNoInputs = document.querySelectorAll('input[type="radio"][value="yes"], input[type="radio"][value="no"]');
 
-function nextQuestion() {
-    if (currentQuestionIndex < totalQuestions - 1) {
-        currentQuestionIndex++;
-        showQuestion(currentQuestionIndex);
-    }
-}
+        yesNoInputs.forEach(input => {
+            // Remove any old listeners if re-initialized
+            const new_element = input.cloneNode(true);
+            input.parentNode.replaceChild(new_element, input);
 
-function previousQuestion() {
-    if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        showQuestion(currentQuestionIndex);
-    }
-}
+            new_element.addEventListener('change', function (e) {
+                handleBranching(e.target);
+            });
+        });
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    // File validation functions
-    window.showError = function(inputId, message) {
-        const questionContainer = document.querySelector(`[data-question-id="${inputId.replace('question_', '')}"]`);
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'file-error mt-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm';
-        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${message}`;
-        questionContainer.appendChild(errorDiv);
-        
-        // Auto-remove error after 5 seconds
-        setTimeout(function() {
-            if (errorDiv.parentNode) {
-                errorDiv.remove();
-            }
-        }, 5000);
-    };
-    
-    window.isAllowedExtension = function(filename) {
-        const allowedExtensions = ['.pdf', '.xls', '.xlsx', '.csv', '.txt', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif', '.bmp'];
-        const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
-        return allowedExtensions.includes(extension);
-    };
-    
-    // Handle file upload functionality
-    const attachmentQuestions = document.querySelectorAll('[data-question-id]');
-    attachmentQuestions.forEach(container => {
-        const questionId = container.dataset.questionId;
-        const fileInput = document.getElementById(`question_${questionId}`);
-        const statusMessage = document.getElementById(`file-name-${questionId}`);
-        const errorMessage = document.getElementById(`file-error-${questionId}`);
-        
-        if (fileInput) {
-            // Add event listener for file selection (no separate upload button needed)
-            fileInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                
-                if (file) {
-                    // Validate file size (10MB limit)
-                    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
-                    if (file.size > maxSize) {
-                        errorMessage.textContent = `❌ File "${file.name}" is too large (${(file.size/1024/1024).toFixed(1)}MB). Maximum size is 10MB.`;
-                        errorMessage.style.color = 'red';
-                        statusMessage.textContent = '';
-                        fileInput.value = ''; // Clear the file
-                        return;
-                    }
-                    
-                    // Validate file type
-                    const allowedTypes = ['application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
-                                      'text/csv', 'text/plain', 'application/msword', 
-                                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                      'image/jpeg', 'image/png', 'image/gif', 'image/bmp'];
-                    
-                    if (!allowedTypes.includes(file.type) && !isAllowedExtension(file.name)) {
-                        errorMessage.textContent = `❌ File "${file.name}" has invalid format. Allowed: PDF, XLS, XLSX, CSV, TXT, DOC, DOCX, JPG, PNG, GIF, BMP`;
-                        errorMessage.style.color = 'red';
-                        statusMessage.textContent = '';
-                        fileInput.value = ''; // Clear the file
-                        return;
-                    }
-                    
-                    // Show success message
-                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
-                    statusMessage.textContent = `✅ ${file.name} (${fileSize}MB) ready to upload`;
-                    statusMessage.style.color = 'green';
-                    errorMessage.textContent = '';
+        function handleBranching(selectedInput) {
+            const parentContainer = selectedInput.closest('.question-container');
+            if (!parentContainer) return;
+
+            const parentId = parentContainer.dataset.questionId;
+            const selectedValue = selectedInput.value; // 'yes' or 'no'
+
+            // Find all immediate follow-ups for this parent
+            const childQuestions = document.querySelectorAll(`.question-container[data-parent-id="${parentId}"]`);
+
+            childQuestions.forEach(child => {
+                if (child.dataset.triggerAnswer === selectedValue) {
+                    // Show triggered child
+                    child.style.display = 'block';
+                    // Make required inputs active again
+                    toggleRequired(child, true);
                 } else {
-                    statusMessage.textContent = '';
-                    errorMessage.textContent = '';
+                    // Hide untriggered child and reset its answers
+                    hideAndResetBranch(child);
                 }
             });
         }
-    });
-});
 
-// Form submission
-document.getElementById('questionnaireForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Show loading state
-    const submitBtn = document.querySelector('button[type="submit"]');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+        function hideAndResetBranch(container) {
+            container.style.display = 'none';
+
+            // Reset inputs
+            const inputs = container.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (input.type === 'radio' || input.type === 'checkbox') input.checked = false;
+                else input.value = '';
+            });
+
+            // Disable required validation while hidden
+            toggleRequired(container, false);
+
+            // Recursively hide all children of this branch
+            const branchId = container.dataset.questionId;
+            const branchChildren = document.querySelectorAll(`.question-container[data-parent-id="${branchId}"]`);
+            branchChildren.forEach(child => hideAndResetBranch(child));
+        }
+
+        function toggleRequired(container, isRequired) {
+            const inputs = container.querySelectorAll('input[required], textarea[required], select[required]');
+            // To manage dynamic required state safely:
+            // Assume if it has a 'required' span, it should be required when visible
+            const hasRequiredMarker = container.querySelector('.required') !== null;
+            if (hasRequiredMarker) {
+                const allInputs = container.querySelectorAll('input, textarea, select');
+                allInputs.forEach(input => {
+                    input.required = isRequired;
+                });
+            }
+        }
+
+        // Previous pagination logic removed as it conflicts with branching flow.
+        // Ensure the submit button is always visible.
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) submitBtn.classList.remove('hidden');
+
+        // File validation functions
+        window.showError = function (inputId, message) {
+            const questionContainer = document.querySelector(`[data-question-id="${inputId.replace('question_', '')}"]`);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'file-error mt-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>${message}`;
+            questionContainer.appendChild(errorDiv);
+
+            // Auto-remove error after 5 seconds
+            setTimeout(function () {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        };
+
+        window.isAllowedExtension = function (filename) {
+            const allowedExtensions = ['.pdf', '.xls', '.xlsx', '.csv', '.txt', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif', '.bmp'];
+            const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+            return allowedExtensions.includes(extension);
+        };
+
+        // Handle file upload functionality
+        const attachmentQuestions = document.querySelectorAll('[data-question-id]');
+        attachmentQuestions.forEach(container => {
+            const questionId = container.dataset.questionId;
+            const fileInput = document.getElementById(`question_${questionId}`);
+            const statusMessage = document.getElementById(`file-name-${questionId}`);
+            const errorMessage = document.getElementById(`file-error-${questionId}`);
+
+            if (fileInput) {
+                // Add event listener for file selection (no separate upload button needed)
+                fileInput.addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+
+                    if (file) {
+                        // Validate file size (10MB limit)
+                        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+                        if (file.size > maxSize) {
+                            errorMessage.textContent = `❌ File "${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 10MB.`;
+                            errorMessage.style.color = 'red';
+                            statusMessage.textContent = '';
+                            fileInput.value = ''; // Clear the file
+                            return;
+                        }
+
+                        // Validate file type
+                        const allowedTypes = ['application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'text/csv', 'text/plain', 'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'image/jpeg', 'image/png', 'image/gif', 'image/bmp'];
+
+                        if (!allowedTypes.includes(file.type) && !isAllowedExtension(file.name)) {
+                            errorMessage.textContent = `❌ File "${file.name}" has invalid format. Allowed: PDF, XLS, XLSX, CSV, TXT, DOC, DOCX, JPG, PNG, GIF, BMP`;
+                            errorMessage.style.color = 'red';
+                            statusMessage.textContent = '';
+                            fileInput.value = ''; // Clear the file
+                            return;
+                        }
+
+                        // Show success message
+                        const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                        statusMessage.textContent = `✅ ${file.name} (${fileSize}MB) ready to upload`;
+                        statusMessage.style.color = 'green';
+                        errorMessage.textContent = '';
+                    } else {
+                        statusMessage.textContent = '';
+                        errorMessage.textContent = '';
+                    }
+                });
+            }
+        });
     }
-    
-    // Submit the form normally
-    this.submit();
-});
+
+    // Run initialization
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initQuestionnaireLogic);
+    } else {
+        // Run immediately since the DOM is already ready (e.g. loaded via AJAX via innerHTML)
+        // Set a small timeout to ensure the browser has finished rendering the injected DOM nodes
+        setTimeout(initQuestionnaireLogic, 50);
+    }
+
+    // Form submission
+    document.getElementById('questionnaireForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        // Show loading state
+        const submitBtn = document.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+        }
+
+        // Submit the form normally
+        this.submit();
+    });
 </script>
 
 <style>
-/* Professional Business Styling */
-.questionnaire-container {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #ffffff;
-    color: #333333;
-}
+    /* Clean Medical Platform Theme Tweaks */
+    .questionnaire-container {
+        font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
 
-.questionnaire-header h1 {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-}
+    .custom-radio {
+        width: 1.3rem;
+        height: 1.3rem;
+        margin-top: 0.2rem;
+        cursor: pointer;
+    }
 
-.questionnaire-header p {
-    font-size: 1rem;
-    color: #6c757d;
-    margin-bottom: 0;
-}
+    .radio-label {
+        cursor: pointer;
+        color: #344767;
+    }
 
-.question-container {
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    background: #ffffff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
+    .question-text {
+        font-weight: 600;
+        color: #2b3a4a;
+        line-height: 1.4;
+    }
 
-.question-container h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 1.5rem;
-    line-height: 1.4;
-}
+    .border-dashed {
+        border-style: dashed !important;
+    }
 
-.question-container .required {
-    color: #dc3545;
-    font-weight: 600;
-}
+    .cursor-pointer {
+        cursor: pointer;
+    }
 
-/* Option styling */
-.option-label {
-    display: block;
-    padding: 1rem;
-    border: 2px solid #e9ecef;
-    border-radius: 6px;
-    margin-bottom: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: #ffffff;
-}
-
-.option-label:hover {
-    border-color: #22c55e;
-    background: #f8fff9;
-}
-
-.option-label input[type="radio"]:checked + .option-content {
-    color: #22c55e;
-    font-weight: 500;
-}
-
-.option-label input[type="radio"]:checked {
-    accent-color: #22c55e;
-}
-
-.option-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.option-text {
-    font-size: 1rem;
-    color: #495057;
-    margin: 0;
-}
-
-/* Image option styling */
-.option-image {
-    max-height: 120px;
-    max-width: 200px;
-    border-radius: 4px;
-    object-fit: contain;
-    border: 1px solid #dee2e6;
-    display: block;
-    margin: 0.5rem 0;
-}
-
-.option-image-caption {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-top: 0.5rem;
-    margin-bottom: 0;
-}
-
-/* Textarea styling */
-.form-textarea {
-    border: 2px solid #e9ecef;
-    border-radius: 6px;
-    padding: 0.75rem;
-    font-size: 1rem;
-    font-family: inherit;
-    transition: border-color 0.2s ease;
-    resize: vertical;
-    min-height: 100px;
-}
-
-.form-textarea:focus {
-    outline: none;
-    border-color: #22c55e;
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
-}
-
-/* File upload styling */
-.file-upload-area {
-    border: 2px dashed #22c55e;
-    border-radius: 6px;
-    padding: 2rem;
-    text-align: center;
-    background: #f8fff9;
-    transition: all 0.2s ease;
-}
-
-.file-upload-area:hover {
-    border-color: #16a34a;
-    background: #f0fdf4;
-}
-
-.file-upload-area input[type="file"] {
-    border: none;
-    padding: 0.5rem;
-    font-size: 0.875rem;
-}
-
-.file-upload-info {
-    font-size: 0.75rem;
-    color: #6c757d;
-    margin-top: 0.5rem;
-}
-
-.file-status {
-    font-size: 0.75rem;
-    margin-top: 0.5rem;
-    font-weight: 500;
-}
-
-.file-status.success {
-    color: #22c55e;
-}
-
-.file-status.error {
-    color: #dc3545;
-}
-
-/* Submit button styling */
-.btn-submit {
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 6px;
-    font-size: 1.125rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2);
-}
-
-.btn-submit:hover {
-    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 8px rgba(34, 197, 94, 0.3);
-}
-
-.btn-submit:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
     .question-container {
-        padding: 1.5rem;
+        transition: all 0.3s ease;
     }
-    
-    .questionnaire-header h1 {
-        font-size: 1.75rem;
+
+    .question-container:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
     }
-    
-    .option-image {
-        max-height: 100px;
-        max-width: 150px;
-    }
-    
-    .option-content {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-}
 </style>
 {% endblock %}
