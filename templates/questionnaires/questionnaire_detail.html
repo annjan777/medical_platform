@@ -28,26 +28,28 @@
       </thead>
       <tbody id="questions-tbody">
         {% for q in questions %}
-          <tr data-question-id="{{ q.pk }}">
-            <td>{{ q.order }}</td>
-            <td>{{ q.question_text }}</td>
-            <td>{{ q.get_question_type_display }}</td>
-            <td>{{ q.is_required|yesno:"Yes,No" }}</td>
-            <td style="white-space:nowrap;">
-              <a href="{% url 'questionnaires:question_update' q.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
-              <a href="{% url 'questionnaires:question_delete' q.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
-              <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-outline-secondary move-up" {% if forloop.first %}disabled{% endif %}">
-                  <i class="fas fa-arrow-up"></i>
-                </button>
-                <button type="button" class="btn btn-outline-secondary move-down" {% if forloop.last %}disabled{% endif %}">
-                  <i class="fas fa-arrow-down"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
+        <tr data-question-id="{{ q.pk }}">
+          <td>{{ q.get_display_number }}</td>
+          <td>{{ q.question_text }}</td>
+          <td>{{ q.get_question_type_display }}</td>
+          <td>{{ q.is_required|yesno:"Yes,No" }}</td>
+          <td style="white-space:nowrap;">
+            <a href="{% url 'questionnaires:question_update' q.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+            <a href="{% url 'questionnaires:question_delete' q.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            <div class="btn-group btn-group-sm" role="group">
+              <button type="button" class="btn btn-outline-secondary move-up" {% if forloop.first %}disabled{% endif %}>
+                <i class="fas fa-arrow-up"></i>
+              </button>
+              <button type="button" class="btn btn-outline-secondary move-down" {% if forloop.last %}disabled{% endif %}>
+                <i class="fas fa-arrow-down"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
         {% empty %}
-          <tr><td colspan="5">No questions yet.</td></tr>
+        <tr>
+          <td colspan="5">No questions yet.</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
@@ -55,103 +57,103 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const tbody = document.getElementById('questions-tbody');
-    
-    tbody.addEventListener('click', function(e) {
-        if (e.target.closest('.move-up') || e.target.closest('.move-down')) {
-            const button = e.target.closest('button');
-            const row = button.closest('tr');
-            const isMovingUp = button.classList.contains('move-up');
-            
-            if (isMovingUp) {
-                const prevRow = row.previousElementSibling;
-                if (prevRow && prevRow.tagName === 'TR') {
-                    tbody.insertBefore(row, prevRow);
-                }
-            } else {
-                const nextRow = row.nextElementSibling;
-                if (nextRow && nextRow.tagName === 'TR') {
-                    tbody.insertBefore(nextRow, row);
-                }
-            }
-            
-            updateQuestionOrder();
-            updateButtonStates();
+
+    tbody.addEventListener('click', function (e) {
+      if (e.target.closest('.move-up') || e.target.closest('.move-down')) {
+        const button = e.target.closest('button');
+        const row = button.closest('tr');
+        const isMovingUp = button.classList.contains('move-up');
+
+        if (isMovingUp) {
+          const prevRow = row.previousElementSibling;
+          if (prevRow && prevRow.tagName === 'TR') {
+            tbody.insertBefore(row, prevRow);
+          }
+        } else {
+          const nextRow = row.nextElementSibling;
+          if (nextRow && nextRow.tagName === 'TR') {
+            tbody.insertBefore(nextRow, row);
+          }
         }
+
+        updateQuestionOrder();
+        updateButtonStates();
+      }
     });
-    
+
     function updateQuestionOrder() {
-        const rows = tbody.querySelectorAll('tr[data-question-id]');
-        const questionIds = [];
-        
-        rows.forEach((row, index) => {
-            const questionId = row.dataset.questionId;
-            questionIds.push(questionId);
-            
-            // Update the order number display
-            const orderCell = row.querySelector('td:first-child');
-            orderCell.textContent = index + 1;
-        });
-        
-        // Send the new order to the server
-        fetch(`/questionnaires/api/update-question-order/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({
-                question_ids: questionIds
-            })
+      const rows = tbody.querySelectorAll('tr[data-question-id]');
+      const questionIds = [];
+
+      rows.forEach((row, index) => {
+        const questionId = row.dataset.questionId;
+        questionIds.push(questionId);
+
+        const orderCell = row.querySelector('td:first-child');
+        // We should ideally fetch the new display numbers from the server 
+        // but for now we just show a placeholder or keep old text to avoid showing wrong sequential integers
+        // orderCell.textContent = '...'; 
+      });
+
+      // Send the new order to the server
+      fetch(`/questionnaires/api/update-question-order/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          question_ids: questionIds
         })
+      })
         .then(response => response.json())
         .then(data => {
-            if (!data.success) {
-                console.error('Failed to update question order:', data.error);
-                // Optionally show an error message to the user
-            }
+          if (!data.success) {
+            console.error('Failed to update question order:', data.error);
+            // Optionally show an error message to the user
+          }
         })
         .catch(error => {
-            console.error('Error updating question order:', error);
+          console.error('Error updating question order:', error);
         });
     }
-    
+
     function updateButtonStates() {
-        const rows = tbody.querySelectorAll('tr[data-question-id]');
-        
-        rows.forEach((row, index) => {
-            const upButton = row.querySelector('.move-up');
-            const downButton = row.querySelector('.move-down');
-            
-            // Disable up button for first row
-            if (upButton) {
-                upButton.disabled = index === 0;
-            }
-            
-            // Disable down button for last row
-            if (downButton) {
-                downButton.disabled = index === rows.length - 1;
-            }
-        });
+      const rows = tbody.querySelectorAll('tr[data-question-id]');
+
+      rows.forEach((row, index) => {
+        const upButton = row.querySelector('.move-up');
+        const downButton = row.querySelector('.move-down');
+
+        // Disable up button for first row
+        if (upButton) {
+          upButton.disabled = index === 0;
+        }
+
+        // Disable down button for last row
+        if (downButton) {
+          downButton.disabled = index === rows.length - 1;
+        }
+      });
     }
-    
+
     // CSRF token helper
     function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
         }
-        return cookieValue;
+      }
+      return cookieValue;
     }
-});
+  });
 </script>
 {% endblock %}
-

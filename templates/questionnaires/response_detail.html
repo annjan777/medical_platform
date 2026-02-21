@@ -35,9 +35,9 @@
                 <td><strong>Status:</strong></td>
                 <td>
                   {% if response.is_complete %}
-                    <span class="badge bg-success">Complete</span>
+                  <span class="badge bg-success">Complete</span>
                   {% else %}
-                    <span class="badge bg-warning">In Progress</span>
+                  <span class="badge bg-warning">In Progress</span>
                   {% endif %}
                 </td>
               </tr>
@@ -59,56 +59,56 @@
                 <td><strong>Respondent:</strong></td>
                 <td>
                   {% if response.respondent %}
-                    {{ response.respondent.get_full_name|default:response.respondent.username|default:"Unknown" }}
-                    {% if response.respondent.role %}
-                      <span class="badge bg-info ms-1">{{ response.respondent.get_role_display }}</span>
-                    {% endif %}
+                  {{ response.respondent.get_full_name|default:response.respondent.username|default:"Unknown" }}
+                  {% if response.respondent.role %}
+                  <span class="badge bg-info ms-1">{{ response.respondent.get_role_display }}</span>
+                  {% endif %}
                   {% else %}
-                    -
+                  -
                   {% endif %}
                 </td>
               </tr>
             </table>
           </div>
-          
+
           <div class="col-md-6">
             <h5 class="text-muted mb-3">Patient Information</h5>
             {% if response.patient %}
-              <table class="table table-sm">
-                <tr>
-                  <td><strong>Patient ID:</strong></td>
-                  <td><span class="badge bg-primary">{{ response.patient.patient_id }}</span></td>
-                </tr>
-                <tr>
-                  <td><strong>Name:</strong></td>
-                  <td>{{ response.patient.first_name }} {{ response.patient.last_name }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Date of Birth:</strong></td>
-                  <td>{{ response.patient.date_of_birth|date:"Y-m-d" }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Age:</strong></td>
-                  <td>{{ response.patient.age }} years</td>
-                </tr>
-                <tr>
-                  <td><strong>Gender:</strong></td>
-                  <td>{{ response.patient.get_gender_display }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Phone:</strong></td>
-                  <td>{{ response.patient.phone_number|default:"-" }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Email:</strong></td>
-                  <td>{{ response.patient.email|default:"-" }}</td>
-                </tr>
-              </table>
+            <table class="table table-sm">
+              <tr>
+                <td><strong>Patient ID:</strong></td>
+                <td><span class="badge bg-primary">{{ response.patient.patient_id }}</span></td>
+              </tr>
+              <tr>
+                <td><strong>Name:</strong></td>
+                <td>{{ response.patient.first_name }} {{ response.patient.last_name }}</td>
+              </tr>
+              <tr>
+                <td><strong>Date of Birth:</strong></td>
+                <td>{{ response.patient.date_of_birth|date:"Y-m-d" }}</td>
+              </tr>
+              <tr>
+                <td><strong>Age:</strong></td>
+                <td>{{ response.patient.age }} years</td>
+              </tr>
+              <tr>
+                <td><strong>Gender:</strong></td>
+                <td>{{ response.patient.get_gender_display }}</td>
+              </tr>
+              <tr>
+                <td><strong>Phone:</strong></td>
+                <td>{{ response.patient.phone_number|default:"-" }}</td>
+              </tr>
+              <tr>
+                <td><strong>Email:</strong></td>
+                <td>{{ response.patient.email|default:"-" }}</td>
+              </tr>
+            </table>
             {% else %}
-              <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                No patient associated with this response.
-              </div>
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              No patient associated with this response.
+            </div>
             {% endif %}
           </div>
         </div>
@@ -151,99 +151,99 @@
           <div class="col-12">
             <h5 class="text-muted mb-3">Questionnaire Answers</h5>
             {% if response.answers.exists %}
-              <div class="table-responsive">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th width="5%">#</th>
-                      <th width="45%">Question</th>
-                      <th width="15%">Type</th>
-                      <th width="35%">Answer</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for answer in response.answers.all|dictsort:"question.order" %}
-                      <tr>
-                        <td>{{ answer.question.order }}</td>
-                        <td>
-                          <strong>{{ answer.question.question_text }}</strong>
-                          {% if answer.question.is_required %}
-                            <span class="badge bg-danger ms-1">Required</span>
-                          {% endif %}
-                        </td>
-                        <td>
-                          <span class="badge bg-secondary">{{ answer.question.get_question_type_display }}</span>
-                        </td>
-                        <td>
-                          {% if answer.file_answer %}
-                            <div class="d-flex align-items-center">
-                              <i class="fas fa-file me-2 text-primary"></i>
-                              <a href="{{ answer.file_answer.url }}" class="btn btn-sm btn-outline-primary me-2" download>
-                                <i class="fas fa-download me-1"></i> Download
-                              </a>
-                              <span class="text-muted">{{ answer.file_answer.name }}</span>
-                              <small class="text-muted ms-2">({{ answer.file_answer.size|filesizeformat }})</small>
-                            </div>
-                          {% elif answer.text_answer %}
-                            {{ answer.text_answer }}
-                          {% elif answer.option_answer.exists %}
-                            {% for option in answer.option_answer.all %}
-                              <span class="badge bg-info">{{ option.text }}</span>
-                            {% endfor %}
-                          {% else %}
-                            <span class="text-muted">No answer provided</span>
-                          {% endif %}
-                        </td>
-                      </tr>
-                    {% empty %}
-                      <tr>
-                        <td colspan="4" class="text-center text-muted">No answers found.</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-              
-              <!-- Statistics -->
-              <div class="row mt-3">
-                <div class="col-md-4">
-                  <div class="card bg-light">
-                    <div class="card-body text-center">
-                      <h4 class="mb-1">{{ response.answers.count }}</h4>
-                      <small class="text-muted">Questions Answered</small>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="card bg-light">
-                    <div class="card-body text-center">
-                      <h4 class="mb-1">{{ response.questionnaire.questions.count }}</h4>
-                      <small class="text-muted">Total Questions</small>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="card bg-light">
-                    <div class="card-body text-center">
-                      <h4 class="mb-1">
-                        {% with answered=response.answers.count total=response.questionnaire.questions.count %}
-                          {% if total > 0 %}
-                            {% widthratio answered total 100 %}%
-                          {% else %}
-                            0%
-                          {% endif %}
-                        {% endwith %}
-                      </h4>
-                      <small class="text-muted">Completion Rate</small>
-                    </div>
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th width="5%">#</th>
+                    <th width="45%">Question</th>
+                    <th width="15%">Type</th>
+                    <th width="35%">Answer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for answer in response.answers.all|dictsort:"question.order" %}
+                  <tr>
+                    <td>{{ answer.question.get_display_number }}</td>
+                    <td>
+                      <strong>{{ answer.question.question_text }}</strong>
+                      {% if answer.question.is_required %}
+                      <span class="badge bg-danger ms-1">Required</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">{{ answer.question.get_question_type_display }}</span>
+                    </td>
+                    <td>
+                      {% if answer.file_answer %}
+                      <div class="d-flex align-items-center">
+                        <i class="fas fa-file me-2 text-primary"></i>
+                        <a href="{{ answer.file_answer.url }}" class="btn btn-sm btn-outline-primary me-2" download>
+                          <i class="fas fa-download me-1"></i> Download
+                        </a>
+                        <span class="text-muted">{{ answer.file_answer.name }}</span>
+                        <small class="text-muted ms-2">({{ answer.file_answer.size|filesizeformat }})</small>
+                      </div>
+                      {% elif answer.text_answer %}
+                      {{ answer.text_answer }}
+                      {% elif answer.option_answer.exists %}
+                      {% for option in answer.option_answer.all %}
+                      <span class="badge bg-info">{{ option.text }}</span>
+                      {% endfor %}
+                      {% else %}
+                      <span class="text-muted">No answer provided</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center text-muted">No answers found.</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Statistics -->
+            <div class="row mt-3">
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h4 class="mb-1">{{ response.answers.count }}</h4>
+                    <small class="text-muted">Questions Answered</small>
                   </div>
                 </div>
               </div>
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h4 class="mb-1">{{ response.questionnaire.questions.count }}</h4>
+                    <small class="text-muted">Total Questions</small>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h4 class="mb-1">
+                      {% with answered=response.answers.count total=response.questionnaire.questions.count %}
+                      {% if total > 0 %}
+                      {% widthratio answered total 100 %}%
+                      {% else %}
+                      0%
+                      {% endif %}
+                      {% endwith %}
+                    </h4>
+                    <small class="text-muted">Completion Rate</small>
+                  </div>
+                </div>
+              </div>
+            </div>
             {% else %}
-              <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>
-                No answers have been recorded for this response yet.
-              </div>
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              No answers have been recorded for this response yet.
+            </div>
             {% endif %}
           </div>
         </div>
@@ -252,4 +252,3 @@
   </div>
 </div>
 {% endblock %}
-

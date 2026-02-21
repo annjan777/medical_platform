@@ -7,7 +7,7 @@
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-black">{% trans 'Questionnaires' %}</h1>
-        <a class="btn btn-primary" href="{% url 'questionnaires:questionnaire_create' %}">
+        <a class="btn btn-primary" href="{% url 'questionnaires:create' %}">
             <i class="fas fa-plus mr-2"></i> {% trans 'Create New Questionnaire' %}
         </a>
     </div>
@@ -18,40 +18,58 @@
             <table class="min-w-full leading-normal recent-users-table">
                 <thead>
                     <tr>
-                        <th class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">{% trans 'Title' %}</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">{% trans 'Version' %}</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">{% trans 'Status' %}</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">{% trans 'Type' %}</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">{% trans 'Last Updated' %}</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-600 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">{% trans 'Actions' %}</th>
+                        <th
+                            class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                            {% trans 'Title' %}</th>
+                        <th
+                            class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                            {% trans 'Version' %}</th>
+                        <th
+                            class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                            {% trans 'Status' %}</th>
+                        <th
+                            class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                            {% trans 'Type' %}</th>
+                        <th
+                            class="px-5 py-3 border-b-2 border-gray-600 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                            {% trans 'Last Updated' %}</th>
+                        <th
+                            class="px-5 py-3 border-b-2 border-gray-600 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                            {% trans 'Actions' %}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for q in questionnaires %}
-                        <tr class="hover:bg-gray-600">
-                            <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{ q.title }}</td>
-                            <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{ q.version }}</td>
-                            <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{ q.get_status_display }}</td>
-                            <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{ q.get_questionnaire_type_display }}</td>
-                            <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{ q.updated_at|date:"M d, Y" }}</td>
-                            <td class="px-5 py-5 border-b border-gray-600 text-sm text-right whitespace-nowrap">
-                                <a href="{% url 'questionnaires:detail' q.pk %}" class="text-teal-500 hover:text-teal-400 mr-3" title="{% trans 'View Questions' %}">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'questionnaires:builder_edit' q.pk %}" class="text-blue-500 hover:text-blue-400 mr-3" title="{% trans 'Edit Questionnaire' %}">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="{% url 'questionnaires:delete' q.pk %}" class="text-red-500 hover:text-red-400" title="{% trans 'Delete Questionnaire' %}">
-                                    <i class="fas fa-trash"></i>
-                                </a>
-                            </td>
-                        </tr>
+                    <tr class="hover:bg-gray-600">
+                        <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{ q.title }}</td>
+                        <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{ q.version }}</td>
+                        <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{ q.get_status_display }}
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{
+                            q.get_questionnaire_type_display }}</td>
+                        <td class="px-5 py-5 border-b border-gray-600 text-sm text-gray-100">{{ q.updated_at|date:"M d,
+                            Y" }}</td>
+                        <td class="px-5 py-5 border-b border-gray-600 text-sm text-right whitespace-nowrap">
+                            <a href="{% url 'questionnaires:detail' q.pk %}"
+                                class="text-teal-500 hover:text-teal-400 mr-3" title="{% trans 'View Questions' %}">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'questionnaires:builder_edit' q.pk %}"
+                                class="text-blue-500 hover:text-blue-400 mr-3" title="{% trans 'Edit Questionnaire' %}">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'questionnaires:delete' q.pk %}" class="text-red-500 hover:text-red-400"
+                                title="{% trans 'Delete Questionnaire' %}">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
                     {% empty %}
-                        <tr>
-                            <td colspan="6" class="px-5 py-5 border-b border-gray-600 text-center text-sm text-gray-100">
-                                {% trans 'No questionnaires found.' %}
-                            </td>
-                        </tr>
+                    <tr>
+                        <td colspan="6" class="px-5 py-5 border-b border-gray-600 text-center text-sm text-gray-100">
+                            {% trans 'No questionnaires found.' %}
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
