@@ -24,24 +24,42 @@
                     <div>
                         <select name="status" class="form-select">
                             <option value="">All Status</option>
-                            <option value="scheduled" {% if request.GET.status=='scheduled' %}selected{% endif %}>
-                                Scheduled</option>
-                            <option value="in_progress" {% if request.GET.status=='in_progress' %}selected{% endif %}>In
-                                Progress</option>
-                            <option value="completed" {% if request.GET.status=='completed' %}selected{% endif %}>
-                                Completed</option>
-                            <option value="cancelled" {% if request.GET.status=='cancelled' %}selected{% endif %}>
-                                Cancelled</option>
-                            <option value="rescheduled" {% if request.GET.status=='rescheduled' %}selected{% endif %}>
-                                Rescheduled</option>
+                            {% if request.GET.status == 'scheduled' %}
+                            <option value="scheduled" selected>Scheduled</option>
+                            {% else %}
+                            <option value="scheduled">Scheduled</option>
+                            {% endif %}
+                            {% if request.GET.status == 'in_progress' %}
+                            <option value="in_progress" selected>In Progress</option>
+                            {% else %}
+                            <option value="in_progress">In Progress</option>
+                            {% endif %}
+                            {% if request.GET.status == 'completed' %}
+                            <option value="completed" selected>Completed</option>
+                            {% else %}
+                            <option value="completed">Completed</option>
+                            {% endif %}
+                            {% if request.GET.status == 'cancelled' %}
+                            <option value="cancelled" selected>Cancelled</option>
+                            {% else %}
+                            <option value="cancelled">Cancelled</option>
+                            {% endif %}
+                            {% if request.GET.status == 'rescheduled' %}
+                            <option value="rescheduled" selected>Rescheduled</option>
+                            {% else %}
+                            <option value="rescheduled">Rescheduled</option>
+                            {% endif %}
                         </select>
                     </div>
                     <div>
                         <select name="screening_type" class="form-select">
                             <option value="">All Types</option>
                             {% for type in screening_types %}
-                            <option value="{{ type.id }}" {% if request.GET.screening_type==type.id|stringformat:"s"
-                                %}selected{% endif %}>{{ type.name }}</option>
+                            {% if request.GET.screening_type == type.id|stringformat:"s" %}
+                            <option value="{{ type.id }}" selected>{{ type.name }}</option>
+                            {% else %}
+                            <option value="{{ type.id }}">{{ type.name }}</option>
+                            {% endif %}
                             {% endfor %}
                         </select>
                     </div>
