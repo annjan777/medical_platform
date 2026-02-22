@@ -5,17 +5,16 @@
 
 {% block admin_content %}
 <div class="container mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-black">Screening Session #{{ session.id|stringformat:"06d" }}</h1>
+    <!-- Header layout -->
+    <div class="flex justify-end mb-6">
         <div class="flex space-x-4">
             <a href="{% url 'screening:session_list' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left mr-2"></i> Back to Sessions
             </a>
             {% if session.can_complete %}
-                <a href="{% url 'screening:session_complete' session.id %}" class="btn btn-primary">
-                    <i class="fas fa-check mr-2"></i> Complete Session
-                </a>
+            <a href="{% url 'screening:session_complete' session.id %}" class="btn btn-primary">
+                <i class="fas fa-check mr-2"></i> Complete Session
+            </a>
             {% endif %}
         </div>
     </div>
@@ -29,7 +28,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
                     <p class="text-gray-400 text-sm">Patient</p>
-                    <p class="text-black font-medium">{{ session.patient.get_full_name|default:session.patient.email }}</p>
+                    <p class="text-black font-medium">{{ session.patient.get_full_name|default:session.patient.email }}
+                    </p>
                 </div>
                 <div>
                     <p class="text-gray-400 text-sm">Screening Type</p>
@@ -37,7 +37,8 @@
                 </div>
                 <div>
                     <p class="text-gray-400 text-sm">Status</p>
-                    <span class="px-2 py-1 text-xs font-medium rounded-full {% if session.status == 'completed' %}bg-green-900 text-green-200{% elif session.status == 'in_progress' %}bg-blue-900 text-blue-200{% elif session.status == 'scheduled' %}bg-yellow-900 text-yellow-200{% else %}bg-gray-700 text-gray-300{% endif %}">
+                    <span
+                        class="px-2 py-1 text-xs font-medium rounded-full {% if session.status == 'completed' %}bg-green-900 text-green-200{% elif session.status == 'in_progress' %}bg-blue-900 text-blue-200{% elif session.status == 'scheduled' %}bg-yellow-900 text-yellow-200{% else %}bg-gray-700 text-gray-300{% endif %}">
                         {{ session.get_status_display }}
                     </span>
                 </div>
@@ -51,10 +52,12 @@
                 </div>
                 <div>
                     <p class="text-gray-400 text-sm">Conducted By</p>
-                    <p class="text-black font-medium">{{ session.conducted_by.get_full_name|default:session.conducted_by.email|default:"Not assigned" }}</p>
+                    <p class="text-black font-medium">{{
+                        session.conducted_by.get_full_name|default:session.conducted_by.email|default:"Not assigned" }}
+                    </p>
                 </div>
             </div>
-            
+
             {% if session.notes %}
             <div class="mt-6">
                 <p class="text-gray-400 text-sm mb-2">Notes</p>
@@ -76,9 +79,9 @@
                     <p class="text-gray-400 text-sm">Start Time</p>
                     <p class="text-black font-medium">
                         {% if session.actual_start_time %}
-                            {{ session.actual_start_time|date:"M d, Y H:i" }}
+                        {{ session.actual_start_time|date:"M d, Y H:i" }}
                         {% else %}
-                            Not started
+                        Not started
                         {% endif %}
                     </p>
                 </div>
@@ -86,9 +89,9 @@
                     <p class="text-gray-400 text-sm">End Time</p>
                     <p class="text-black font-medium">
                         {% if session.actual_end_time %}
-                            {{ session.actual_end_time|date:"M d, Y H:i" }}
+                        {{ session.actual_end_time|date:"M d, Y H:i" }}
                         {% else %}
-                            Not completed
+                        Not completed
                         {% endif %}
                     </p>
                 </div>
@@ -112,18 +115,19 @@
         <div class="card-body">
             <div class="mb-4">
                 <p class="text-gray-400 text-sm mb-2">Result Status</p>
-                <span class="px-2 py-1 text-xs font-medium rounded-full {% if session.result_status == 'normal' %}bg-green-900 text-green-200{% elif session.result_status == 'abnormal' %}bg-red-900 text-red-200{% elif session.result_status == 'inconclusive' %}bg-yellow-900 text-yellow-200{% else %}bg-gray-700 text-gray-300{% endif %}">
+                <span
+                    class="px-2 py-1 text-xs font-medium rounded-full {% if session.result_status == 'normal' %}bg-green-900 text-green-200{% elif session.result_status == 'abnormal' %}bg-red-900 text-red-200{% elif session.result_status == 'inconclusive' %}bg-yellow-900 text-yellow-200{% else %}bg-gray-700 text-gray-300{% endif %}">
                     {{ session.get_result_status_display }}
                 </span>
             </div>
-            
+
             {% if session.screening_result.findings %}
             <div class="mb-4">
                 <p class="text-gray-400 text-sm mb-2">Findings</p>
                 <p class="text-black">{{ session.screening_result.findings }}</p>
             </div>
             {% endif %}
-            
+
             {% if session.screening_result.recommendations %}
             <div class="mb-4">
                 <p class="text-gray-400 text-sm mb-2">Recommendations</p>
@@ -162,215 +166,4 @@
     {% endif %}
 </div>
 
-<style>
-.grid {
-    display: grid;
-}
-
-.grid-cols-1 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.md\:grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.lg\:grid-cols-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.gap-6 {
-    gap: 1.5rem;
-}
-
-.space-y-4 > * + * {
-    margin-top: 1rem;
-}
-
-.space-x-4 > * + * {
-    margin-left: 1rem;
-}
-
-.mt-6 {
-    margin-top: 1.5rem;
-}
-
-.mb-2 {
-    margin-bottom: 0.5rem;
-}
-
-.mb-4 {
-    margin-bottom: 1rem;
-}
-
-.mb-8 {
-    margin-bottom: 2rem;
-}
-
-.mr-2 {
-    margin-right: 0.5rem;
-}
-
-.mr-3 {
-    margin-right: 0.75rem;
-}
-
-.p-4 {
-    padding: 1rem;
-}
-
-.px-2 {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-}
-
-.py-1 {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-}
-
-.text-xs {
-    font-size: 0.75rem;
-}
-
-.text-sm {
-    font-size: 0.875rem;
-}
-
-.text-lg {
-    font-size: 1.125rem;
-}
-
-.text-3xl {
-    font-size: 1.875rem;
-}
-
-.font-medium {
-    font-weight: 500;
-}
-
-.font-semibold {
-    font-weight: 600;
-}
-
-.font-bold {
-    font-weight: 700;
-}
-
-.rounded-full {
-    border-radius: 9999px;
-}
-
-.rounded-lg {
-    border-radius: 0.5rem;
-}
-
-.border {
-    border-width: 1px;
-}
-
-.border-gray-700 {
-    border-color: #374151;
-}
-
-.flex {
-    display: flex;
-}
-
-.items-center {
-    align-items: center;
-}
-
-.justify-between {
-    justify-content: space-between;
-}
-
-.text-black {
-    color: #f3f4f6;
-}
-
-.text-gray-400 {
-    color: #9ca3af;
-}
-
-.text-green-200 {
-    color: #bbf7d0;
-}
-
-.text-green-900 {
-    color: #14532d;
-}
-
-.text-blue-200 {
-    color: #bfdbfe;
-}
-
-.text-blue-900 {
-    color: #1e3a8a;
-}
-
-.text-yellow-200 {
-    color: #fef3c7;
-}
-
-.text-yellow-900 {
-    color: #78350f;
-}
-
-.text-red-200 {
-    color: #fecaca;
-}
-
-.text-red-900 {
-    color: #7f1d1d;
-}
-
-.text-gray-300 {
-    color: #d1d5db;
-}
-
-.text-gray-700 {
-    color: #374151;
-}
-
-.bg-green-900 {
-    background-color: #14532d;
-}
-
-.bg-blue-900 {
-    background-color: #1e3a8a;
-}
-
-.bg-yellow-900 {
-    background-color: #78350f;
-}
-
-.bg-red-900 {
-    background-color: #7f1d1d;
-}
-
-.bg-gray-700 {
-    background-color: #374151;
-}
-
-.btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-}
-
-@media (max-width: 768px) {
-    .md\:grid-cols-2 {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-    }
-    
-    .lg\:grid-cols-3 {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-    }
-    
-    .flex {
-        flex-direction: column;
-        gap: 1rem;
-    }
-}
-</style>
 {% endblock %}
