@@ -37,4 +37,5 @@ urlpatterns = [
     path('api/get-device/<int:device_id>/', views.api_get_device, name='api_get_device'),
     path('api/create-session/', views.api_create_session, name='api_create_session'),
     path('api/submit-questionnaire/', views.api_submit_questionnaire, name='api_submit_questionnaire'),
+    path('api/save-vitals/', views.api_save_vitals, name='api_save_vitals'),
 ]

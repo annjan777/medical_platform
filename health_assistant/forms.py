@@ -191,3 +191,33 @@ class ScreeningSessionFilterForm(forms.Form):
             raise forms.ValidationError("Start date cannot be after end date.")
         
         return cleaned_data
+
+from patients.models import Patient, PatientVitals
+
+class VitalsForm(forms.ModelForm):
+    """Form for collecting patient vitals"""
+    
+    class Meta:
+        model = PatientVitals
+        fields = [
+            'weight', 'height', 'blood_pressure_systolic', 
+            'blood_pressure_diastolic', 'heart_rate', 
+            'temperature', 'spo2', 'respiratory_rate'
+        ]
+        widgets = {
+            'weight': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'placeholder': 'Weight (kg)'}),
+            'height': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'placeholder': 'Height (cm)'}),
+            'blood_pressure_systolic': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Systolic (mmHg)'}),
+            'blood_pressure_diastolic': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Diastolic (mmHg)'}),
+            'heart_rate': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Heart Rate (bpm)'}),
+            'temperature': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'placeholder': 'Temp (°C)'}),
+            'spo2': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'SpO2 (%)', 'min': '0', 'max': '100'}),
+            'respiratory_rate': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Resp Rate (breaths/min)'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # For simplicity in this demo flow, all vitals can be optional,
+        # but we can enforce some if needed.
+        for field in self.fields:
+            self.fields[field].required = False

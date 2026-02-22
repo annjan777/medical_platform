@@ -1,54 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Health Assistant Portal{% endblock %} - Medical Data Collection Platform</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
         :root {
             /* Light Medical Platform Theme */
-            --medical-primary: #10b981;  /* Light medical blue */
-            --medical-primary-dark: #0d6efd;  /* Darker shade */
-            --medical-secondary: #6c757d;  /* Light gray */
-            --medical-light: #f8f9fa;  /* Very light blue */
-            --medical-success: #198754;  /* Green */
-            --medical-warning: #ffc107;  /* Yellow */
-            --medical-danger: #dc3545;  /* Red */
+            --medical-primary: #10b981;
+            /* Light medical blue */
+            --medical-primary-dark: #0d6efd;
+            /* Darker shade */
+            --medical-secondary: #6c757d;
+            /* Light gray */
+            --medical-light: #f8f9fa;
+            /* Very light blue */
+            --medical-success: #198754;
+            /* Green */
+            --medical-warning: #ffc107;
+            /* Yellow */
+            --medical-danger: #dc3545;
+            /* Red */
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8fafc;  /* Light background */
+            background-color: #f8fafc;
+            /* Light background */
         }
-        
+
         .navbar-custom {
             background: linear-gradient(135deg, var(--medical-primary) 0%, var(--medical-secondary) 100%);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         .navbar-custom .navbar-brand,
         .navbar-custom .nav-link {
             color: white !important;
         }
-        
+
         .navbar-custom .nav-link:hover {
-            background-color: rgba(255,255,255,0.1);
+            background-color: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
         }
-        
+
         .sidebar {
             background: white;
             min-height: calc(100vh - 56px);
-            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
             padding: 20px 0;
         }
-        
+
         .sidebar .nav-link {
             color: #495057;
             padding: 12px 20px;
@@ -56,36 +65,36 @@
             border-radius: 8px;
             transition: all 0.3s ease;
         }
-        
+
         .sidebar .nav-link:hover {
             background-color: var(--medical-light);
             color: var(--medical-primary);
             transform: translateX(5px);
         }
-        
+
         .sidebar .nav-link.active {
             background-color: var(--medical-primary);
             color: white;
         }
-        
+
         .main-content {
             padding: 15px;
             max-width: 1400px;
             margin: 0 auto;
         }
-        
+
         .card {
             border: none;
             border-radius: 8px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s ease;
         }
-        
+
         .card:hover {
             transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         .card-header {
             background: linear-gradient(135deg, var(--medical-primary) 0%, var(--medical-secondary) 100%);
             color: white;
@@ -93,7 +102,7 @@
             border: none;
             padding: 12px 20px;
         }
-        
+
         .btn-primary {
             background: linear-gradient(135deg, var(--medical-primary) 0%, var(--medical-secondary) 100%);
             border: none;
@@ -101,217 +110,217 @@
             padding: 10px 20px;
             transition: all 0.3s ease;
         }
-        
+
         .btn-primary:hover {
             background: linear-gradient(135deg, var(--medical-primary-dark) 0%, #3b8bc4 100%);
             transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        
+
         .stat-card {
             background: white;
             border-radius: 8px;
             padding: 15px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             border-left: 3px solid var(--medical-primary);
         }
-        
+
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
         }
-        
+
         .stat-number {
             font-size: 1.5rem;
             font-weight: bold;
             color: var(--medical-primary);
         }
-        
+
         .quick-action {
             background: white;
             border-radius: 8px;
             padding: 20px;
             text-align: center;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             cursor: pointer;
             border: 2px solid transparent;
         }
-        
+
         .quick-action:hover {
             border-color: var(--medical-primary);
             transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
-        
+
         .quick-action i {
             font-size: 2.5rem;
             color: var(--medical-primary);
             margin-bottom: 10px;
         }
-        
+
         .activity-item {
             padding: 12px 0;
             border-bottom: 1px solid #e9ecef;
             transition: background-color 0.2s ease;
         }
-        
+
         .activity-item:hover {
             background-color: var(--medical-light);
             margin: 0 -15px;
             padding: 12px 15px;
             border-radius: 8px;
         }
-        
+
         .activity-item:last-child {
             border-bottom: none;
         }
-        
+
         .user-info {
             background: var(--medical-light);
             padding: 15px;
             border-radius: 12px;
             margin-bottom: 20px;
         }
-        
+
         .form-control:focus {
             border-color: var(--medical-primary);
             box-shadow: 0 0 0 0.2rem rgba(44, 122, 123, 0.25);
         }
-        
+
         .table-responsive {
             border-radius: 12px;
             overflow: hidden;
         }
-        
+
         .table thead th {
             background-color: var(--medical-primary);
             color: white;
             border: none;
         }
-        
+
         .alert {
             border: none;
             border-radius: 12px;
             padding: 15px 20px;
         }
-        
+
         .alert-info {
             background-color: var(--medical-light);
             color: var(--medical-primary);
             border-left: 4px solid var(--medical-primary);
         }
-        
+
         .breadcrumb {
             background: transparent;
             padding: 0;
             margin-bottom: 20px;
         }
-        
-        .breadcrumb-item + .breadcrumb-item::before {
+
+        .breadcrumb-item+.breadcrumb-item::before {
             content: ">";
             color: #6c757d;
         }
-        
+
         .navbar-toggler-icon {
             background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28255, 255, 255, 1%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
         }
-        
+
         .navbar-toggler {
             border-color: rgba(255, 255, 255, 0.3);
             padding: 0.25rem 0.5rem;
         }
-        
+
         .navbar-toggler:hover {
             border-color: rgba(255, 255, 255, 0.5);
             background-color: rgba(255, 255, 255, 0.1);
         }
-        
+
         .navbar-toggler:focus {
             box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
         }
-        
+
         @media (max-width: 991.98px) {
             .navbar-custom {
                 padding: 0.5rem 1rem;
             }
-            
+
             .navbar-brand {
                 font-size: 1rem;
             }
-            
+
             .navbar-brand strong {
                 font-size: 0.9rem;
             }
-            
+
             .sidebar {
                 min-height: auto;
                 margin-bottom: 20px;
             }
-            
+
             .main-content {
                 padding: 15px;
             }
-            
+
             .stat-card {
                 margin-bottom: 15px;
             }
-            
+
             .navbar-nav {
                 padding: 1rem 0;
                 background-color: rgba(255, 255, 255, 0.1);
                 border-radius: 8px;
                 margin-top: 0.5rem;
             }
-            
+
             .navbar-nav .nav-link {
                 padding: 0.75rem 1rem;
                 margin: 0.25rem 0;
                 border-radius: 6px;
                 transition: all 0.3s ease;
             }
-            
+
             .navbar-nav .nav-link:hover {
                 background-color: rgba(255, 255, 255, 0.2);
             }
-            
+
             .navbar-nav .dropdown-menu {
                 background-color: var(--medical-primary);
                 border: none;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             }
-            
+
             .navbar-nav .dropdown-item {
                 color: white;
                 padding: 0.5rem 1rem;
             }
-            
+
             .navbar-nav .dropdown-item:hover {
                 background-color: rgba(255, 255, 255, 0.1);
                 color: white;
             }
-            
+
             .navbar-nav .dropdown-divider {
                 border-color: rgba(255, 255, 255, 0.2);
             }
         }
-        
+
         @media (max-width: 576px) {
             .navbar-brand {
                 font-size: 0.9rem;
             }
-            
+
             .navbar-brand strong {
                 font-size: 0.8rem;
             }
-            
+
             .navbar-brand i {
                 font-size: 1rem;
             }
         }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -322,12 +331,12 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <a class="navbar-brand" href="{% url 'health_assistant:home' %}">
                 <i class="fas fa-heartbeat me-2"></i>
                 <strong>Medical Data Collection Platform</strong>
             </a>
-            
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto d-lg-none">
                     <!-- Navigation items only in mobile/tablet view -->
@@ -352,15 +361,17 @@
                         </a>
                     </li>
                 </ul>
-                
+
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user-circle me-1"></i>
                             {{ request.user.get_full_name|default:request.user.email|default:"User" }}
                         </a>
-                        <ul class="dropdown-menu">
-                            <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i
+                                        class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -378,26 +389,31 @@
                     <h6 class="mb-1">{{ request.user.get_full_name|default:request.user.email|default:"User" }}</h6>
                     <small class="text-muted">Health Assistant</small>
                 </div>
-                
+
                 <nav class="nav flex-column">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'health_assistant:home' %}">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
+                        href="{% url 'health_assistant:home' %}">
                         <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                     </a>
-                    <a class="nav-link {% if request.resolver_match.url_name == 'landing' %}active{% endif %}" href="{% url 'health_assistant:landing' %}">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'landing' %}active{% endif %}"
+                        href="{% url 'health_assistant:landing' %}">
                         <i class="fas fa-user-plus me-2"></i>Patient Registration
                     </a>
-                    <a class="nav-link {% if request.resolver_match.url_name == 'patient_list' %}active{% endif %}" href="{% url 'health_assistant:patient_list' %}">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'patient_list' %}active{% endif %}"
+                        href="{% url 'health_assistant:patient_list' %}">
                         <i class="fas fa-users me-2"></i>Patient Management
                     </a>
-                    <a class="nav-link {% if request.resolver_match.url_name == 'questionnaires' %}active{% endif %}" href="{% url 'health_assistant:questionnaires' %}">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'questionnaires' %}active{% endif %}"
+                        href="{% url 'health_assistant:questionnaires' %}">
                         <i class="fas fa-clipboard-list me-2"></i>Questionnaires
                     </a>
-                    <a class="nav-link {% if request.resolver_match.url_name == 'my_sessions' %}active{% endif %}" href="{% url 'health_assistant:my_sessions' %}">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'my_sessions' %}active{% endif %}"
+                        href="{% url 'health_assistant:my_sessions' %}">
                         <i class="fas fa-history me-2"></i>My Sessions
                     </a>
                 </nav>
             </div>
-            
+
             <!-- Main Content Area -->
             <div class="col-md-10 main-content">
                 <!-- Breadcrumb -->
@@ -409,13 +425,13 @@
                     </ol>
                 </nav>
                 {% endblock %}
-                
+
                 <!-- Page Header -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1 class="h3 mb-0">{% block page_title %}Health Assistant Portal{% endblock %}</h1>
                     {% block page_actions %}{% endblock %}
                 </div>
-                
+
                 <!-- Content -->
                 {% block content %}{% endblock %}
             </div>
@@ -426,7 +442,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    
+
     <script>
         // Common functions
         function getCookie(name) {
@@ -443,7 +459,7 @@
             }
             return cookieValue;
         }
-        
+
         function showAlert(message, type = 'info') {
             const alertDiv = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -451,37 +467,38 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             `;
-            
+
             // Add to top of content area
             $('.main-content').prepend(alertDiv);
-            
+
             // Auto-remove after 5 seconds
             setTimeout(() => {
                 $('.alert').fadeOut();
             }, 5000);
         }
-        
+
         function showLoading(element) {
             const originalContent = element.html();
             element.html('<i class="fas fa-spinner fa-spin me-2"></i>Loading...');
             element.prop('disabled', true);
             return originalContent;
         }
-        
+
         function hideLoading(element, originalContent) {
             element.html(originalContent);
             element.prop('disabled', false);
         }
-        
+
         // Initialize tooltips
-        $(document).ready(function() {
+        $(document).ready(function () {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
         });
     </script>
-    
+
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

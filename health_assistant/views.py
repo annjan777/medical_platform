@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 from django.urls import reverse_lazy
 
 from accounts.models import User
-from patients.models import Patient
+from patients.models import Patient, PatientVitals
 from screening.models import ScreeningSession, ScreeningType
 from devices.models import Device
 from questionnaires.models import Questionnaire, Question
-from .forms import PatientRegistrationForm
+from .forms import PatientRegistrationForm, VitalsForm
 
 
 def has_patient_access(user):
@@ -124,25 +124,46 @@ def patient_register(request):
         return redirect('login')
     
     if request.method == 'POST':
+        # Check for phone number duplicates BEFORE validating the form
+        phone_number = request.POST.get('phone_number')
+        if phone_number:
+            # Clean phone number for better matching
+            cleaned_phone = phone_number.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+            existing_patients = Patient.objects.filter(
+                Q(phone_number__icontains=cleaned_phone) | Q(phone_number__icontains=phone_number)
+            )
+            
+            if existing_patients.exists():
+                patient_list = []
+                for p in existing_patients:
+                    patient_list.append({
+                        'id': p.id,
+                        'patient_id': p.patient_id,
+                        'first_name': p.first_name,
+                        'last_name': p.last_name,
+                        'name': f"{p.first_name} {p.last_name}",
+                        'full_name': f"{p.first_name} {p.last_name}",
+                        'age': p.age,
+                        'gender': p.get_gender_display(),
+                        'phone': p.phone_number,
+                        'phone_number': p.phone_number,
+                        'created_at': p.created_at.strftime('%Y-%m-%d %H:%M')
+                    })
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'has_phone_duplicates': True,
+                        'patients': patient_list,
+                        'message': f'Patient with phone number {phone_number} already exists.',
+                        'errors': {'phone_number': 'This phone number is already registered.'}
+                    })
+                else:
+                    messages.error(request, f'Patient with phone number {phone_number} already exists.')
+                    return redirect('health_assistant:landing')
+
         form = PatientRegistrationForm(request.POST)
         if form.is_valid():
-            # Check for phone number duplicates before saving
-            phone_number = form.cleaned_data.get('phone_number')
-            if phone_number:
-                existing_patients = Patient.objects.filter(
-                    phone_number__icontains=phone_number
-                ).exclude(id=form.instance.id if form.instance.id else None)
-                
-                if existing_patients.exists():
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return JsonResponse({
-                            'success': False,
-                            'message': f'Phone number {phone_number} already exists. Please use a different number or select existing patient.',
-                            'errors': {'phone_number': 'This phone number is already registered.'}
-                        })
-                    else:
-                        messages.error(request, f'Phone number {phone_number} already exists. Please use a different number or select existing patient.')
-                        return redirect('health_assistant:landing')
             
             patient = form.save()
             print(f"DEBUG: Patient saved with ID: {patient.id}")
@@ -160,9 +181,13 @@ def patient_register(request):
                         'patient_id': patient.patient_id,
                         'first_name': patient.first_name,
                         'last_name': patient.last_name,
+                        'name': f"{patient.first_name} {patient.last_name}",
+                        'full_name': f"{patient.first_name} {patient.last_name}",
                         'date_of_birth': patient.date_of_birth,
                         'age': patient.age,
-                        'gender': patient.gender
+                        'gender': patient.gender,
+                        'phone': patient.phone_number,
+                        'phone_number': patient.phone_number
                     }
                 }
                 print(f"DEBUG: Response data: {response_data}")
@@ -326,9 +351,12 @@ def api_search_patients(request):
                         'patient_id': patient.patient_id,
                         'first_name': patient.first_name,
                         'last_name': patient.last_name,
+                        'name': f"{patient.first_name} {patient.last_name}",
+                        'full_name': f"{patient.first_name} {patient.last_name}",
                         'age': patient.age if patient.age is not None else 0,
                         'gender': patient.gender,
                         'gender_display': patient.get_gender_display(),
+                        'phone': patient.phone_number,
                         'phone_number': patient.phone_number,
                         'email': patient.email,
                         'city': patient.city,
@@ -378,9 +406,12 @@ def api_search_patients(request):
             'patient_id': patient.patient_id,
             'first_name': patient.first_name,
             'last_name': patient.last_name,
+            'name': f"{patient.first_name} {patient.last_name}",
+            'full_name': f"{patient.first_name} {patient.last_name}",
             'age': patient.age if patient.age is not None else 0,
             'gender': patient.gender,
             'gender_display': patient.get_gender_display(),
+            'phone': patient.phone_number,
             'phone_number': patient.phone_number,
             'email': patient.email,
             'city': patient.city,
@@ -396,8 +427,8 @@ def api_search_patients(request):
             'total_pages': paginator.num_pages,
             'has_previous': page_obj.has_previous(),
             'has_next': page_obj.has_next(),
-            'previous_page': page_obj.previous_page_number if page_obj.has_previous() else None,
-            'next_page': page_obj.next_page_number if page_obj.has_next() else None,
+            'previous_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
+            'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
         }
     })
 
@@ -416,9 +447,12 @@ def api_get_patient(request, patient_id):
                 'patient_id': patient.patient_id,
                 'first_name': patient.first_name,
                 'last_name': patient.last_name,
+                'name': f"{patient.first_name} {patient.last_name}",
+                'full_name': f"{patient.first_name} {patient.last_name}",
                 'age': patient.age,
                 'gender': patient.gender,
                 'gender_display': patient.get_gender_display(),
+                'phone': patient.phone_number,
                 'phone_number': patient.phone_number,
                 'email': patient.email,
                 'city': patient.city,
@@ -757,6 +791,52 @@ def api_submit_questionnaire(request):
             'response_id': response.id
         })
         
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+def api_save_vitals(request):
+    """API endpoint to save patient vitals"""
+    if not has_patient_access(request.user):
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        patient_id = request.POST.get('patient_id')
+        if not patient_id:
+            return JsonResponse({'success': False, 'message': 'Patient ID is required'}, status=400)
+        
+        # Try to get patient
+        try:
+            patient = Patient.objects.get(id=patient_id)
+        except (Patient.DoesNotExist, ValueError):
+            try:
+                patient = Patient.objects.get(patient_id=patient_id)
+            except Patient.DoesNotExist:
+                return JsonResponse({'success': False, 'message': 'Patient not found'}, status=404)
+        
+        form = VitalsForm(request.POST)
+        if form.is_valid():
+            vitals = form.save(commit=False)
+            vitals.patient = patient
+            vitals.recorded_by = request.user
+            vitals.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Vitals saved successfully',
+                'vitals_id': vitals.id
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid data',
+                'errors': form.errors
+            })
+            
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
 

@@ -16,7 +16,7 @@
                     <p class="text-muted mb-0">Register patient and conduct medical data collection questionnaire</p>
                 </div>
                 <div>
-                    <a href="{% url 'health_assistant:dashboard' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'health_assistant:home' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
                     </a>
                 </div>
@@ -34,21 +34,28 @@
                             <div class="step-circle active" id="step1-circle">
                                 <i class="fas fa-user-plus"></i>
                             </div>
-                            <div class="step-label">Patient Registration</div>
+                            <div class="step-label">Registration</div>
                         </div>
                         <div class="step-connector flex-grow-1"></div>
                         <div class="step-indicator me-3">
                             <div class="step-circle" id="step2-circle">
-                                <i class="fas fa-clipboard-list"></i>
+                                <i class="fas fa-heartbeat"></i>
                             </div>
-                            <div class="step-label">Screening Questionnaire</div>
+                            <div class="step-label">Vitals Entry</div>
+                        </div>
+                        <div class="step-connector flex-grow-1"></div>
+                        <div class="step-indicator me-3">
+                            <div class="step-circle" id="step3-circle">
+                                <i class="fas fa-list-check"></i>
+                            </div>
+                            <div class="step-label">Select Questionnaire</div>
                         </div>
                         <div class="step-connector flex-grow-1"></div>
                         <div class="step-indicator">
-                            <div class="step-circle" id="step3-circle">
-                                <i class="fas fa-check"></i>
+                            <div class="step-circle" id="step4-circle">
+                                <i class="fas fa-clipboard-list"></i>
                             </div>
-                            <div class="step-label">Complete</div>
+                            <div class="step-label">Conduct Questionnaire</div>
                         </div>
                     </div>
                 </div>
@@ -204,7 +211,7 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="d-flex justify-content-between">
-                                <a href="{% url 'health_assistant:dashboard' %}" class="btn btn-secondary">
+                                <a href="{% url 'health_assistant:home' %}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left me-2"></i>Cancel
                                 </a>
                                 <button type="submit" class="btn btn-primary" id="registerPatientBtn">
@@ -218,13 +225,125 @@
         </div>
     </div>
 
-    <!-- Step 2: Questionnaire Selection -->
+    <!-- Step 2: Vitals Entry -->
     <div id="step2" class="workflow-step" style="display: none;">
+        <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>
+                    Step 2: Enter Patient Vitals
+                </h5>
+                <span class="badge bg-light text-primary">Patient ID: <span id="vitalsPatientId"></span></span>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light border-primary mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user-circle fa-2x text-primary me-3"></i>
+                        <div>
+                            <h6 class="mb-0" id="vitalsPatientName"></h6>
+                            <small class="text-muted" id="vitalsPatientDetail"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="vitalsForm">
+                    <input type="hidden" name="patient_id" id="vitalsPatientHiddenId">
+                    <div class="row">
+                        <!-- Blood Pressure -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                <i class="fas fa-gauge-high me-2"></i>Blood Pressure
+                            </h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="form-label">Systolic (mmHg)</label>
+                                    <input type="number" name="blood_pressure_systolic" class="form-control"
+                                        placeholder="120">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Diastolic (mmHg)</label>
+                                    <input type="number" name="blood_pressure_diastolic" class="form-control"
+                                        placeholder="80">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Heart & Respiration -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                <i class="fas fa-wave-square me-2"></i>Heart & Respiration
+                            </h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="form-label">Heart Rate (bpm)</label>
+                                    <input type="number" name="heart_rate" class="form-control" placeholder="72">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Resp. Rate</label>
+                                    <input type="number" name="respiratory_rate" class="form-control" placeholder="16">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Body Metrics -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                <i class="fas fa-weight me-2"></i>Body Metrics
+                            </h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="form-label">Weight (kg)</label>
+                                    <input type="number" step="0.1" name="weight" class="form-control"
+                                        placeholder="70.5">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Height (cm)</label>
+                                    <input type="number" step="0.1" name="height" class="form-control"
+                                        placeholder="175">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Temperature & SpO2 -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                <i class="fas fa-thermometer-half me-2"></i>Other Vitals
+                            </h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="form-label">Temp (°C)</label>
+                                    <input type="number" step="0.1" name="temperature" class="form-control"
+                                        placeholder="36.6">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">SpO2 (%)</label>
+                                    <input type="number" name="spo2" class="form-control" placeholder="98" min="0"
+                                        max="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="showStep1()">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Registration
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                            <i class="fas fa-save me-2"></i>Save Vitals & Continue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Questionnaire Selection -->
+    <div id="step3" class="workflow-step" style="display: none;">
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
                     <i class="fas fa-clipboard-list me-2"></i>
-                    Step 2: Select Screening Questionnaire
+                    Step 3: Select Screening Questionnaire
                 </h5>
             </div>
             <div class="card-body">
@@ -260,7 +379,10 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end">
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" onclick="showStep2()">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Vitals
+                    </button>
                     <button type="button" class="btn btn-success" id="startQuestionnaireBtn" disabled>
                         <i class="fas fa-play me-2"></i>Start Questionnaire
                     </button>
@@ -269,13 +391,13 @@
         </div>
     </div>
 
-    <!-- Step 3: Questionnaire -->
-    <div id="step3" class="workflow-step" style="display: none;">
+    <!-- Step 4: Questionnaire Filling -->
+    <div id="step4" class="workflow-step" style="display: none;">
         <div class="card shadow-sm">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
-                    <i class="fas fa-clipboard-list me-2"></i>
-                    <span id="questionnaireTitle">Screening Questionnaire</span>
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    Step 4: <span id="questionnaireTitle">Conduct Questionnaire</span>
                 </h5>
             </div>
             <div class="card-body">
@@ -283,8 +405,11 @@
                     <!-- Questionnaire will be loaded here -->
                 </div>
 
-                <div class="text-center mt-4">
-                    <button type="button" class="btn btn-primary btn-lg" id="submitQuestionnaireBtn">
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-secondary" onclick="showStep3()">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Selection
+                    </button>
+                    <button type="button" class="btn btn-primary btn-lg px-5" id="submitQuestionnaireBtn">
                         <i class="fas fa-check me-2"></i>Submit Questionnaire
                     </button>
                 </div>
@@ -304,21 +429,13 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
-                    </div>
                     <div id="successDetails"></div>
-                    <div class="mt-3">
-                        <h6>What's Next?</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-check text-success me-2"></i>Patient has been registered</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Questionnaire completed</li>
-                            <li><i class="fas fa-check text-success me-2"></i>Data saved successfully</li>
-                        </ul>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-outline-primary" id="viewDashboardBtn">
+                        <i class="fas fa-th-large me-2"></i>Go to Dashboard
+                    </button>
                     <button type="button" class="btn btn-primary" id="newScreeningBtn">
                         <i class="fas fa-plus me-2"></i>Start New Screening
                     </button>
@@ -384,8 +501,10 @@
     }
 
     .step-circle.active {
-        background-color: var(--medical-primary);
+        background-color: #0d6efd;
+        /* Blue for active */
         color: white;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
     }
 
     .step-circle.completed {
@@ -405,6 +524,11 @@
         margin: 25px 0;
         position: relative;
         top: -15px;
+        transition: background-color 0.3s ease;
+    }
+
+    .step-connector.completed {
+        background-color: #28a745;
     }
 
     .workflow-step {
@@ -616,60 +740,6 @@
 
 {% block extra_js %}
 <script>
-    // Common functions
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    function showAlert(message, type = 'info') {
-        const alertDiv = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-
-        // Add to top of content area
-        $('.main-content').prepend(alertDiv);
-
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            $('.alert').fadeOut();
-        }, 5000);
-    }
-
-    function showLoading(element) {
-        const originalContent = element.html();
-        element.html('<i class="fas fa-spinner fa-spin me-2"></i>Loading...');
-        element.prop('disabled', true);
-        return originalContent;
-    }
-
-    function hideLoading(element, originalContent) {
-        element.html(originalContent);
-        element.prop('disabled', false);
-    }
-
-    // Initialize tooltips
-    $(document).ready(function () {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>
-<script>
     let currentPatient = null;
     let selectedQuestionnaire = null;
 
@@ -680,33 +750,48 @@
         const searchInput = document.getElementById('patientSearchInput');
 
         // Patient search
-        searchBtn.addEventListener('click', searchPatients);
-        searchInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                searchPatients();
-            }
-        });
+        if (searchBtn) searchBtn.addEventListener('click', searchPatients);
+
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchPatients();
+                }
+            });
+        }
 
         // Patient registration
-        patientForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            registerPatient();
-        });
+        if (patientForm) {
+            patientForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                registerPatient();
+            });
+        }
 
         // Navigation buttons
-        document.getElementById('startQuestionnaireBtn').addEventListener('click', startQuestionnaire);
-        document.getElementById('submitQuestionnaireBtn').addEventListener('click', submitQuestionnaire);
+        const startBtn = document.getElementById('startQuestionnaireBtn');
+        if (startBtn) startBtn.addEventListener('click', startQuestionnaire);
+
+        const submitBtn = document.getElementById('submitQuestionnaireBtn');
+        if (submitBtn) submitBtn.addEventListener('click', submitQuestionnaire);
 
         // Success modal buttons
-        document.getElementById('newScreeningBtn').addEventListener('click', function () {
-            bootstrap.Modal.getInstance(document.getElementById('successModal')).hide();
-            resetWorkflow();
-        });
+        const dashboardBtn = document.getElementById('viewDashboardBtn');
+        if (dashboardBtn) {
+            dashboardBtn.addEventListener('click', function () {
+                window.location.href = '/health-assistant/';
+            });
+        }
 
-        document.getElementById('viewDashboardBtn').addEventListener('click', function () {
-            window.location.href = '/health-assistant/dashboard/';
-        });
+        // Vitals form
+        const vitalsForm = document.getElementById('vitalsForm');
+        if (vitalsForm) {
+            vitalsForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                saveVitals();
+            });
+        }
     });
 
     function searchPatients() {
@@ -810,29 +895,6 @@
         };
     }
 
-    function selectDuplicatePatient(patientId) {
-        selectedDuplicatePatientId = patientId;
-        const modal = bootstrap.Modal.getInstance(document.getElementById('phoneDuplicateModal'));
-        modal.hide();
-
-        // Get the selected patient's data to populate search input
-        fetch(`/health-assistant/api/get-patient/${patientId}/`, {
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.patient) {
-                    // Populate search input with the selected patient's phone for easy reference
-                    const searchInput = document.getElementById('patientSearchInput');
-                    if (searchInput && data.patient.phone) {
-                        searchInput.value = data.patient.phone;
-                    }
-                    selectExistingPatient(patientId);
-                }
-            });
-    }
 
     function showRegularSearchResults(patients) {
         const resultsDiv = document.getElementById('searchResults');
@@ -943,12 +1005,12 @@
                     currentPatient = data.patient;
                     showStep2();
 
-                    // Show success modal with Patient ID
-                    showSuccessModal();
+                    // Show success modal specifically for registration
+                    showSuccessModal('registration');
 
-                    // Show alert with Patient ID
-                    alert(`Patient Registered Successfully!\n\nPatient ID: ${data.patient.patient_id}\nName: ${data.patient.first_name} ${data.patient.last_name}\nAge: ${data.patient.age}\nGender: ${data.patient.gender}\n\nClick OK to continue to screening.`);
-
+                } else if (data.has_phone_duplicates) {
+                    // Specific handling for phone duplicates
+                    showPhoneDuplicateModal(data.patients, data.message);
                 } else {
                     showAlert(data.message || 'Registration failed. Please try again.', 'danger');
                 }
@@ -974,24 +1036,89 @@
         document.getElementById('step2').style.display = 'block';
         updateProgressIndicator(2);
 
-        // Update patient summary
-        if (currentPatient) {
-            document.getElementById('patientSummary').innerHTML = `
-            <p><strong>Name:</strong> ${currentPatient.name}</p>
-            <p><strong>Age:</strong> ${currentPatient.age}</p>
-            <p><strong>Gender:</strong> ${currentPatient.gender}</p>
-            ${currentPatient.phone ? `<p><strong>Phone:</strong> ${currentPatient.phone}</p>` : ''}
-        `;
-        }
+        // Reset vitals form for the selected patient
+        const form = document.getElementById('vitalsForm');
+        if (form) form.reset();
 
-        // Load questionnaires
-        loadQuestionnaires();
+        // Update patient info in vitals step
+        if (currentPatient) {
+            const firstName = currentPatient.first_name || '';
+            const lastName = currentPatient.last_name || '';
+            const fullName = currentPatient.name || currentPatient.full_name || (firstName + ' ' + lastName).trim() || 'N/A';
+            const patientId = currentPatient.patient_id || currentPatient.id || 'N/A';
+            const age = currentPatient.age || 'N/A';
+            const gender = currentPatient.gender_display || currentPatient.gender || 'N/A';
+
+            document.getElementById('vitalsPatientId').textContent = patientId;
+            document.getElementById('vitalsPatientName').textContent = fullName;
+            document.getElementById('vitalsPatientDetail').textContent = `Age: ${age} | Gender: ${gender}`;
+            document.getElementById('vitalsPatientHiddenId').value = currentPatient.id;
+        }
+    }
+
+    function saveVitals() {
+        const form = document.getElementById('vitalsForm');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalContent = showLoading($(submitBtn));
+
+        const formData = new FormData(form);
+
+        fetch('/health-assistant/api/save-vitals/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Vitals saved successfully', 'success');
+                    showStep3();
+                } else {
+                    showAlert(data.message || 'Error saving vitals', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving vitals:', error);
+                showAlert('An error occurred. Please try again.', 'danger');
+            })
+            .finally(() => {
+                hideLoading($(submitBtn), originalContent);
+            });
     }
 
     function showStep3() {
         hideAllSteps();
         document.getElementById('step3').style.display = 'block';
         updateProgressIndicator(3);
+
+        // Update patient summary in questionnaire step
+        if (currentPatient) {
+            const firstName = currentPatient.first_name || '';
+            const lastName = currentPatient.last_name || '';
+            const fullName = currentPatient.name || currentPatient.full_name || (firstName + ' ' + lastName).trim() || 'N/A';
+            const phone = currentPatient.phone || currentPatient.phone_number || 'N/A';
+            const age = currentPatient.age || 'N/A';
+            const gender = currentPatient.gender_display || currentPatient.gender || 'N/A';
+
+            document.getElementById('patientSummary').innerHTML = `
+                <p class="mb-1"><strong>Name:</strong> ${fullName}</p>
+                <p class="mb-1"><strong>Age:</strong> ${age}</p>
+                <p class="mb-1"><strong>Gender:</strong> ${gender}</p>
+                ${phone !== 'N/A' ? `<p class="mb-0"><strong>Phone:</strong> ${phone}</p>` : ''}
+            `;
+        }
+
+        // Load questionnaires
+        loadQuestionnaires();
+    }
+
+    function showStep4() {
+        hideAllSteps();
+        document.getElementById('step4').style.display = 'block';
+        updateProgressIndicator(4);
     }
 
     function hideAllSteps() {
@@ -1001,12 +1128,22 @@
     }
 
     function updateProgressIndicator(step) {
-        document.querySelectorAll('.step-circle').forEach((circle, index) => {
+        const circles = document.querySelectorAll('.step-circle');
+        const connectors = document.querySelectorAll('.step-connector');
+
+        circles.forEach((circle, index) => {
             circle.classList.remove('active', 'completed');
             if (index < step - 1) {
                 circle.classList.add('completed');
             } else if (index === step - 1) {
                 circle.classList.add('active');
+            }
+        });
+
+        connectors.forEach((connector, index) => {
+            connector.classList.remove('completed');
+            if (index < step - 1) {
+                connector.classList.add('completed');
             }
         });
     }
@@ -1024,7 +1161,7 @@
             .then(data => {
                 if (data.questionnaires && data.questionnaires.length > 0) {
                     listDiv.innerHTML = data.questionnaires.map(q => `
-                <div class="card questionnaire-card mb-2" onclick="selectQuestionnaire(${q.id}, '${q.title.replace(/'/g, "\\'")}', ${q.question_count || 0})">
+                <div class="card questionnaire-card mb-2" onclick="selectQuestionnaire(event, ${q.id}, '${q.title.replace(/'/g, "\\'")}', ${q.question_count || 0})">
                     <div class="card-body">
                         <h6 class="card-title mb-1">${q.title}</h6>
                         <p class="card-text small text-muted">${q.description || 'No description'}</p>
@@ -1050,14 +1187,16 @@
             });
     }
 
-    function selectQuestionnaire(id, title, questionCount) {
+    function selectQuestionnaire(event, id, title, questionCount) {
         selectedQuestionnaire = { id, title, questionCount };
 
         // Update UI
         document.querySelectorAll('.questionnaire-card').forEach(card => {
             card.classList.remove('selected');
         });
-        event.currentTarget.classList.add('selected');
+
+        const card = event.target.closest('.questionnaire-card');
+        if (card) card.classList.add('selected');
 
         // Enable start button
         document.getElementById('startQuestionnaireBtn').disabled = false;
@@ -1069,7 +1208,7 @@
             return;
         }
 
-        showStep3();
+        showStep4();
 
         // Load questionnaire content
         const contentDiv = document.getElementById('questionnaireContent');
@@ -1185,10 +1324,6 @@
     `;
 
         contentDiv.innerHTML = questionnaireHTML;
-
-        console.log('Questionnaire rendered directly on landing page');
-        console.log('Patient ID:', currentPatient.id);
-        console.log('Questionnaire ID:', questionnaire.id);
     }
 
     function renderQuestionField(question) {
@@ -1258,22 +1393,18 @@
             return;
         }
 
-        // Validate that we have a patient
         if (!currentPatient) {
             showAlert('No patient selected. Please register or select a patient first.', 'danger');
             return;
         }
 
-        // Validate required questions
         const requiredQuestions = form.querySelectorAll('[required]');
         const unansweredRequired = [];
 
         requiredQuestions.forEach(question => {
-            // CRITICAL FIX: Skip validation if the question is hidden by branching logic
-            // We check the parent question-container to see if it's display: none
             const container = question.closest('.question-container');
             if (container && window.getComputedStyle(container).display === 'none') {
-                return; // Skip this hidden field!
+                return;
             }
 
             const questionType = question.type;
@@ -1281,19 +1412,15 @@
             let isAnswered = false;
 
             if (questionType === 'radio') {
-                // For radio buttons, check if any option in the group is selected
                 const radioGroup = form.querySelectorAll(`input[name="${questionName}"]:checked`);
                 isAnswered = radioGroup.length > 0;
             } else if (questionType === 'checkbox') {
-                // For checkboxes, check if it's checked
                 isAnswered = question.checked;
             } else {
-                // For text inputs, textareas, selects
                 isAnswered = question.value.trim() !== '';
             }
 
             if (!isAnswered) {
-                // Find the question text to show in error message
                 const questionLabel = form.querySelector(`label[for="${question.id}"]`) ||
                     form.querySelector(`label[for="${questionName}"]`) ||
                     question.closest('.form-group, .question-container, .mb-4')?.querySelector('label, h6, .question-text');
@@ -1307,25 +1434,20 @@
             }
         });
 
-        // If there are unanswered required questions, show error and prevent submission
         if (unansweredRequired.length > 0) {
             showAlert(`Please answer the following required questions: ${unansweredRequired.join(', ')}`, 'warning');
             return;
         }
 
-        // Show loading state
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
 
-        // Create FormData and ensure patient_id is included
         const formData = new FormData(form);
 
-        // Make sure patient_id is in the form data
         if (!formData.has('patient_id')) {
             formData.append('patient_id', currentPatient.patient_id);
         }
 
-        // Submit to our own API endpoint instead of the questionnaire app
         fetch('/health-assistant/api/submit-questionnaire/', {
             method: 'POST',
             body: formData,
@@ -1337,7 +1459,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showSuccessModal();
+                    showSuccessModal('completion');
                 } else {
                     showAlert(data.message || 'Submission failed. Please try again.', 'danger');
                 }
@@ -1352,13 +1474,36 @@
             });
     }
 
-    function showSuccessModal() {
-        const modal = new bootstrap.Modal(document.getElementById('successModal'));
+    function showSuccessModal(mode = 'completion') {
+        const modalElement = document.getElementById('successModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+        // Update modal title based on mode
+        const modalTitle = modalElement.querySelector('.modal-title');
+        if (mode === 'registration') {
+            modalTitle.innerHTML = '<i class="fas fa-check-circle me-2"></i>Registration Successful';
+        } else {
+            modalTitle.innerHTML = '<i class="fas fa-check-circle me-2"></i>Screening Completed';
+        }
+
+        let nextSteps = '';
+        if (mode === 'registration') {
+            nextSteps = `
+                <li><i class="fas fa-check text-success me-2"></i>Patient has been registered</li>
+                <li><i class="fas fa-arrow-right text-primary me-2"></i>Next: Enter patient vitals (Step 2)</li>
+                <li><i class="fas fa-info-circle text-info me-2"></i>Patient ID assigned for records</li>
+            `;
+        } else {
+            nextSteps = `
+                <li><i class="fas fa-check text-success me-2"></i>Patient data verified</li>
+                <li><i class="fas fa-check text-success me-2"></i>Questionnaire completed</li>
+                <li><i class="fas fa-check text-success me-2"></i>Data saved to medical records</li>
+            `;
+        }
 
         $('#successDetails').html(`
         <div class="text-center mb-4">
             <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
-            <h5 class="text-success mb-3">Patient Registered Successfully!</h5>
         </div>
         <div class="patient-info">
             <div class="row mb-3">
@@ -1372,36 +1517,49 @@
             <div class="row">
                 <div class="col-md-6">
                     <strong>Patient ID:</strong> 
-                    <span class="badge bg-primary fs-6">${currentPatient.patient_id || 'N/A'}</span>
+                    <span class="badge bg-primary fs-6">${currentPatient.patient_id || currentPatient.id || 'N/A'}</span>
                 </div>
                 <div class="col-md-6">
                     <strong>Name:</strong> 
-                    ${currentPatient.first_name || ''} ${currentPatient.last_name || ''}
+                    ${currentPatient.name || (currentPatient.first_name + ' ' + currentPatient.last_name) || 'N/A'}
                 </div>
             </div>
-            <div class="row">
+            <div class="row mt-2">
                 <div class="col-md-6">
                     <strong>Age:</strong> 
                     ${currentPatient.age || 'N/A'}
                 </div>
                 <div class="col-md-6">
                     <strong>Gender:</strong> 
-                    ${currentPatient.gender || 'N/A'}
+                    ${currentPatient.gender_display || currentPatient.gender || 'N/A'}
                 </div>
             </div>
         </div>
         <div class="mt-3">
             <h6>What's Next?</h6>
             <ul class="list-unstyled">
-                <li><i class="fas fa-check text-success me-2"></i>Patient has been registered</li>
-                <li><i class="fas fa-check text-success me-2"></i>Patient ID assigned: <strong>${currentPatient.patient_id || 'N/A'}</strong></li>
-                <li><i class="fas fa-check text-success me-2"></i>Questionnaire completed</li>
-                <li><i class="fas fa-check text-success me-2"></i>Data saved successfully</li>
+                ${nextSteps}
             </ul>
         </div>
     `);
 
         modal.show();
+
+        // Update "What's Next" button behavior
+        const continueBtn = document.getElementById('newScreeningBtn');
+        if (mode === 'registration') {
+            continueBtn.innerHTML = '<i class="fas fa-heartbeat me-2"></i>Enter Vitals';
+            continueBtn.onclick = function () {
+                modal.hide();
+                showStep2();
+            };
+        } else {
+            continueBtn.innerHTML = '<i class="fas fa-plus me-2"></i>New Screening';
+            continueBtn.onclick = function () {
+                modal.hide();
+                resetWorkflow();
+            };
+        }
     }
 
 
@@ -1410,11 +1568,27 @@
         currentPatient = null;
         selectedQuestionnaire = null;
 
-        // Reset form
-        document.getElementById('patientRegistrationForm').reset();
+        // Reset forms
+        const patientForm = document.getElementById('patientRegistrationForm');
+        if (patientForm) patientForm.reset();
+
+        const vitalsForm = document.getElementById('vitalsForm');
+        if (vitalsForm) vitalsForm.reset();
+
+        // Clear content
         document.getElementById('searchResults').innerHTML = '';
         document.getElementById('questionnaireList').innerHTML = '';
         document.getElementById('questionnaireContent').innerHTML = '';
+
+        // Reset patient info UI targets
+        document.getElementById('vitalsPatientId').textContent = '-';
+        document.getElementById('vitalsPatientName').textContent = '';
+        document.getElementById('vitalsPatientDetail').textContent = '';
+        document.getElementById('patientSummary').innerHTML = '';
+
+        // Reset search input
+        const searchInput = document.getElementById('patientSearchInput');
+        if (searchInput) searchInput.value = '';
 
         // Reset progress
         updateProgressIndicator(1);

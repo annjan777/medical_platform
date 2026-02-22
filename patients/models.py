@@ -272,3 +272,51 @@ class Document(models.Model):
     
     def is_pdf(self):
         return self.file_extension() == '.pdf'
+
+class PatientVitals(models.Model):
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name='vitals',
+        verbose_name=_('patient')
+    )
+    weight = models.DecimalField(_('weight (kg)'), max_digits=5, decimal_places=2, null=True, blank=True)
+    height = models.DecimalField(_('height (cm)'), max_digits=5, decimal_places=2, null=True, blank=True)
+    
+    blood_pressure_systolic = models.PositiveIntegerField(_('systolic BP (mmHg)'), null=True, blank=True)
+    blood_pressure_diastolic = models.PositiveIntegerField(_('diastolic BP (mmHg)'), null=True, blank=True)
+    
+    heart_rate = models.PositiveIntegerField(_('heart rate (bpm)'), null=True, blank=True)
+    temperature = models.DecimalField(_('temperature (°C)'), max_digits=4, decimal_places=1, null=True, blank=True)
+    spo2 = models.PositiveIntegerField(
+        _('SpO2 (%)'), 
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        null=True, blank=True
+    )
+    respiratory_rate = models.PositiveIntegerField(_('respiratory rate (breaths/min)'), null=True, blank=True)
+    
+    recorded_at = models.DateTimeField(_('recorded at'), auto_now_add=True)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='recorded_vitals',
+        verbose_name=_('recorded by')
+    )
+
+    class Meta:
+        ordering = ['-recorded_at']
+        verbose_name = _('patient vitals')
+        verbose_name_plural = _('patient vitals')
+
+    def __str__(self):
+        return f"Vitals for {self.patient.full_name} at {self.recorded_at.strftime('%Y-%m-%d %H:%M')}"
+
+    @property
+    def bmi(self):
+        """Calculate Body Mass Index (BMI)"""
+        if self.weight and self.height:
+            height_m = self.height / 100
+            return round(float(self.weight) / (float(height_m) ** 2), 2)
+        return None

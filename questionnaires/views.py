@@ -230,11 +230,19 @@ class ResponseDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         return self.request.user.is_staff or self.request.user == self.get_object().respondent
     
     def get_queryset(self):
-        return Response.objects.select_related('questionnaire', 'respondent')
+        return Response.objects.select_related('questionnaire', 'respondent', 'patient')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['answers'] = self.object.answers.select_related('question')
+        # Fetch latest vitals for the patient associated with this response
+        if self.object.patient:
+            from patients.models import PatientVitals
+            context['vitals'] = PatientVitals.objects.filter(
+                patient=self.object.patient
+            ).order_by('-recorded_at').first()
+        else:
+            context['vitals'] = None
         return context
 
 class ResponseDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -446,7 +454,13 @@ def upload_attachment(request):
 
 @login_required
 def download_responses(request):
-    """Download filtered questionnaire responses as CSV."""
+    import openpyxl
+    from openpyxl.styles import Font, Alignment
+    from openpyxl.utils import get_column_letter
+    from patients.models import PatientVitals
+    from collections import defaultdict
+    import io
+
     # Get filter parameters
     questionnaire_id = request.GET.get('questionnaire')
     patient_id = request.GET.get('patient')
@@ -467,56 +481,109 @@ def download_responses(request):
             date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
             responses = responses.filter(started_at__date__gte=date_from_obj)
         except ValueError:
-            pass  # Invalid date format, ignore filter
+            pass
             
     if date_to:
         try:
             date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
             responses = responses.filter(started_at__date__lte=date_to_obj)
         except ValueError:
-            pass  # Invalid date format, ignore filter
+            pass
     
-    # Create CSV content
-    output = io.StringIO()
-    writer = csv.writer(output)
+    # Create Excel workbook
+    wb = openpyxl.Workbook()
+    default_sheet = wb.active
+    wb.remove(default_sheet)
     
-    # Write header
-    header = [
-        'Response ID', 'Patient ID', 'Patient Name', 'Questionnaire', 
-        'Respondent', 'Status', 'Started At'
+    # Group responses by questionnaire
+    questionnaire_responses = defaultdict(list)
+    for response in responses:
+        questionnaire_responses[response.questionnaire].append(response)
+        
+    if not questionnaire_responses:
+        # Empty state
+        ws = wb.create_sheet(title="No Responses")
+        ws.append(["No data available for the given filters."])
+    
+    # Define headers for vitals
+    vitals_headers = [
+        'BP (Systolic/Diastolic)', 'Heart Rate (bpm)', 'Respiratory Rate/min', 
+        'Temperature (°C)', 'SpO2 (%)', 'Weight (kg)', 'Height (cm)', 'BMI'
     ]
     
-    # Add question columns
-    if responses.exists():
-        first_response = responses.first()
-        questions = first_response.questionnaire.questions.all().order_by('order')
-        for question in questions:
-            header.append(f'Q{question.order}: {question.question_text[:50]}...')
-    
-    writer.writerow(header)
-    
-    # Write data rows
-    for response in responses:
-        row = [
-            response.id,
-            response.patient.patient_id if response.patient else '',
-            f"{response.patient.first_name} {response.patient.last_name}" if response.patient else '',
-            response.questionnaire.title,
-            response.respondent.get_full_name() if response.respondent else '',
-            'Complete' if response.is_complete else 'In Progress',
-            response.started_at.strftime('%Y-%m-%d %H:%M:%S') if response.started_at else ''
+    for questionnaire, q_responses in questionnaire_responses.items():
+        # Excel sheet names have a 31-char limit and don't allow some special chars
+        safe_title = "".join([c if c.isalnum() else " " for c in questionnaire.title])[:31].strip()
+        if not safe_title:
+            safe_title = f"Questionnaire_{questionnaire.id}"
+            
+        sheet_name = safe_title
+        counter = 1
+        while sheet_name in wb.sheetnames:
+            suffix = f"_{counter}"
+            avail_len = 31 - len(suffix)
+            sheet_name = safe_title[:avail_len] + suffix
+            counter += 1
+            
+        ws = wb.create_sheet(title=sheet_name)
+        
+        # Write header
+        header = [
+            'Response ID', 'Patient ID', 'Patient Name', 'Questionnaire', 
+            'Respondent', 'Status', 'Started At'
         ]
         
-        # Add answer columns
-        if responses.exists():
+        header.extend(vitals_headers)
+        
+        questions = questionnaire.questions.all().order_by('order')
+        for question in questions:
+            header.append(f'Q{question.get_display_number()}: {question.question_text[:50]}...')
+            
+        ws.append(header)
+        
+        # Style header
+        for cell in ws[1]:
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+        
+        # Write data rows
+        for response in q_responses:
+            vitals = None
+            if response.patient:
+                vitals = PatientVitals.objects.filter(patient=response.patient).order_by('-recorded_at').first()
+            
+            row = [
+                response.id,
+                response.patient.patient_id if response.patient else '',
+                f"{response.patient.first_name} {response.patient.last_name}" if response.patient else '',
+                response.questionnaire.title,
+                response.respondent.get_full_name() if response.respondent else '',
+                'Complete' if response.is_complete else 'In Progress',
+                response.started_at.strftime('%Y-%m-%d %H:%M:%S') if response.started_at else ''
+            ]
+            
+            if vitals:
+                bp = f"{vitals.blood_pressure_systolic or '-'}/{vitals.blood_pressure_diastolic or '-'}" if (vitals.blood_pressure_systolic or vitals.blood_pressure_diastolic) else "-"
+                row.extend([
+                    bp,
+                    vitals.heart_rate or '-',
+                    vitals.respiratory_rate or '-',
+                    vitals.temperature or '-',
+                    vitals.spo2 or '-',
+                    vitals.weight or '-',
+                    vitals.height or '-',
+                    vitals.bmi or '-'
+                ])
+            else:
+                row.extend(['-'] * len(vitals_headers))
+            
             answers_dict = {answer.question_id: answer for answer in response.answers.all()}
             for question in questions:
                 answer = answers_dict.get(question.id)
                 if answer:
                     if answer.file_answer:
-                        # Create downloadable link for file
                         file_url = request.build_absolute_uri(answer.file_answer.url)
-                        row.append(f"=HYPERLINK(\"{file_url}\",\"{answer.file_answer.name}\")")
+                        row.append(f'=HYPERLINK("{file_url}", "{answer.file_answer.name}")')
                     elif answer.option_answer.exists():
                         options = ', '.join([opt.text for opt in answer.option_answer.all()])
                         row.append(options)
@@ -524,12 +591,27 @@ def download_responses(request):
                         row.append(answer.text_answer or '')
                 else:
                     row.append('')
-        
-        writer.writerow(row)
+                    
+            ws.append(row)
+            
+        # Adjust column widths
+        for col_idx, column_cells in enumerate(ws.iter_cols(min_row=1, max_row=ws.max_row), 1):
+            if col_idx > len(header):
+                break
+            length = max((len(str(cell.value) if cell.value is not None else "")) for cell in column_cells)
+            ws.column_dimensions[get_column_letter(col_idx)].width = min(length + 2, 50)
+            
+    # Output file
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
     
-    # Create HTTP response
-    response = HttpResponse(output.getvalue(), content_type='text/csv')
-    filename = f"questionnaire_responses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    # Return Excel response
+    response = HttpResponse(
+        output.read(), 
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f"questionnaire_responses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     return response
