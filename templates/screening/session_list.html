@@ -24,15 +24,15 @@
                     <div>
                         <select name="status" class="form-select">
                             <option value="">All Status</option>
-                            <option value="scheduled" {% if request.GET.status=='scheduled' %}selected{% endif %}>
+                            <option value="scheduled" {% if request.GET.status == 'scheduled' %}selected{% endif %}>
                                 Scheduled</option>
-                            <option value="in_progress" {% if request.GET.status=='in_progress' %}selected{% endif %}>In
+                            <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In
                                 Progress</option>
-                            <option value="completed" {% if request.GET.status=='completed' %}selected{% endif %}>
+                            <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>
                                 Completed</option>
-                            <option value="cancelled" {% if request.GET.status=='cancelled' %}selected{% endif %}>
+                            <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>
                                 Cancelled</option>
-                            <option value="rescheduled" {% if request.GET.status=='rescheduled' %}selected{% endif %}>
+                            <option value="rescheduled" {% if request.GET.status == 'rescheduled' %}selected{% endif %}>
                                 Rescheduled</option>
                         </select>
                     </div>
@@ -40,7 +40,7 @@
                         <select name="screening_type" class="form-select">
                             <option value="">All Types</option>
                             {% for type in screening_types %}
-                            <option value="{{ type.id }}" {% if request.GET.screening_type==type.id|stringformat:"s"
+                            <option value="{{ type.id }}" {% if request.GET.screening_type == type.id|stringformat:"s"
                                 %}selected{% endif %}>{{ type.name }}</option>
                             {% endfor %}
                         </select>
