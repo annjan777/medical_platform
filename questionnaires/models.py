@@ -178,8 +178,11 @@ class Question(models.Model):
         based on the root order and the trigger path down the tree.
         """
         if not self.parent:
-            # Root questions use their direct 'order' (assuming order is 1-indexed here, or adjust dynamically in view)
-            return str(self.order)
+            siblings = list(self.questionnaire.questions.filter(parent__isnull=True).order_by('order', 'id'))
+            try:
+                return str(siblings.index(self) + 1)
+            except ValueError:
+                return str(len(siblings) + 1)
             
         parent_number = self.parent.get_display_number()
         
@@ -193,6 +196,20 @@ class Question(models.Model):
         
         return f"{parent_number}.{suffix}"
         
+    @property
+    def children_json(self):
+        import json
+        children = []
+        for child in self.follow_ups.all().order_by('order', 'id'):
+            children.append({
+                'id': child.id,
+                'trigger': child.trigger_answer,
+                'text': child.question_text,
+                'type': child.question_type,
+                'required': child.is_required
+            })
+        return json.dumps(children)
+
     def get_all_descendants(self):
         """Recursively get all children questions (and their children) for this question."""
         descendants = []

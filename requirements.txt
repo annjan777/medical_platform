@@ -56,7 +56,7 @@ django-crispy-forms==2.0
 crispy-bootstrap5==0.7
 
 # Validation
-django-validators==4.0.0
+django-validators
 
 # Utilities
 django-filter==23.2

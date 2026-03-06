@@ -122,8 +122,30 @@ class QuestionCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         )
         form.instance.order = (last_question.order + 1) if last_question else 1
         
+        response = super().form_valid(form)
+        question = self.object
+        
+        # Process followups
+        followups_data = self.request.POST.get('followups_data')
+        if followups_data and form.instance.question_type == 'yes_no':
+            import json
+            try:
+                followups = json.loads(followups_data)
+                for index, fu in enumerate(followups):
+                    Question.objects.create(
+                        questionnaire=question.questionnaire,
+                        parent=question,
+                        trigger_answer=fu['trigger'],
+                        question_text=fu['text'],
+                        question_type=fu['type'],
+                        is_required=fu['required'],
+                        order=question.order + index + 1
+                    )
+            except Exception as e:
+                print("Error parsing followups:", e)
+                
         messages.success(self.request, 'Question added successfully.')
-        return super().form_valid(form)
+        return response
     
     def get_success_url(self):
         return reverse_lazy('questionnaires:detail', 
@@ -143,8 +165,49 @@ class QuestionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return context
     
     def form_valid(self, form):
+        response = super().form_valid(form)
+        question = self.object
+        
+        followups_data = self.request.POST.get('followups_data')
+        if followups_data and question.question_type == 'yes_no':
+            import json
+            try:
+                followups = json.loads(followups_data)
+                processed_ids = []
+                for index, fu in enumerate(followups):
+                    fu_id = fu.get('id')
+                    if fu_id:
+                        try:
+                            child = Question.objects.get(id=fu_id, parent=question)
+                            child.question_text = fu['text']
+                            child.question_type = fu['type']
+                            child.is_required = fu['required']
+                            child.trigger_answer = fu['trigger']
+                            child.order = question.order + index + 1
+                            child.save()
+                            processed_ids.append(child.id)
+                        except Question.DoesNotExist:
+                            pass
+                    else:
+                        child = Question.objects.create(
+                            questionnaire=question.questionnaire,
+                            parent=question,
+                            trigger_answer=fu['trigger'],
+                            question_text=fu['text'],
+                            question_type=fu['type'],
+                            is_required=fu['required'],
+                            order=question.order + index + 1
+                        )
+                        processed_ids.append(child.id)
+                
+                question.follow_ups.exclude(id__in=processed_ids).delete()
+            except Exception as e:
+                print("Error parsing followups:", e)
+        elif question.question_type != 'yes_no':
+            question.follow_ups.all().delete()
+            
         messages.success(self.request, 'Question updated successfully.')
-        return super().form_valid(form)
+        return response
     
     def get_success_url(self):
         return reverse_lazy('questionnaires:detail', 

@@ -244,30 +244,19 @@
     function updateQuestionNumbers() {
         const buildNumbers = (container, prefix) => {
             let count = 1;
-            // Immediate children only
             Array.from(container.children).forEach(item => {
                 if (!item.classList.contains('question-item')) return;
+
                 const num = prefix ? `${prefix}.${count}` : `${count}`;
                 item.querySelector('.question-number').textContent = num;
 
                 // Recurse into followups
                 const followupsContainer = item.querySelector('.followups-container');
-                if (followupsContainer) {
-                    let childCount = 1;
-                    Array.from(followupsContainer.children).forEach(followup => {
-                        if (!followup.classList.contains('question-item')) return;
-
-                        const newNum = num + '.' + childCount;
-                        followup.querySelector('.question-number').textContent = newNum;
-
-                        // Recursive call for deeper nesting
-                        const nestedFollowups = followup.querySelector('.followups-container');
-                        if (nestedFollowups) buildNumbers(nestedFollowups, newNum);
-
-                        childCount++;
-                    });
+                if (followupsContainer && followupsContainer.children.length > 0) {
+                    buildNumbers(followupsContainer, num);
                 }
-                if (!prefix) count++;
+
+                count++;
             });
         };
         buildNumbers(document.getElementById('questionsContainer'), '');

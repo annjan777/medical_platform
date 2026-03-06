@@ -7,23 +7,143 @@
   <div class="card-header">
     <h2 style="margin:0; color: #000000;">{% if object %}Edit Question{% else %}Add Question{% endif %}</h2>
     {% if questionnaire %}
-      <div style="margin-top:6px;color:#666;">For: {{ questionnaire.title }}</div>
+    <div style="margin-top:6px;color:#666;">For: {{ questionnaire.title }}</div>
     {% endif %}
   </div>
   <div class="card-body">
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" id="mainQuestionForm" onsubmit="prepareSubmit()">
       {% csrf_token %}
       {{ form.as_p }}
-      <div style="margin-top:12px;">
+
+      <!-- Custom Follow up section injected by JS -->
+      <div id="followUpsSection"
+        style="display: none; margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+        <h4 style="margin-top:0; margin-bottom: 15px; font-size: 1.1rem; color: #333;">Follow-up Questions (Optional)
+        </h4>
+
+        <div id="followUpsContainer"></div>
+
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+          <button type="button" class="btn btn-sm btn-outline-success" onclick="addFollowUpRow('yes')">
+            <i class="fas fa-plus"></i> Add YES Follow-up
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="addFollowUpRow('no')">
+            <i class="fas fa-plus"></i> Add NO Follow-up
+          </button>
+        </div>
+      </div>
+
+      <input type="hidden" name="followups_data" id="followups_data" value="[]">
+
+      <div style="margin-top:20px;">
         <button class="btn btn-primary" type="submit">Save</button>
         {% if questionnaire %}
-          <a class="btn btn-secondary" href="{% url 'questionnaires:detail' questionnaire.pk %}">Cancel</a>
+        <a class="btn btn-secondary" href="{% url 'questionnaires:detail' questionnaire.pk %}">Cancel</a>
         {% else %}
-          <a class="btn btn-secondary" href="{% url 'questionnaires:list' %}">Cancel</a>
+        <a class="btn btn-secondary" href="{% url 'questionnaires:list' %}">Cancel</a>
         {% endif %}
       </div>
     </form>
   </div>
 </div>
-{% endblock %}
 
+<script>
+  const typeSelect = document.getElementById('id_question_type');
+  const followUpsSection = document.getElementById('followUpsSection');
+  const container = document.getElementById('followUpsContainer');
+  const dataInput = document.getElementById('followups_data');
+
+  let followUps = [];
+
+  {% if object %}
+  followUps = {{ object.children_json | safe }};
+  {% endif %}
+
+  function renderFollowUps() {
+    container.innerHTML = '';
+    followUps.forEach((fu, index) => {
+      const div = document.createElement('div');
+      const isYes = fu.trigger === 'yes';
+      div.className = "card mb-3 shadow-none";
+      div.style.border = "1px solid #e5e7eb";
+      div.style.borderLeft = isYes ? '4px solid #10b981' : '4px solid #ef4444';
+      div.style.backgroundColor = '#f9fafb';
+
+      div.innerHTML = `
+      <div class="card-body" style="padding: 15px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+            <span style="font-size: 11px; font-weight: 700; background-color: ${isYes ? '#d1fae5' : '#fee2e2'}; color: ${isYes ? '#065f46' : '#991b1b'}; padding: 4px 10px; border-radius: 4px; text-transform: uppercase;">
+              If ${fu.trigger}
+            </span>
+            <button type="button" class="btn btn-sm btn-outline-danger" style="padding: 2px 8px; font-size: 12px;" onclick="removeFollowUp(${index})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+          <div style="margin-bottom: 12px;">
+              <label class="form-label text-muted" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">Question Text *</label>
+              <textarea class="form-control form-control-sm" rows="2" placeholder="Enter follow-up question" onchange="updateFu(${index}, 'text', this.value)" required>${fu.text}</textarea>
+          </div>
+          <div style="display:flex; gap: 15px; align-items: flex-end;">
+            <div style="flex-grow: 1;">
+                <label class="form-label text-muted" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;">Question Type *</label>
+                <select class="form-select form-select-sm" onchange="updateFu(${index}, 'type', this.value)">
+                  <option value="yes_no" ${fu.type === 'yes_no' ? 'selected' : ''}>Yes/No</option>
+                  <option value="true_false" ${fu.type === 'true_false' ? 'selected' : ''}>True/False</option>
+                  <option value="multiple_choice" ${fu.type === 'multiple_choice' ? 'selected' : ''}>Multiple Choice</option>
+                  <option value="short_answer" ${fu.type === 'short_answer' ? 'selected' : ''}>Short Answer</option>
+                </select>
+            </div>
+            <div style="padding-bottom: 6px;">
+                <label style="display:flex; align-items:center; cursor: pointer; margin: 0;">
+                  <input type="checkbox" class="form-check-input mt-0" ${fu.required ? 'checked' : ''} onchange="updateFu(${index}, 'required', this.checked)"> 
+                  <span style="margin-left:6px; font-size: 0.85rem; font-weight: 500; color: #4b5563;">Required</span>
+                </label>
+            </div>
+          </div>
+      </div>
+    `;
+      container.appendChild(div);
+    });
+  }
+
+  function addFollowUpRow(trigger) {
+    followUps.push({
+      id: null,
+      trigger: trigger,
+      text: '',
+      type: 'short_answer',
+      required: true
+    });
+    renderFollowUps();
+  }
+
+  function updateFu(index, key, value) {
+    followUps[index][key] = value;
+  }
+
+  function removeFollowUp(index) {
+    followUps.splice(index, 1);
+    renderFollowUps();
+  }
+
+  function toggleSection() {
+    if (typeSelect && typeSelect.value === 'yes_no') {
+      followUpsSection.style.display = 'block';
+    } else {
+      followUpsSection.style.display = 'none';
+    }
+  }
+
+  function prepareSubmit() {
+    dataInput.value = JSON.stringify(followUps);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeSelect) {
+      typeSelect.addEventListener('change', toggleSection);
+      toggleSection();
+    }
+    renderFollowUps();
+  });
+</script>
+{% endblock %}

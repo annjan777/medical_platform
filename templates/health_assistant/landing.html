@@ -426,13 +426,14 @@
                         <i class="fas fa-check-circle me-2"></i>
                         Screening Completed Successfully!
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white"
+                        onclick="handleSuccessModalClose()"></button>
                 </div>
                 <div class="modal-body">
                     <div id="successDetails"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" onclick="handleSuccessModalClose()">Close</button>
                     <button type="button" class="btn btn-outline-primary" id="viewDashboardBtn">
                         <i class="fas fa-th-large me-2"></i>Go to Dashboard
                     </button>
@@ -1474,7 +1475,10 @@
             });
     }
 
+    let currentSuccessMode = 'completion';
+
     function showSuccessModal(mode = 'completion') {
+        currentSuccessMode = mode;
         const modalElement = document.getElementById('successModal');
         const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
 
@@ -1547,19 +1551,37 @@
 
         // Update "What's Next" button behavior
         const continueBtn = document.getElementById('newScreeningBtn');
+
+        // Cleanup old listener if exists
+        $(modalElement).off('hidden.bs.modal.successRedirect');
+
+        // Setup listener for closing via ESC or backdrop
+        $(modalElement).on('hidden.bs.modal.successRedirect', function () {
+            if (currentSuccessMode === 'completion') {
+                window.location.href = '/health-assistant/landing/';
+            }
+        });
+
         if (mode === 'registration') {
             continueBtn.innerHTML = '<i class="fas fa-heartbeat me-2"></i>Enter Vitals';
             continueBtn.onclick = function () {
+                currentSuccessMode = 'handled'; // prevent the hidden event from redirecting
                 modal.hide();
                 showStep2();
             };
         } else {
             continueBtn.innerHTML = '<i class="fas fa-plus me-2"></i>New Screening';
             continueBtn.onclick = function () {
+                // we want it to redirect anyway if it's completion
                 modal.hide();
-                resetWorkflow();
             };
         }
+    }
+
+    function handleSuccessModalClose() {
+        const modalElement = document.getElementById('successModal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) modal.hide();
     }
 
 
