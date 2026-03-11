@@ -67,9 +67,9 @@
                             <label for="genderFilter" class="form-label">Gender</label>
                             <select class="form-select" id="genderFilter">
                                 <option value="">All Genders</option>
-                                <option value="M" {% if request.GET.gender=='M' %}selected{% endif %}>Male</option>
-                                <option value="F" {% if request.GET.gender=='F' %}selected{% endif %}>Female</option>
-                                <option value="O" {% if request.GET.gender=='O' %}selected{% endif %}>Other</option>
+                                <option value="M" {% if request.GET.gender == 'M' %}selected{% endif %}>Male</option>
+                                <option value="F" {% if request.GET.gender == 'F' %}selected{% endif %}>Female</option>
+                                <option value="O" {% if request.GET.gender == 'O' %}selected{% endif %}>Other</option>
                             </select>
                         </div>
                         <div class="col-md-2">
