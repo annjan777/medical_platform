@@ -74,14 +74,19 @@
             <tr>
               <td>
                 {% if response.patient %}
-                <span class="badge bg-primary">{{ response.patient.patient_id }}</span>
+                <a href="{% url 'questionnaires:response_detail' response.pk %}" class="text-decoration-none">
+                  <span class="badge bg-primary">{{ response.patient.patient_id }}</span>
+                </a>
                 {% else %}
                 <span class="text-muted">No Patient</span>
                 {% endif %}
               </td>
               <td>
                 {% if response.patient %}
-                {{ response.patient.first_name }} {{ response.patient.last_name }}
+                <a href="{% url 'questionnaires:response_detail' response.pk %}"
+                  class="text-decoration-none text-dark fw-medium">
+                  {{ response.patient.first_name }} {{ response.patient.last_name }}
+                </a>
                 {% else %}
                 <span class="text-muted">-</span>
                 {% endif %}
@@ -133,9 +138,6 @@
                 <div class="btn-group btn-group-sm">
                   <a href="{% url 'questionnaires:response_detail' response.pk %}" class="btn btn-outline-primary">
                     <i class="fas fa-eye"></i> View
-                  </a>
-                  <a href="{% url 'questionnaires:response_edit' response.pk %}" class="btn btn-outline-secondary">
-                    <i class="fas fa-edit"></i> Edit
                   </a>
                 </div>
               </td>

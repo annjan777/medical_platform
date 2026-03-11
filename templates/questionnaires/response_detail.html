@@ -14,10 +14,6 @@
         class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 flex items-center transition">
         <i class="fas fa-arrow-left mr-2"></i> Back to List
       </a>
-      <a href="{% url 'questionnaires:response_edit' response.pk %}"
-        class="px-4 py-2 rounded-lg text-white bg-teal-600 hover:bg-teal-700 flex items-center transition">
-        <i class="fas fa-edit mr-2"></i> Edit
-      </a>
       <a href="{% url 'questionnaires:response_delete' response.pk %}"
         class="px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 flex items-center transition">
         <i class="fas fa-trash mr-2"></i> Delete
@@ -362,16 +358,21 @@
                   {% elif answer.option_answer.exists %}
                   <div class="flex flex-wrap gap-1">
                     {% for option in answer.option_answer.all %}
-                      {% if option.option_image %}
-                      <div class="mb-2 flex flex-col items-center">
-                          <img src="{{ option.option_image.url }}" alt="Option Image" class="img-thumbnail rounded shadow-sm mb-1" style="max-height: 100px;">
-                          {% if option.text %}
-                          <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700 border border-blue-100">{{ option.text }}</span>
-                          {% endif %}
-                      </div>
-                      {% else %}
-                      <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700 border border-blue-100">{{ option.text }}</span>
+                    {% if option.option_image %}
+                    <div class="mb-2 flex flex-col items-center">
+                      <img src="{{ option.option_image.url }}" alt="Option Image"
+                        class="img-thumbnail rounded shadow-sm mb-1" style="max-height: 100px;">
+                      {% if option.text %}
+                      <span
+                        class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700 border border-blue-100">{{
+                        option.text }}</span>
                       {% endif %}
+                    </div>
+                    {% else %}
+                    <span
+                      class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700 border border-blue-100">{{
+                      option.text }}</span>
+                    {% endif %}
                     {% endfor %}
                   </div>
                   {% else %}

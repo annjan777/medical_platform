@@ -3,6 +3,36 @@
 {% block page_title %}Patients{% endblock %}
 
 {% block admin_content %}
+<style>
+  /* Pure CSS instant tooltips */
+  .has-tooltip {
+    position: relative;
+  }
+
+  .has-tooltip .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    background-color: #1f2937;
+    color: #fff;
+    text-align: center;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    pointer-events: none;
+    transition: opacity 0.1s ease;
+  }
+
+  .has-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
+</style>
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
     <h2 style="margin:0;">Patients
@@ -288,23 +318,15 @@
             </td>
             <td>
               <div class="btn-group btn-group-sm">
-                <a href="{% url 'patients:update' patient.patient_id %}"
-                  class="btn btn-outline-secondary position-relative group" aria-label="Edit Patient">
+                <a href="{% url 'patients:update' patient.patient_id %}" class="btn btn-outline-secondary has-tooltip"
+                  aria-label="Edit Patient">
                   <i class="fas fa-edit"></i>
-                  <!-- Instant CSS Tooltip -->
-                  <span
-                    class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity duration-200 z-50">
-                    Edit Patient
-                  </span>
+                  <span class="tooltip-text">Edit Patient</span>
                 </a>
-                <a href="{% url 'patients:dashboard' patient.patient_id %}"
-                  class="btn btn-outline-info position-relative group" aria-label="Patient Dashboard">
+                <a href="{% url 'patients:dashboard' patient.patient_id %}" class="btn btn-outline-info has-tooltip"
+                  aria-label="Patient Dashboard">
                   <i class="fas fa-chart-line"></i>
-                  <!-- Instant CSS Tooltip -->
-                  <span
-                    class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity duration-200 z-50">
-                    Patient Dashboard
-                  </span>
+                  <span class="tooltip-text">Patient Dashboard</span>
                 </a>
               </div>
             </td>
