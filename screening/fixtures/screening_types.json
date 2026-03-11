@@ -1,0 +1,19 @@
+[
+{
+  "model": "screening.screeningtype",
+  "pk": 1,
+  "fields": {
+    "name": "General Health Screening",
+    "code": "general-health",
+    "description": "Standard general health screening using connected devices",
+    "is_active": true,
+    "requires_doctor_review": false,
+    "recommended_frequency": 30,
+    "pre_screening_questionnaire": null,
+    "post_screening_questionnaire": null,
+    "supported_device_types": [],
+    "created_at": "2026-03-11T21:30:02.126Z",
+    "updated_at": "2026-03-11T21:30:02.126Z"
+  }
+}
+]

@@ -1,0 +1,17 @@
+[Unit]
+Description=Medical Platform Django Server
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/medical_platform
+EnvironmentFile=/home/ubuntu/medical_platform/.env
+ExecStart=/home/ubuntu/medical_platform/venv/bin/gunicorn \
+    --workers 3 \
+    --bind 0.0.0.0:8000 \
+    config.wsgi:application
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -174,6 +174,31 @@
     let selectedPatient = null;
     let selectedProduct = null;
     let selectedDevice = null;
+    let deviceStatusPoller = null;  // background poller handle
+
+    /** Start polling device statuses every 2s — auto-updates cards as MQTT replies arrive */
+    function startDevicePoller() {
+        if (deviceStatusPoller) return;  // already running
+        deviceStatusPoller = setInterval(async () => {
+            // Only poll while device section is visible and no device selected yet
+            const section = document.getElementById('deviceSelection');
+            if (!section || section.style.display === 'none' || selectedDevice) {
+                stopDevicePoller();
+                return;
+            }
+            try {
+                const data = await makeAjaxRequest('/health-assistant/api/get-devices/');
+                updateDeviceCards(data.devices || []);
+            } catch (e) { /* silent */ }
+        }, 2000);
+    }
+
+    function stopDevicePoller() {
+        if (deviceStatusPoller) {
+            clearInterval(deviceStatusPoller);
+            deviceStatusPoller = null;
+        }
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         // Patient search
@@ -302,6 +327,7 @@
 
     function showDeviceSelection() {
         document.getElementById('deviceSelection').style.display = 'block';
+        startDevicePoller();  // begin auto-refresh as MQTT replies arrive
     }
 
     function loadDevices() {
@@ -339,33 +365,72 @@
     async function refreshDeviceStatus() {
         const btn = event.currentTarget;
         const originalContent = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Pinging Devices...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Pinging...';
         btn.disabled = true;
 
-        try {
-            // Get all visible device IDs from the current cards
-            const deviceIds = Array.from(document.querySelectorAll('[data-device-id]'))
-                .map(el => el.dataset.deviceId);
+        // Step 1: Mark all devices disconnected immediately in DB + UI
+        markAllCardsDisconnected();
+        await makeAjaxRequest('/health-assistant/api/reset-devices/', 'POST');
 
-            // Send ping for each device
-            await Promise.all(deviceIds.map(id =>
-                makeAjaxRequest(`/iot/ping-device/${id}/`, 'POST')
-            ));
+        // Step 2: Get all visible device IDs and send a ping to each
+        const deviceIds = Array.from(document.querySelectorAll('[data-device-id]'))
+            .map(el => el.dataset.deviceId);
 
-            // Wait 2 seconds for devices to reply via MQTT
-            setTimeout(() => {
-                loadDevices();
+        await Promise.all(deviceIds.map(id =>
+            makeAjaxRequest(`/iot/ping-device/${id}/`, 'POST').catch(() => { })
+        ));
+
+        // Step 3: Poll the API for up to 5 seconds to catch any device that replied
+        let elapsed = 0;
+        const pollInterval = 1000; // 1 second
+        const maxWait = 5000;      // 5 seconds max
+
+        const poller = setInterval(async () => {
+            elapsed += pollInterval;
+            try {
+                const data = await makeAjaxRequest('/health-assistant/api/get-devices/');
+                updateDeviceCards(data.devices || []);
+            } catch (e) { /* ignore */ }
+
+            if (elapsed >= maxWait) {
+                clearInterval(poller);
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
-                showAlert('Device status updated.', 'success');
-            }, 2000);
+            }
+        }, pollInterval);
+    }
 
-        } catch (error) {
-            console.error('Refresh Error:', error);
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
-            showAlert('Failed to refresh device status.', 'danger');
-        }
+    /** Visually mark every device card as Disconnected */
+    function markAllCardsDisconnected() {
+        document.querySelectorAll('[data-device-id]').forEach(card => {
+            const badge = card.querySelector('.badge');
+            const icon = card.querySelector('.fas.fa-microchip');
+            if (badge) { badge.className = 'badge bg-danger'; badge.textContent = 'Disconnected'; }
+            if (icon) { icon.className = 'fas fa-microchip fa-3x text-danger mb-3'; }
+            card.classList.add('opacity-50');
+            card.setAttribute('onclick', '');  // disable selection while disconnected
+        });
+    }
+
+    /** Update device cards based on fresh API data without a full reload */
+    function updateDeviceCards(devices) {
+        devices.forEach(device => {
+            const card = document.querySelector(`[data-device-id="${device.id}"]`);
+            if (!card) return;
+            const badge = card.querySelector('.badge');
+            const icon = card.querySelector('.fas.fa-microchip');
+            if (device.is_connected) {
+                if (badge) { badge.className = 'badge bg-success'; badge.textContent = 'Connected'; }
+                if (icon) { icon.className = 'fas fa-microchip fa-3x text-success mb-3'; }
+                card.classList.remove('opacity-50');
+                card.setAttribute('onclick', `selectDevice(${device.id})`);
+            } else {
+                if (badge) { badge.className = 'badge bg-danger'; badge.textContent = 'Disconnected'; }
+                if (icon) { icon.className = 'fas fa-microchip fa-3x text-danger mb-3'; }
+                card.classList.add('opacity-50');
+                card.setAttribute('onclick', '');
+            }
+        });
     }
 
     function selectDevice(deviceId) {
@@ -373,6 +438,7 @@
             .then(data => {
                 if (data.device && data.device.is_connected) {
                     selectedDevice = data.device;
+                    stopDevicePoller();  // no need to poll once device chosen
                     showConsentSection();
                 } else {
                     showAlert('Selected device is not connected. Please choose a different device.', 'warning');
@@ -420,6 +486,7 @@
     function resetPatientSelection() {
         selectedPatient = null;
         selectedProduct = null;
+        stopDevicePoller();
         document.getElementById('selectedPatientInfo').style.display = 'none';
         document.getElementById('deviceSelection').style.display = 'none';
         document.getElementById('consentSection').style.display = 'none';

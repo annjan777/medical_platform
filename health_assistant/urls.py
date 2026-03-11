@@ -35,6 +35,7 @@ urlpatterns = [
     path('api/get-products/', views.api_get_products, name='api_get_products'),
     path('api/get-product/<int:product_id>/', views.api_get_product, name='api_get_product'),
     path('api/get-devices/', views.api_get_devices, name='api_get_devices'),
+    path('api/reset-devices/', views.api_reset_devices_disconnected, name='api_reset_devices'),
     path('api/get-device/<int:device_id>/', views.api_get_device, name='api_get_device'),
     path('api/create-session/', views.api_create_session, name='api_create_session'),
     path('api/submit-questionnaire/', views.api_submit_questionnaire, name='api_submit_questionnaire'),

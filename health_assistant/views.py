@@ -678,6 +678,19 @@ def api_get_devices(request):
 
 
 @login_required
+@require_POST
+def api_reset_devices_disconnected(request):
+    """Mark all active devices as disconnected before a ping cycle."""
+    if request.user.role != User.Role.HEALTH_ASSISTANT:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    updated = Device.objects.filter(status=Device.STATUS_ACTIVE).update(
+        connection_status=Device.CONNECTION_DISCONNECTED
+    )
+    return JsonResponse({'reset': updated})
+
+
+@login_required
 def api_get_device(request, device_id):
     """API endpoint to get device details"""
     if request.user.role != User.Role.HEALTH_ASSISTANT:
