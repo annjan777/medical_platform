@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager, Permission, Group
 from django.utils.translation import gettext_lazy as _
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+from django.core.exceptions import PermissionDenied
 
 class UserManager(BaseUserManager):
     """Custom user model manager where email is the unique identifier"""
@@ -60,5 +63,18 @@ class User(AbstractUser):
     @property
     def is_doctor(self):
         return self.role == self.Role.DOCTOR
+
+    def delete(self, *args, **kwargs):
+        """Prevent deletion of super admins"""
+        if self.is_super_admin:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied(_("Super Admin users cannot be deleted."))
+        return super().delete(*args, **kwargs)
+
+@receiver(pre_delete, sender=User)
+def protect_superadmin_deletion(sender, instance, **kwargs):
+    """Signal to prevent deletion of super admins (handles bulk deletion)"""
+    if instance.role == User.Role.SUPER_ADMIN:
+        raise PermissionDenied(_("Super Admin users cannot be deleted."))
 
 # AuditLog model has been moved to dashboard app to avoid conflicts

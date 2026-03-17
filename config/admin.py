@@ -177,6 +177,23 @@ class CustomUserAdmin(BaseUserAdmin):
             context,
         )
 
+    def has_delete_permission(self, request, obj=None):
+        """Disable deletion of super admins in the admin interface."""
+        if obj and obj.is_super_admin:
+            return False
+        return super().has_delete_permission(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        """Prevent bulk deletion of super admins."""
+        if queryset.filter(role=User.Role.SUPER_ADMIN).exists():
+            self.message_user(
+                request,
+                _("You cannot delete Super Admin users."),
+                level=messages.ERROR
+            )
+            return False
+        return super().delete_queryset(request, queryset)
+
 
 # Create an instance of our custom admin site
 admin_site = CustomAdminSite(name='admin')
