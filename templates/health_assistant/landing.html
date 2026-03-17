@@ -132,9 +132,9 @@
 
                         <div class="col-md-4 mb-3">
                             <label for="date_of_birth" class="form-label">
-                                Date of Birth <span class="text-danger">*</span>
+                                Date of Birth
                             </label>
-                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
                         </div>
 
                         <div class="col-md-4 mb-3">
@@ -169,10 +169,10 @@
 
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">
-                                Email Address
+                                Email Address <span class="text-danger">*</span>
                             </label>
                             <input type="email" class="form-control" id="email" name="email"
-                                placeholder="Optional email address">
+                                placeholder="Email address (required)" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -289,7 +289,7 @@
                                     <input type="number" name="heart_rate" class="form-control" placeholder="72">
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label">Resp. Rate</label>
+                                    <label class="form-label">Resp. Rate (BPM)</label>
                                     <input type="number" name="respiratory_rate" class="form-control" placeholder="16">
                                 </div>
                             </div>
@@ -726,6 +726,12 @@
         }
     }
 
+    /* Lighter placeholders for vitals */
+    #vitalsForm .form-control::placeholder {
+        color: #adb5bd !important;
+        opacity: 0.6;
+    }
+
     /* Responsive Improvements */
     @media (max-width: 768px) {
         .questionnaire-card {
@@ -978,6 +984,10 @@
         const form = document.getElementById('patientRegistrationForm');
         const submitBtn = document.getElementById('registerPatientBtn');
 
+        // Clear previous errors
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
         // Validate consent
         if (!document.getElementById('consentCheckbox').checked) {
             showAlert('Please confirm patient consent has been obtained.', 'warning');
@@ -1023,7 +1033,22 @@
                     // Specific handling for phone duplicates
                     showPhoneDuplicateModal(data.patients, data.message);
                 } else {
-                    showAlert(data.message || 'Registration failed. Please try again.', 'danger');
+                    if (data.errors) {
+                        // Display field-specific errors
+                        for (const [field, messages] of Object.entries(data.errors)) {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            if (input) {
+                                input.classList.add('is-invalid');
+                                const feedback = document.createElement('div');
+                                feedback.className = 'invalid-feedback d-block';
+                                feedback.textContent = messages.join(' ');
+                                input.parentNode.appendChild(feedback);
+                            }
+                        }
+                        showAlert('Please correct the highlighted errors.', 'danger');
+                    } else {
+                        showAlert(data.message || 'Registration failed. Please try again.', 'danger');
+                    }
                 }
             })
             .catch(error => {
@@ -1080,6 +1105,11 @@
     function saveVitals() {
         const form = document.getElementById('vitalsForm');
         const submitBtn = form.querySelector('button[type="submit"]');
+        
+        // Clear previous errors
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
         const originalContent = showLoading($(submitBtn));
 
         const formData = new FormData(form);
@@ -1098,7 +1128,30 @@
                     showAlert('Vitals saved successfully', 'success');
                     showStep3();
                 } else {
-                    showAlert(data.message || 'Error saving vitals', 'danger');
+                    if (data.errors) {
+                        // Display field-specific errors
+                        for (const [field, messages] of Object.entries(data.errors)) {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            const inputById = form.querySelector(`#${field}`); // VitalsForm might use simple IDs
+                            const target = input || inputById;
+                            
+                            if (target) {
+                                target.classList.add('is-invalid');
+                                const feedback = document.createElement('div');
+                                feedback.className = 'invalid-feedback d-block';
+                                feedback.textContent = messages.join(' ');
+                                // Special case for grouped inputs like BP
+                                if (target.parentNode.classList.contains('input-group') || target.classList.contains('form-control')) {
+                                     target.parentNode.appendChild(feedback);
+                                } else {
+                                     target.after(feedback);
+                                }
+                            }
+                        }
+                        showAlert('Please correct the highlighted errors.', 'danger');
+                    } else {
+                        showAlert(data.message || 'Error saving vitals', 'danger');
+                    }
                 }
             })
             .catch(error => {

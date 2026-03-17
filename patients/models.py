@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 
 class Patient(models.Model):
     class Gender(models.TextChoices):
@@ -25,15 +25,22 @@ class Patient(models.Model):
     )
     first_name = models.CharField(_('first name'), max_length=150)
     last_name = models.CharField(_('last name'), max_length=150)
-    date_of_birth = models.DateField(_('date of birth'))
+    date_of_birth = models.DateField(_('date of birth'), null=True, blank=True)
     gender = models.CharField(
         _('gender'),
         max_length=1,
         choices=Gender.choices,
         default=Gender.UNSPECIFIED
     )
-    phone_number = models.CharField(_('phone number'), max_length=20, unique=True, null=False, blank=False)
-    email = models.EmailField(_('email address'), blank=True)
+    phone_number = models.CharField(
+        _('phone number'), 
+        max_length=15, 
+        unique=True, 
+        null=False, 
+        blank=False,
+        validators=[RegexValidator(regex=r'^\d{10}$', message=_("Phone number must be exactly 10 digits."))]
+    )
+    email = models.EmailField(_('email address'))
     address = models.TextField(_('address'), blank=True)
     city = models.CharField(_('city'), max_length=100, blank=True)
     state = models.CharField(_('state/province'), max_length=100, blank=True)

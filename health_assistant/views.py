@@ -11,6 +11,7 @@ from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 import json
 from django.utils.dateformat import DateFormat
+import re
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -135,11 +136,17 @@ def patient_register(request):
         # Check for phone number duplicates BEFORE validating the form
         phone_number = request.POST.get('phone_number')
         if phone_number:
-            # Clean phone number for better matching
-            cleaned_phone = phone_number.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
-            existing_patients = Patient.objects.filter(
-                Q(phone_number__icontains=cleaned_phone) | Q(phone_number__icontains=phone_number)
-            )
+            # Clean phone number for better matching (10 digits)
+            cleaned_phone = re.sub(r'\D', '', phone_number)
+            
+            # Only check for duplicates if we have a valid-looking 10-digit number
+            # Otherwise, the form validation will handle the error message
+            if len(cleaned_phone) == 10:
+                existing_patients = Patient.objects.filter(
+                    Q(phone_number__icontains=cleaned_phone)
+                )
+            else:
+                existing_patients = Patient.objects.none()
             
             if existing_patients.exists():
                 patient_list = []
@@ -208,7 +215,7 @@ def patient_register(request):
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': False,
-                    'message': 'Please correct the errors below.',
+                    'message': 'Please correct the highlighted errors.',
                     'errors': form.errors
                 })
     else:
