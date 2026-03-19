@@ -565,13 +565,30 @@
 
             try {
                 const response = await fetch(url, options);
-                // Reset timer on fetch success too
-                resetTimer();
+                // Reset timer on fetch success too if defined
+                if (typeof resetTimer === 'function') {
+                    resetTimer();
+                }
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorText.substring(0, 100)}`);
                 }
-                return await response.json();
+                
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return await response.json();
+                } else {
+                    const text = await response.text();
+                    console.warn('Expected JSON but received:', contentType);
+                    // Return as success if it's 200 but not JSON? 
+                    // No, likely an error page or redirect.
+                    if (text.includes('login') || text.includes('password')) {
+                         return { success: false, message: 'Session expired. Please login again.' };
+                    }
+                    return { success: false, message: `Invalid server response (not JSON: ${contentType})` };
+                }
             } catch (error) {
                 console.error('AJAX Request Error:', error);
                 throw error;

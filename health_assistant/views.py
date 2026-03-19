@@ -387,132 +387,151 @@ def api_search_patients(request):
     if not has_patient_access(request.user):
         return JsonResponse({'error': 'Access denied'}, status=403)
     
-    query = request.GET.get('q', '').strip()
-    gender = request.GET.get('gender', '')
-    date_from = request.GET.get('date_from', '')
-    date_to = request.GET.get('date_to', '')
-    page = int(request.GET.get('page', 1))
-    export_format = request.GET.get('export', '')
-    
-    # Handle CSV export
-    if export_format == 'csv':
-        return export_patients_csv(query, gender, date_from, date_to)
-    
-    # Build filter conditions
-    filters = Q()
-    if query:
-        # Check if query is a phone number (more flexible detection)
-        cleaned_query = query.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
-        is_phone_query = cleaned_query.isdigit() and len(cleaned_query) >= 10
+    try:
+        query = request.GET.get('q', '').strip()
+        gender = request.GET.get('gender', '')
+        date_from = request.GET.get('date_from', '')
+        date_to = request.GET.get('date_to', '')
         
-        if is_phone_query:
-            # Search for exact phone number match first
-            existing_patients = Patient.objects.filter(
-                Q(phone_number__icontains=cleaned_query)
-            ).order_by('created_at')[:20]
+        # Safely handle page parameter
+        try:
+            page_val = request.GET.get('page', 1)
+            page = int(page_val) if page_val and str(page_val).isdigit() else 1
+        except (ValueError, TypeError):
+            page = 1
             
-            # If exact phone match found, check for duplicates
-            if existing_patients.count() > 0:
-                patient_data = []
-                for patient in existing_patients:
-                    patient_data.append({
-                        'id': patient.id,
-                        'setu_id': patient.setu_id,
-                        'patient_id': patient.patient_id,
-                        'first_name': patient.first_name,
-                        'last_name': patient.last_name,
-                        'name': f"{patient.first_name} {patient.last_name}",
-                        'full_name': f"{patient.first_name} {patient.last_name}",
-                        'age': patient.age if patient.age is not None else 0,
-                        'gender': patient.gender,
-                        'gender_display': patient.get_gender_display(),
-                        'phone': patient.phone_number,
-                        'phone_number': patient.phone_number,
-                        'email': patient.email,
-                        'city': patient.city,
-                        'address': patient.address,
-                        'created_at': patient.created_at.isoformat(),
-                        'is_duplicate_phone': True
-                    })
-                
-                return JsonResponse({
-                    'patients': patient_data,
-                    'has_phone_duplicates': True,
-                    'message': f'Phone number {query} already exists. Please select existing patient or use different number.'
-                })
+        export_format = request.GET.get('export', '')
+    
+        # Handle CSV export
+        if export_format == 'csv':
+            return export_patients_csv(query, gender, date_from, date_to)
         
-        # Regular search by name, partial phone or Setu ID
-        filters |= Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(patient_id__icontains=query) | Q(phone_number__icontains=query) | Q(setu_id__icontains=query)
-    
-    print(f"DEBUG: Search query: '{query}'")
-    print(f"DEBUG: Filters: {filters}")
-    
-    if gender:
-        filters &= Q(gender=gender)
-    if date_from:
-        filters &= Q(created_at__date__gte=date_from)
-    if date_to:
-        filters &= Q(created_at__date__lte=date_to)
-    
-    # Get patients with pagination - if no query, return all patients
-    if not query:
-        patients = Patient.objects.all()
-    else:
+        # Build filter conditions
+        filters = Q()
+        if query:
+            # Check if query is a phone number (more flexible detection)
+            cleaned_query = query.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+            is_phone_query = cleaned_query.isdigit() and len(cleaned_query) >= 10
+            
+            if is_phone_query:
+                # Search for exact phone number match first
+                existing_patients = Patient.objects.filter(
+                    Q(phone_number__icontains=cleaned_query)
+                ).order_by('created_at')[:20]
+                
+                # If exact phone match found, check for duplicates
+                if existing_patients.count() > 0:
+                    patient_data = []
+                    for patient in existing_patients:
+                        patient_data.append({
+                            'id': patient.id,
+                            'setu_id': patient.setu_id,
+                            'patient_id': patient.patient_id,
+                            'first_name': patient.first_name,
+                            'last_name': patient.last_name,
+                            'name': f"{patient.first_name} {patient.last_name}",
+                            'full_name': f"{patient.first_name} {patient.last_name}",
+                            'age': patient.age if patient.age is not None else 0,
+                            'gender': patient.gender,
+                            'gender_display': patient.get_gender_display(),
+                            'phone': patient.phone_number,
+                            'phone_number': patient.phone_number,
+                            'email': patient.email,
+                            'city': patient.city,
+                            'address': patient.address,
+                            'created_at': patient.created_at.isoformat(),
+                            'is_duplicate_phone': True
+                        })
+                    
+                    return JsonResponse({
+                        'patients': patient_data,
+                        'has_phone_duplicates': True,
+                        'message': f'Phone number {query} already exists. Please select existing patient or use different number.'
+                    })
+            
+            # Regular search by name, partial phone or Setu ID
+            filters |= Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(patient_id__icontains=query) | Q(phone_number__icontains=query) | Q(setu_id__icontains=query)
+        
+        # print(f"DEBUG: Search query: '{query}'")
+        # print(f"DEBUG: Filters: {filters}")
+        
+        if gender:
+            filters &= Q(gender=gender)
+        if date_from:
+            filters &= Q(created_at__date__gte=date_from)
+        if date_to:
+            filters &= Q(created_at__date__lte=date_to)
+        
+        # Get patients with pagination
+        # IMPORTANT: Apply filters to all cases, not just when query is present
         patients = Patient.objects.filter(filters).order_by('-created_at')
-    
-    print(f"DEBUG: Found {patients.count()} patients")
-    
-    # Pagination
-    from django.core.paginator import Paginator
-    per_page = 20
-    paginator = Paginator(patients, per_page)
-    page_obj = paginator.get_page(page)
-    
-    patient_data = []
-    for i, patient in enumerate(page_obj):
-        print(f"DEBUG: Patient {i}: {patient.first_name} {patient.last_name} (ID: {patient.patient_id})")
-        patient_data.append({
-            'id': patient.id,
-            'setu_id': patient.setu_id,
-            'patient_id': patient.patient_id,
-            'first_name': patient.first_name,
-            'last_name': patient.last_name,
-            'name': f"{patient.first_name} {patient.last_name}",
-            'full_name': f"{patient.first_name} {patient.last_name}",
-            'age': patient.age if patient.age is not None else 0,
-            'gender': patient.gender,
-            'gender_display': patient.get_gender_display(),
-            'phone': patient.phone_number,
-            'phone_number': patient.phone_number,
-            'email': patient.email,
-            'city': patient.city,
-            'address': patient.address,
-            'created_at': patient.created_at.isoformat()
+        
+        # Pagination
+        from django.core.paginator import Paginator
+        per_page = 20
+        paginator = Paginator(patients, per_page)
+        page_obj = paginator.get_page(page)
+        
+        patient_data = []
+        for i, patient in enumerate(page_obj):
+            patient_data.append({
+                'id': patient.id,
+                'setu_id': patient.setu_id,
+                'patient_id': patient.patient_id,
+                'first_name': patient.first_name,
+                'last_name': patient.last_name,
+                'name': f"{patient.first_name} {patient.last_name}",
+                'full_name': f"{patient.first_name} {patient.last_name}",
+                'age': patient.age if patient.age is not None else 0,
+                'gender': patient.gender,
+                'gender_display': patient.get_gender_display(),
+                'phone': patient.phone_number,
+                'phone_number': patient.phone_number,
+                'email': patient.email,
+                'city': patient.city,
+                'address': patient.address,
+                'created_at': patient.created_at.isoformat() if patient.created_at else ''
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'patients': patient_data,
+            'total_count': paginator.count,
+            'pagination': {
+                'current_page': page_obj.number,
+                'total_pages': paginator.num_pages,
+                'has_previous': page_obj.has_previous(),
+                'has_next': page_obj.has_next(),
+                'previous_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
+                'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
+            }
         })
-    
-    return JsonResponse({
-        'patients': patient_data,
-        'total_count': paginator.count,
-        'pagination': {
-            'current_page': page_obj.number,
-            'total_pages': paginator.num_pages,
-            'has_previous': page_obj.has_previous(),
-            'has_next': page_obj.has_next(),
-            'previous_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
-            'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
-        }
-    })
+    except Exception as e:
+        import traceback
+        error_msg = f"ERROR in api_search_patients: {str(e)}"
+        print(error_msg)
+        with open('/tmp/search_error.log', 'a') as f:
+            f.write(f"\n--- {datetime.now()} ---\n")
+            f.write(error_msg + "\n")
+            f.write(traceback.format_exc() + "\n")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'message': f'Search failed: {str(e)}'
+        }, status=200) # Use 200 to ensure JS handles the error message gracefully
 
 
 @login_required
 def api_get_patient(request, patient_id):
     """API endpoint to get patient details"""
     if not has_patient_access(request.user):
-        return JsonResponse({'error': 'Access denied'}, status=403)
+        return JsonResponse({'success': False, 'message': 'Access denied'}, status=403)
     
     try:
         patient = Patient.objects.get(id=patient_id)
         return JsonResponse({
+            'success': True,
             'patient': {
                 'id': patient.id,
                 'setu_id': patient.setu_id,
@@ -521,7 +540,7 @@ def api_get_patient(request, patient_id):
                 'last_name': patient.last_name,
                 'name': f"{patient.first_name} {patient.last_name}",
                 'full_name': f"{patient.first_name} {patient.last_name}",
-                'age': patient.age,
+                'age': patient.age if patient.age is not None else 0,
                 'gender': patient.gender,
                 'gender_display': patient.get_gender_display(),
                 'phone': patient.phone_number,
@@ -530,11 +549,24 @@ def api_get_patient(request, patient_id):
                 'city': patient.city,
                 'address': patient.address,
                 'date_of_birth': patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else '',
-                'created_at': patient.created_at.isoformat()
+                'created_at': patient.created_at.isoformat() if patient.created_at else ''
             }
         })
     except Patient.DoesNotExist:
-        return JsonResponse({'error': 'Patient not found'}, status=404)
+        return JsonResponse({
+            'success': False,
+            'error': 'Patient not found',
+            'message': 'The selected patient could not be found.'
+        }, status=200)
+    except Exception as e:
+        import traceback
+        print(f"ERROR in api_get_patient: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'message': f'Failed to retrieve patient details: {str(e)}'
+        }, status=200)
 
 
 @login_required

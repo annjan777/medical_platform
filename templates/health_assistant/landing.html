@@ -856,7 +856,7 @@
             })
             .catch(error => {
                 console.error('Error searching patients:', error);
-                resultsDiv.innerHTML = '<div class="alert alert-danger">Error searching patients. Please try again.</div>';
+                resultsDiv.innerHTML = `<div class="alert alert-danger">Error searching patients: ${error.message || 'Please try again.'}</div>`;
             });
     }
 

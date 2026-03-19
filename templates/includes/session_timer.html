@@ -112,6 +112,8 @@
         } else {
             checkSessionTimeout();
         }
+        window.resetTimer = resetTimer;
+        window.checkSessionTimeout = checkSessionTimeout;
         {% endif %}
     })();
 </script>
