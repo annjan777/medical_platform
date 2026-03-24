@@ -400,15 +400,34 @@ def get_response_edit_form(request, pk):
 
         # Get all questions in the questionnaire, not just the answered ones
         questions = response_obj.questionnaire.questions.all().order_by('order', 'id')
+        
+        # If a specific question ID is provided, figure out exactly which questions to show 
+        # (the question itself, plus any conditional descendants)
+        target_question_id = request.GET.get('question_id')
+        if target_question_id:
+            try:
+                target_question_id = int(target_question_id)
+                target_question = questions.get(id=target_question_id)
+                # Keep the target question and all its descendants
+                descendants = target_question.get_all_descendants()
+                descendant_ids = [d.id for d in descendants]
+                allowed_ids = set([target_question_id] + descendant_ids)
+                questions = [q for q in questions if q.id in allowed_ids]
+            except (ValueError, Question.DoesNotExist):
+                pass
+                
         # Create a map of question_id to answer for easier lookup
         answers_map = {a.question_id: a for a in response_obj.answers.all()}
         
         # Bundle question and answer together for easy template iteration
         bundled_data = []
+        allowed_ids = {q.id for q in questions}
         for q in questions:
+            is_parent_present = bool(q.parent_id and q.parent_id in allowed_ids)
             bundled_data.append({
                 'question': q,
-                'answer': answers_map.get(q.id)
+                'answer': answers_map.get(q.id),
+                'is_hidden': bool(q.parent and is_parent_present)
             })
         
         return render(request, 'questionnaires/partials/response_edit_form.html', {
