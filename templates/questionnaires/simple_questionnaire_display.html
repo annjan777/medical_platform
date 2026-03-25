@@ -32,23 +32,24 @@
                         {% if question.is_required %}<span class="text-danger ms-1">*</span>{% endif %}
                     </h5>
                     {% if question.reference_image %}
-                    <div class="question-reference-image mb-4 ms-2">
-                        <img src="{{ question.reference_image.url }}" alt="Reference Image" class="img-fluid rounded"
-                            style="max-height: 250px;">
+                    <div class="question-reference-image mb-4">
+                        <img src="{{ question.reference_image.url }}" alt="Reference Image" 
+                            class="img-fluid rounded shadow-sm border"
+                            style="max-height: 320px; object-fit: contain; background: #fff;">
                     </div>
                     {% endif %}
 
                     <!-- Yes/No Question -->
                     {% if question.question_type == 'yes_no' %}
-                    <div class="radio-group ms-2">
-                        <div class="form-check mb-3">
+                    <div class="d-flex gap-5 flex-wrap ms-2">
+                        <div class="form-check">
                             <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}"
                                 id="q{{ question.id }}_yes" value="yes" {{ question.is_required|yesno:'required,' }}>
                             <label class="form-check-label radio-label fs-5" for="q{{ question.id }}_yes">
                                 Yes
                             </label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check">
                             <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}"
                                 id="q{{ question.id }}_no" value="no" {{ question.is_required|yesno:'required,' }}>
                             <label class="form-check-label radio-label fs-5" for="q{{ question.id }}_no">
@@ -59,15 +60,15 @@
 
                     <!-- True/False Question -->
                     {% elif question.question_type == 'true_false' %}
-                    <div class="radio-group ms-2">
-                        <div class="form-check mb-3">
+                    <div class="d-flex gap-5 flex-wrap ms-2">
+                        <div class="form-check">
                             <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}"
                                 id="q{{ question.id }}_true" value="true" {{ question.is_required|yesno:'required,' }}>
                             <label class="form-check-label radio-label fs-5" for="q{{ question.id }}_true">
                                 True
                             </label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check">
                             <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_false" value="false" {{ question.is_required|yesno:'required,' }}>
                             <label class="form-check-label radio-label fs-5" for="q{{ question.id }}_false">
                                 False
@@ -77,35 +78,35 @@
 
                     <!-- Multiple Choice Question -->
                     {% elif question.question_type == 'multiple_choice' %}
-                    <div class="radio-group ms-2">
+                    <div class="row g-2 ms-2 justify-content-center option-row">
                         {% for option in question.options.all %}
-                        <div class="form-check mb-3">
-                            {% if question.allow_multiple_selections %}
-                            <input class="form-check-input custom-checkbox" type="checkbox"
-                                name="question_{{ question.id }}" id="opt_{{ option.id }}" value="{{ option.id }}">
-                            {% else %}
-                            <input class="form-check-input custom-radio" type="radio" name="question_{{ question.id }}" id="opt_{{ option.id }}" value="{{ option.id }}" {{ question.is_required|yesno:'required,' }}>
-                            {% endif %}
-                            <label class="form-check-label radio-label fs-5 d-flex align-items-center"
-                                for="opt_{{ option.id }}">
-                                {% if option.option_image %}
-                                <div class="me-3 mb-2">
-                                    <img src="{{ option.option_image.url }}" alt="{{ option.text|default:option.id }}"
-                                        class="img-thumbnail"
-                                        style="max-height: 400px; max-width: 500px; width: 100%; object-fit: contain;">
-                                    {% if option.text %}
-                                    <span class="d-block mt-1 text-muted small">{{ option.text }}</span>
-                                    {% endif %}
-                                </div>
+                        <div class="col-6 col-md-3 option-col">
+                            <div class="form-check border rounded-2 p-1 option-card text-center h-100">
+                                {% if question.allow_multiple_selections %}
+                                <input class="form-check-input custom-checkbox ms-1 mt-1" type="checkbox"
+                                    name="question_{{ question.id }}" id="opt_{{ option.id }}" value="{{ option.id }}">
                                 {% else %}
-                                <span>{{ option.text }}</span>
+                                <input class="form-check-input custom-radio ms-1 mt-1" type="radio" name="question_{{ question.id }}" id="opt_{{ option.id }}" value="{{ option.id }}" {{ question.is_required|yesno:'required,' }}>
                                 {% endif %}
-                            </label>
+                                <label class="form-check-label radio-label w-100 d-block cursor-pointer"
+                                    for="opt_{{ option.id }}">
+                                    {% if option.option_image %}
+                                    <div class="option-image-container mb-1">
+                                        <img src="{{ option.option_image.url }}" alt="{{ option.text|default:option.id }}"
+                                            class="img-fluid rounded border"
+                                            style="max-height: 160px; width: 100%; object-fit: contain; background: #f8f9fa;">
+                                    </div>
+                                    {% endif %}
+                                    <span class="fw-bold d-block small mb-0" style="font-size: 0.85rem;">{{ option.text }}</span>
+                                </label>
+                            </div>
                         </div>
                         {% empty %}
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            No options available for this question. Please add options in the questionnaire builder.
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                No options available for this question. Please add options in the questionnaire builder.
+                            </div>
                         </div>
                         {% endfor %}
                     </div>
@@ -367,6 +368,52 @@
     .question-container:hover {
         transform: translateY(-2px);
         box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
+    }
+
+    .option-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: #fff;
+    }
+
+    .option-card:hover {
+        background-color: #f8f9fa;
+        border-color: #0d6efd !important;
+    }
+
+    .option-card .form-check-input:checked + .form-check-label {
+        color: #0d6efd;
+    }
+
+    .option-card:has(.form-check-input:checked) {
+        border-color: #0d6efd !important;
+        background-color: #f0f7ff;
+        box-shadow: 0 0 0 1px #0d6efd;
+    }
+
+    .option-image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    /* Dynamic Column Logic */
+    .option-row:has(.option-image-container) .option-col {
+        flex: 0 0 auto;
+        width: 50%;
+    }
+
+    .option-row:not(:has(.option-image-container)) .option-col {
+        flex: 0 0 auto;
+        width: 25%;
+    }
+
+    @media (max-width: 768px) {
+        .option-row .option-col {
+            width: 50% !important;
+        }
     }
 </style>
 {% endblock %}

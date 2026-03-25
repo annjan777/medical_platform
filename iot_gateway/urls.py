@@ -7,8 +7,8 @@ urlpatterns = [
     path('receive-text/', views.receive_text_data, name='receive_text'),
     path('receive-image/', views.receive_image_data, name='receive_image'),
     path('server-info/', views.get_server_info, name='server_info'),
-    path('check-session-data/<int:session_id>/', views.check_session_data, name='check_session_data'),
-    path('trigger-scan/<int:session_id>/', views.trigger_scan, name='trigger_scan'),
+    path('check-session-data/<str:session_id>/', views.check_session_data, name='check_session_data'),
+    path('trigger-scan/<str:session_id>/', views.trigger_scan, name='trigger_scan'),
     path('ping-device/<int:device_id>/', views.ping_device, name='ping_device'),
     
     # Phase 3: APIs

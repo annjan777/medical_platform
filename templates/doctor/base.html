@@ -290,12 +290,42 @@
             </div>
         </div>
     </div>
+    
+    <!-- Session Timeout Modal -->
+    <div class="modal fade" id="sessionTimeoutModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-warning text-dark border-0">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Session Security Alert
+                    </h5>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-clock fa-3x text-warning opacity-75"></i>
+                    </div>
+                    <h4 class="mb-2">Your session has expired</h4>
+                    <p class="text-muted mb-4">For your security, you have been automatically logged out due to inactivity (29 minutes). Please login again to continue.</p>
+                    <div class="d-grid">
+                        <a href="{% url 'logout' %}" class="btn btn-primary btn-lg shadow-sm">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login Again
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pb-4 pt-0 text-muted small">
+                    Redirecting to login in <span id="timeoutCountdown" class="fw-bold">15</span> seconds...
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
+    {% include 'includes/session_timer.html' %}
     {% block extra_js %}{% endblock %}
 </body>
 

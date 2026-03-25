@@ -41,7 +41,7 @@ class PatientRegistrationForm(forms.ModelForm):
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Email address (optional)'
+                'placeholder': 'Email address (required)'
             }),
             'address': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -68,24 +68,19 @@ class PatientRegistrationForm(forms.ModelForm):
         # Make required fields clear
         self.fields['first_name'].required = True
         self.fields['last_name'].required = True
-        self.fields['date_of_birth'].required = True
+        self.fields['email'].required = True
         self.fields['gender'].required = True
         self.fields['phone_number'].required = True  # Phone is now mandatory
         
         # Make optional fields clear
         optional_fields = [
-            'email', 'address', 'city', 
+            'date_of_birth', 'address', 'city', 
             'state', 'postal_code'
         ]
         for field in optional_fields:
             self.fields[field].required = False
         
-        # Add custom validation for phone number
-        phone_validator = RegexValidator(
-            regex=r'^\+?1?\d{9,15}$',
-            message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
-        )
-        self.fields['phone_number'].validators.append(phone_validator)
+        # Phone number validation is handled in clean_phone_number method
     
     def clean_first_name(self):
         """Validate patient first name"""
@@ -116,6 +111,20 @@ class PatientRegistrationForm(forms.ModelForm):
             raise forms.ValidationError("Last name can only contain letters, spaces, hyphens, and apostrophes.")
         
         return last_name.title()  # Convert to title case
+    
+    def clean_phone_number(self):
+        """Validate phone number is exactly 10 digits"""
+        phone = self.cleaned_data.get('phone_number')
+        if not phone:
+            raise forms.ValidationError("Phone number is mandatory.")
+            
+        # Remove any non-digit characters (like spaces, hyphens, parentheses)
+        digits = re.sub(r'\D', '', phone)
+        
+        if len(digits) != 10:
+            raise forms.ValidationError(f"Phone number must be exactly 10 digits. You entered {len(digits)} digits.")
+            
+        return digits
     
     def clean_date_of_birth(self):
         """Validate date of birth"""
@@ -208,6 +217,9 @@ class VitalsForm(forms.ModelForm):
             'blood_pressure_diastolic', 'heart_rate', 
             'temperature', 'spo2', 'respiratory_rate'
         ]
+        labels = {
+            'respiratory_rate': 'Respiratory Rate (BPM)',
+        }
         widgets = {
             'weight': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'placeholder': 'Weight (kg)'}),
             'height': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'placeholder': 'Height (cm)'}),
@@ -216,7 +228,7 @@ class VitalsForm(forms.ModelForm):
             'heart_rate': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Heart Rate (bpm)'}),
             'temperature': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'placeholder': 'Temp (°C)'}),
             'spo2': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'SpO2 (%)', 'min': '0', 'max': '100'}),
-            'respiratory_rate': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Resp Rate (breaths/min)'}),
+            'respiratory_rate': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'BPM'}),
         }
 
     def __init__(self, *args, **kwargs):

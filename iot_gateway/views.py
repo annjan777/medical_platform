@@ -26,11 +26,19 @@ def receive_text_data(request):
     """
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
+            # Handle both JSON and Form-Data (CURL -F)
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+            else:
+                data = request.POST
+
             device_id = data.get('device_id')
-            session_id = data.get('session_id')  # Now optional for status pings
-            reading_type = data.get('reading_type', 'status')
+            session_id = data.get('session_id')
+            reading_type = data.get('reading_type', 'vitals')
             value = data.get('value')
+
+            if not device_id:
+                return JsonResponse({"status": "error", "message": "device_id required"}, status=400)
 
             device = get_object_or_404(Device, device_id=device_id)
             
@@ -49,7 +57,7 @@ def receive_text_data(request):
             session = get_object_or_404(ScreeningSession, pk=session_id)
             
             # Create a DeviceReading
-            reading = DeviceReading.objects.create(
+            DeviceReading.objects.create(
                 device=device,
                 patient=session.patient,
                 reading_type=reading_type,
@@ -63,7 +71,7 @@ def receive_text_data(request):
             device.connection_status = Device.CONNECTION_CONNECTED
             device.save()
 
-            return JsonResponse({"status": "success", "reading_id": reading.id})
+            return JsonResponse({"status": "success", "message": "Reading recorded successfully"})
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
     return HttpResponse("Endpoint for IoT text data receiver")
@@ -86,12 +94,16 @@ def receive_image_data(request):
             device = get_object_or_404(Device, device_id=device_id)
             session = get_object_or_404(ScreeningSession, pk=session_id)
 
+            # Determine file type
+            import mimetypes
+            content_type = mimetypes.guess_type(image_file.name)[0] or 'image/jpeg'
+
             # Save as a ScreeningAttachment
             attachment = ScreeningAttachment.objects.create(
                 session=session,
                 file=image_file,
-                file_type='image/jpeg', # Assuming jpeg for now
-                description=f"IoT Scan from {device.name}",
+                file_type=content_type,
+                description=f"IoT Data Upload from {device.name}",
                 uploaded_by=session.conducted_by
             )
 

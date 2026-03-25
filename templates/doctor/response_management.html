@@ -1,0 +1,384 @@
+{% extends "doctor/base.html" %}
+{% load static %}
+
+{% block title %}Response Management - Dentist Portal{% endblock %}
+
+{% block extra_css %}
+<!-- Include Tailwind for this page specifically to match Admin's premium look -->
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  /* Reset some bootstrap baggage that might conflict */
+  .card { box-shadow: none !important; }
+  /* .btn { border-radius: 0.5rem; } */
+  .bg-medical-gradient {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); /* Doctor themed blue gradient */
+  }
+  .modal-backdrop { display: none !important; } /* We'll use our own backdrop */
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Response Management</li>
+{% endblock %}
+
+{% block page_title %}
+<span class="text-2xl font-bold text-gray-800">
+  <i class="fas fa-file-medical-alt mr-2 text-blue-600"></i>Survey Submissions
+</span>
+{% endblock %}
+
+{% block page_subtitle %}Review and analyze patient questionnaire responses.{% endblock %}
+
+{% block page_actions %}
+<div class="flex space-x-2">
+  <button onclick="downloadResponses()" class="px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 flex items-center transition shadow-sm font-medium">
+    <i class="fas fa-download mr-2 text-sm"></i> Intelligence Export
+  </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Search and Filter -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="md:col-span-2">
+        <label class="block text-[10px] font-black text-gray-400 uppercase mb-1.5 ml-1">Questionnaire Type</label>
+        <select class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" id="questionnaireFilter">
+          <option value="">All Active Surveys</option>
+          {% for questionnaire in questionnaires %}
+          {% with q_id=questionnaire.id|stringformat:"s" %}
+          <option value="{{ questionnaire.id }}" {% if request.GET.questionnaire == q_id %}selected{% endif %}>
+            {{ questionnaire.title }}
+          </option>
+          {% endwith %}
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-black text-gray-400 uppercase mb-1.5 ml-1">Patient Identity</label>
+        <input type="text" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold placeholder-gray-400 focus:ring-2 focus:ring-blue-500 transition-all outline-none" id="patientFilter" placeholder="SCL-ID / Name..." value="{{ request.GET.patient }}">
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-[10px] font-black text-gray-400 uppercase mb-1.5 ml-1">Date Range Window</label>
+        <div class="flex items-center space-x-2">
+          <input type="date" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none" id="dateFromFilter" value="{{ request.GET.date_from }}">
+          <span class="text-gray-300 font-bold">→</span>
+          <input type="date" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none" id="dateToFilter" value="{{ request.GET.date_to }}">
+          <button class="bg-gray-800 hover:bg-black text-white p-2.5 rounded-xl transition-all shadow-md ml-2" onclick="filterResponses()">
+            <i class="fas fa-search px-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Responses List -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    {% if responses %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-100">
+        <thead class="bg-gray-50/50">
+          <tr>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Patient</th>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Survey Detail</th>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Protocol</th>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
+            <th class="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50 bg-white">
+          {% for response in responses %}
+          <tr class="hover:bg-blue-50/20 transition-all group">
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <div class="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-black text-xs mr-3 border border-blue-200 group-hover:scale-110 transition-transform">
+                  {{ response.patient.first_name|slice:":1"|default:"?" }}{{ response.patient.last_name|slice:":1"|default:"" }}
+                </div>
+                <div>
+                  <p class="text-sm font-bold text-gray-900 leading-tight">
+                    {% if response.patient.setu_id %}
+                    <span class="text-blue-700 font-extrabold mr-1">[{{ response.patient.setu_id }}]</span>
+                    {% endif %}
+                    {{ response.patient.first_name }} {{ response.patient.last_name }}
+                  </p>
+                  <p class="text-[10px] font-black text-blue-600 uppercase tracking-tighter">{{ response.patient.patient_id|default:"ANONYMOUS" }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-sm font-bold text-gray-800 truncate max-w-[200px]">{{ response.questionnaire.title|default:"Evaluation"|default:"Clinical Record" }}</p>
+              <p class="text-[10px] text-gray-400 font-semibold italic">{{ response.questionnaire.get_questionnaire_type_display|default:"Screening" }}</p>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <span class="px-2 py-0.5 rounded text-[9px] font-black bg-gray-100 text-gray-500 uppercase border border-gray-200">
+                {{ response.respondent.get_role_display|default:"SYSTEM" }}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              {% if response.is_complete %}
+              <div class="flex items-center text-blue-600">
+                <div class="h-1.5 w-1.5 rounded-full bg-blue-600 mr-2"></div>
+                <span class="text-[10px] font-black uppercase tracking-widest">Completed</span>
+              </div>
+              {% else %}
+              <div class="flex items-center text-amber-500">
+                <div class="h-1.5 w-1.5 rounded-full bg-amber-500 mr-2 animate-pulse"></div>
+                <span class="text-[10px] font-black uppercase tracking-widest text-amber-600">Partial</span>
+              </div>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-[11px] font-bold text-gray-600">{{ response.submitted_at|date:"M d, Y"|default:response.started_at|date:"M d, Y" }}</p>
+              <p class="text-[10px] text-gray-400">{{ response.submitted_at|date:"H:i A"|default:response.started_at|date:"H:i A" }}</p>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex justify-end space-x-2">
+                <a href="{% url 'doctor:response_detail' response.pk %}" class="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-blue-600 hover:text-white transition-all shadow-sm group-hover:shadow-blue-100" title="View Full Analysis">
+                  <i class="fas fa-eye text-xs"></i>
+                </a>
+                <button onclick="openEditModal({{ response.pk }}, '{{ response.questionnaire.title|escapejs }}')" class="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-blue-600 hover:text-white transition-all shadow-sm group-hover:shadow-blue-100" title="Modify Record">
+                  <i class="fas fa-edit text-xs"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="bg-gray-50/50 px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+      <p class="text-[10px] font-bold text-gray-400 uppercase">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
+      <div class="flex space-x-1">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}" class="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:border-blue-500 transition-all no-underline">Prev</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.questionnaire %}&questionnaire={{ request.GET.questionnaire }}{% endif %}{% if request.GET.patient %}&patient={{ request.GET.patient }}{% endif %}" class="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:border-blue-500 transition-all no-underline">Next</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-20 bg-gray-50/30">
+      <div class="h-20 w-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-200 border-dashed">
+        <i class="fas fa-inbox text-3xl text-gray-300"></i>
+      </div>
+      <h3 class="text-lg font-black text-gray-400 uppercase tracking-widest">No Submissions Found</h3>
+      <p class="text-sm text-gray-500 mt-1 italic">Try adjusting filters or checking the patient list.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ========== Edit Response Modal (Bootstrap Style) ========== -->
+<div class="modal fade" id="editResponseModal" tabindex="-1" aria-labelledby="editResponseModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-2xl rounded-2xl overflow-hidden">
+            <!-- Header with Gradient Blue Theme -->
+            <div class="modal-header bg-medical-gradient border-0 px-6 py-4 flex items-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-white opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.2) 0%, transparent 50%);"></div>
+                <h5 class="modal-title font-bold text-white flex items-center relative z-10" id="editResponseModalLabel">
+                    <i class="fas fa-edit mr-3 text-white/80"></i> Modify Record
+                    <span class="mx-2 opacity-30">|</span>
+                    <span id="modalQuestionnaireTitle" class="font-medium text-blue-50 text-sm truncate max-w-[200px]">Survey</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white relative z-10" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body px-8 py-6 bg-gray-50/50">
+                <div id="editModalAlert" class="hidden mb-6"></div>
+                <form id="editResponseForm" class="space-y-6">
+                    <div id="modalLoading" class="text-center py-16">
+                        <div class="inline-block animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
+                        <p class="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Retrieving secure clinical data...</p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer bg-white px-8 py-4 border-t border-gray-100">
+                <button type="button" class="px-6 py-2 border border-gray-300 rounded-xl text-sm font-bold text-gray-500 bg-white hover:bg-gray-50 transition shadow-sm uppercase tracking-wider" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button id="saveBtn" onclick="saveEditResponse(this)" class="px-8 font-black py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs flex items-center shadow-lg hover:shadow-blue-200/50 uppercase tracking-widest">
+                    <i class="fas fa-check-circle mr-2"></i> Commit Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function filterResponses() {
+        const questionnaireId = document.getElementById('questionnaireFilter').value;
+        const patientId = document.getElementById('patientFilter').value;
+        const dateFrom = document.getElementById('dateFromFilter').value;
+        const dateTo = document.getElementById('dateToFilter').value;
+
+        let url = window.location.pathname + '?';
+        const params = [];
+
+        if (questionnaireId) params.push('questionnaire=' + encodeURIComponent(questionnaireId));
+        if (patientId) params.push('patient=' + encodeURIComponent(patientId));
+        if (dateFrom) params.push('date_from=' + encodeURIComponent(dateFrom));
+        if (dateTo) params.push('date_to=' + encodeURIComponent(dateTo));
+
+        window.location.href = url + params.join('&');
+    }
+
+    function downloadResponses() {
+        const questionnaireId = document.getElementById('questionnaireFilter').value;
+        const patientId = document.getElementById('patientFilter').value;
+        const dateFrom = document.getElementById('dateFromFilter').value;
+        const dateTo = document.getElementById('dateToFilter').value;
+
+        let url = '{% url "questionnaires:download_responses" %}?';
+        const params = [];
+
+        if (questionnaireId) params.push('questionnaire=' + encodeURIComponent(questionnaireId));
+        if (patientId) params.push('patient=' + encodeURIComponent(patientId));
+        if (dateFrom) params.push('date_from=' + encodeURIComponent(dateFrom));
+        if (dateTo) params.push('date_to=' + encodeURIComponent(dateTo));
+
+        window.open(url + params.join('&'), '_blank');
+    }
+
+    // Auto-filter on change
+    document.getElementById('questionnaireFilter').addEventListener('change', filterResponses);
+
+    let currentEditResponseId = null;
+
+    async function openEditModal(responseId, questionnaireTitle) {
+        currentEditResponseId = responseId;
+        const modalEl = document.getElementById('editResponseModal');
+        const form = document.getElementById('editResponseForm');
+        const alertEl = document.getElementById('editModalAlert');
+        
+        document.getElementById('modalQuestionnaireTitle').innerText = questionnaireTitle || 'Clinical Record';
+        alertEl.classList.add('hidden');
+        form.innerHTML = `<div id="modalLoading" class="text-center py-16">
+            <div class="inline-block animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
+            <p class="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Retrieving secure data...</p>
+          </div>`;
+        
+        // Use Bootstrap Modal API
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        try {
+            const resp = await fetch(`/questionnaires/responses/${responseId}/edit-form/`);
+            if (resp.ok) {
+                const html = await resp.text();
+                
+                // Use Range API for script execution
+                const range = document.createRange();
+                range.selectNode(form);
+                const fragment = range.createContextualFragment(html);
+                
+                form.innerHTML = '';
+                form.appendChild(fragment);
+
+                // Re-initialize visibility if the function exists
+                if (window.initializeEditFormVisibility) {
+                    setTimeout(window.initializeEditFormVisibility, 50);
+                }
+            } else {
+                const errorData = await resp.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to authorize access.');
+            }
+        } catch (e) {
+            form.innerHTML = `<div class="p-6 bg-red-50 border border-red-100 rounded-2xl flex items-center text-red-800">
+                <i class="fas fa-exclamation-circle text-2xl mr-4 text-red-500"></i>
+                <div>
+                    <p class="font-bold text-sm">Access Denied / Error</p>
+                    <p class="text-xs opacity-80">${e.message || 'Error loading response data.'}</p>
+                </div>
+            </div>`;
+        }
+    }
+
+    async function saveEditResponse(btn) {
+        if (!currentEditResponseId) return;
+
+        const form = document.getElementById('editResponseForm');
+        const alertEl = document.getElementById('editModalAlert');
+        const answers = {};
+
+        const elements = form.querySelectorAll('input[name], textarea[name], select[name]');
+        const seen = new Set();
+        elements.forEach(el => {
+            if (!el.name || el.name === 'csrfmiddlewaretoken') return;
+            const qId = el.name.replace('q_', '');
+            if (el.type === 'radio') {
+                if (el.checked) {
+                    answers[qId] = el.value;
+                    seen.add(qId);
+                } else if (!seen.has(qId)) {
+                    answers[qId] = null;
+                }
+            } else if (el.type === 'checkbox') {
+                if (!answers[qId]) answers[qId] = [];
+                if (el.checked) {
+                    answers[qId].push(el.value);
+                }
+            } else {
+                answers[qId] = el.value;
+            }
+        });
+
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (!csrfToken) return;
+
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+
+        try {
+            const resp = await fetch(`/questionnaires/responses/${currentEditResponseId}/api-update/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ answers })
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+                alertEl.classList.remove('hidden');
+                alertEl.innerHTML = `
+                    <div class="px-4 py-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl flex items-center shadow-sm">
+                        <i class="fas fa-check-circle mr-3 text-blue-500"></i>
+                        <span class="font-bold text-sm uppercase tracking-tight">${data.message}</span>
+                    </div>
+                `;
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alertEl.classList.remove('hidden');
+                alertEl.innerHTML = `
+                    <div class="px-4 py-3 bg-red-50 border border-red-200 text-red-800 rounded-xl flex items-center shadow-sm">
+                        <i class="fas fa-exclamation-circle mr-3 text-red-500"></i>
+                        <span class="font-bold text-sm">${data.message}</span>
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        } catch (e) {
+            alertEl.classList.remove('hidden');
+            alertEl.innerHTML = `
+                <div class="px-4 py-3 bg-red-50 border border-red-200 text-red-800 rounded-xl flex items-center shadow-sm">
+                    <i class="fas fa-exclamation-circle mr-3 text-red-500"></i>
+                    <span class="font-bold text-sm italic">Failed to securely update response.</span>
+                </div>
+            `;
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+</script>
+{% endblock %}

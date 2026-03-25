@@ -132,9 +132,9 @@
 
                         <div class="col-md-4 mb-3">
                             <label for="date_of_birth" class="form-label">
-                                Date of Birth <span class="text-danger">*</span>
+                                Date of Birth
                             </label>
-                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
                         </div>
 
                         <div class="col-md-4 mb-3">
@@ -169,10 +169,10 @@
 
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">
-                                Email Address
+                                Email Address <span class="text-danger">*</span>
                             </label>
                             <input type="email" class="form-control" id="email" name="email"
-                                placeholder="Optional email address">
+                                placeholder="Email address (required)" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -289,7 +289,7 @@
                                     <input type="number" name="heart_rate" class="form-control" placeholder="72">
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label">Resp. Rate</label>
+                                    <label class="form-label">Resp. Rate (BPM)</label>
                                     <input type="number" name="respiratory_rate" class="form-control" placeholder="16">
                                 </div>
                             </div>
@@ -411,6 +411,11 @@
                 </h5>
             </div>
             <div class="card-body">
+                <div id="vitalsSummarySection" class="alert alert-light border border-info-subtle py-2 px-3 mb-3 d-flex align-items-center" style="display: none !important;">
+                    <i class="fas fa-heartbeat text-danger me-2"></i>
+                    <span id="vitalsSummaryText" class="small text-muted font-monospace">No vitals linked.</span>
+                    <span class="badge bg-light text-dark border ms-auto small">Visit Snapshot</span>
+                </div>
                 <div id="questionnaireContent">
                     <!-- Questionnaire will be loaded here -->
                 </div>
@@ -681,15 +686,74 @@
     #questionnaireContent .radio-group,
     #questionnaireContent .checkbox-group {
         display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.5rem;
     }
 
     #questionnaireContent .radio-label,
     #questionnaireContent .checkbox-label {
         font-weight: 500;
         color: #495057;
+        margin-bottom: 0;
+        cursor: pointer;
+    }
+
+    /* Option Card Styling */
+    #questionnaireContent .option-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: #fff;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        height: 100%;
+        display: block;
+    }
+
+    #questionnaireContent .option-card:hover {
+        background-color: #f8f9fa;
+        border-color: #0d6efd;
+    }
+
+    #questionnaireContent .option-card.selected,
+    #questionnaireContent .option-card:has(.form-check-input:checked) {
+        border-color: #0d6efd;
+        background-color: #f0f7ff;
+        box-shadow: 0 0 0 1px #0d6efd;
+    }
+
+    #questionnaireContent .option-image-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
         margin-bottom: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    #questionnaireContent .option-image-container img {
+        max-height: 200px;
+        width: 100%;
+        object-fit: contain;
+    }
+
+    /* Dynamic Column Logic */
+    #questionnaireContent .option-row:has(.option-image-container) .option-col {
+        flex: 0 0 auto;
+        width: 50% !important;
+    }
+
+    #questionnaireContent .option-row:not(:has(.option-image-container)) .option-col {
+        flex: 0 0 auto;
+        width: 25% !important;
+    }
+
+    @media (max-width: 768px) {
+        #questionnaireContent .option-row .option-col {
+            width: 50% !important;
+        }
     }
 
     #questionnaireContent .btn {
@@ -726,6 +790,12 @@
         }
     }
 
+    /* Lighter placeholders for vitals */
+    #vitalsForm .form-control::placeholder {
+        color: #adb5bd !important;
+        opacity: 0.6;
+    }
+
     /* Responsive Improvements */
     @media (max-width: 768px) {
         .questionnaire-card {
@@ -753,6 +823,8 @@
 <script>
     let currentPatient = null;
     let selectedQuestionnaire = null;
+    let currentSessionId = null;
+    let currentVitalsId = null;
 
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize form
@@ -821,7 +893,14 @@
                 'X-CSRFToken': getCookie('csrftoken')
             }
         })
-            .then(response => response.json())
+            .then(async response => {
+                if (response.redirected && response.url.includes('/login/')) {
+                    showAlert('Session expired. Redirecting to login...', 'warning');
+                    setTimeout(() => window.location.href = response.url, 1500);
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.patients && data.patients.length > 0) {
                     // Check if there are phone duplicates
@@ -843,7 +922,7 @@
             })
             .catch(error => {
                 console.error('Error searching patients:', error);
-                resultsDiv.innerHTML = '<div class="alert alert-danger">Error searching patients. Please try again.</div>';
+                resultsDiv.innerHTML = `<div class="alert alert-danger">Error searching patients: ${error.message || 'Please try again.'}</div>`;
             });
     }
 
@@ -978,6 +1057,10 @@
         const form = document.getElementById('patientRegistrationForm');
         const submitBtn = document.getElementById('registerPatientBtn');
 
+        // Clear previous errors
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
         // Validate consent
         if (!document.getElementById('consentCheckbox').checked) {
             showAlert('Please confirm patient consent has been obtained.', 'warning');
@@ -1001,18 +1084,30 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(response => {
-                // Check if response is JSON or HTML
+            .then(async response => {
+                if (response.redirected && response.url.includes('/login/')) {
+                    showAlert('Session expired. Redirecting to login...', 'warning');
+                    setTimeout(() => window.location.href = response.url, 1500);
+                    throw new Error('Session expired');
+                }
+                
+                if (!response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    }
+                    throw new Error(`Server error (${response.status})`);
+                }
+
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     return response.json();
                 } else {
-                    // If it's HTML (redirect), treat as success
-                    return { success: true, message: 'Registration successful' };
+                    throw new Error('Invalid server response format (expected JSON)');
                 }
             })
             .then(data => {
-                if (data.success) {
+                if (data.success && data.patient) {
                     currentPatient = data.patient;
                     showStep2();
 
@@ -1022,8 +1117,23 @@
                 } else if (data.has_phone_duplicates) {
                     // Specific handling for phone duplicates
                     showPhoneDuplicateModal(data.patients, data.message);
-                } else {
-                    showAlert(data.message || 'Registration failed. Please try again.', 'danger');
+                } else if (!data.success) {
+                    if (data.errors) {
+                        // Display field-specific errors
+                        for (const [field, messages] of Object.entries(data.errors)) {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            if (input) {
+                                input.classList.add('is-invalid');
+                                const feedback = document.createElement('div');
+                                feedback.className = 'invalid-feedback d-block';
+                                feedback.textContent = messages.join(' ');
+                                input.parentNode.appendChild(feedback);
+                            }
+                        }
+                        showAlert('Please correct the highlighted errors.', 'danger');
+                    } else {
+                        showAlert(data.message || 'Registration failed. Please try again.', 'danger');
+                    }
                 }
             })
             .catch(error => {
@@ -1073,13 +1183,23 @@
             }
             
             document.getElementById('vitalsPatientDetail').textContent = details;
-            document.getElementById('vitalsPatientHiddenId').value = currentPatient.id;
+            const hiddenIdField = document.getElementById('vitalsPatientHiddenId');
+            if (hiddenIdField) hiddenIdField.value = currentPatient.id;
+        } else {
+            console.warn('showStep2 called without currentPatient');
+            showAlert('Patient data missing. Please try selecting or registering the patient again.', 'warning');
+            showStep1();
         }
     }
 
     function saveVitals() {
         const form = document.getElementById('vitalsForm');
         const submitBtn = form.querySelector('button[type="submit"]');
+        
+        // Clear previous errors
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
         const originalContent = showLoading($(submitBtn));
 
         const formData = new FormData(form);
@@ -1092,13 +1212,53 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(response => response.json())
+            .then(async response => {
+                if (response.redirected && response.url.includes('/login/')) {
+                    showAlert('Session expired. Redirecting to login...', 'warning');
+                    setTimeout(() => window.location.href = response.url, 1500);
+                    throw new Error('Session expired');
+                }
+                
+                if (!response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    }
+                    throw new Error(`Server error (${response.status})`);
+                }
+
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
+                    currentVitalsId = data.vitals_id; // Capture vitals ID for linking to response
                     showAlert('Vitals saved successfully', 'success');
                     showStep3();
                 } else {
-                    showAlert(data.message || 'Error saving vitals', 'danger');
+                    if (data.errors) {
+                        // Display field-specific errors
+                        for (const [field, messages] of Object.entries(data.errors)) {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            const inputById = form.querySelector(`#${field}`); // VitalsForm might use simple IDs
+                            const target = input || inputById;
+                            
+                            if (target) {
+                                target.classList.add('is-invalid');
+                                const feedback = document.createElement('div');
+                                feedback.className = 'invalid-feedback d-block';
+                                feedback.textContent = messages.join(' ');
+                                // Special case for grouped inputs like BP
+                                if (target.parentNode.classList.contains('input-group') || target.classList.contains('form-control')) {
+                                     target.parentNode.appendChild(feedback);
+                                } else {
+                                     target.after(feedback);
+                                }
+                            }
+                        }
+                        showAlert('Please correct the highlighted errors.', 'danger');
+                    } else {
+                        showAlert(data.message || 'Error saving vitals', 'danger');
+                    }
                 }
             })
             .catch(error => {
@@ -1180,7 +1340,14 @@
                 'X-CSRFToken': getCookie('csrftoken')
             }
         })
-            .then(response => response.json())
+            .then(async response => {
+                if (response.redirected && response.url.includes('/login/')) {
+                    showAlert('Session expired. Redirecting to login...', 'warning');
+                    setTimeout(() => window.location.href = response.url, 1500);
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.questionnaires && data.questionnaires.length > 0) {
                     listDiv.innerHTML = data.questionnaires.map(q => `
@@ -1253,6 +1420,20 @@
 
                 if (questionnaireForm) {
                     contentDiv.innerHTML = questionnaireForm.outerHTML;
+
+                    // Update vitals summary in Step 4
+                    const vitalsSummarySection = document.getElementById('vitalsSummarySection');
+                    const vitalsSummaryText = document.getElementById('vitalsSummaryText');
+                    
+                    if (currentVitalsId) {
+                        vitalsSummarySection.style.setProperty('display', 'flex', 'important');
+                        vitalsSummaryText.textContent = `Vitals recorded during this session will be linked to this response.`;
+                        vitalsSummarySection.classList.replace('alert-light', 'alert-info');
+                    } else {
+                        vitalsSummarySection.style.setProperty('display', 'flex', 'important');
+                        vitalsSummaryText.textContent = `No new vitals recorded. Will fallback to the most recent historical data.`;
+                        vitalsSummarySection.classList.replace('alert-info', 'alert-light');
+                    }
 
                     // Remove unwanted navigation buttons from the loaded form
                     const loadedForm = contentDiv.querySelector('form');
@@ -1353,7 +1534,7 @@
         switch (question.question_type) {
             case 'yes_no':
                 return `
-                <div class="mt-2">
+                <div class="d-flex gap-4 flex-wrap mt-2">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="question_${question.id}" value="yes" id="question_${question.id}_yes" ${question.is_required ? 'required' : ''}>
                         <label class="form-check-label" for="question_${question.id}_yes">Yes</label>
@@ -1367,7 +1548,7 @@
 
             case 'true_false':
                 return `
-                <div class="mt-2">
+                <div class="d-flex gap-4 flex-wrap mt-2">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="question_${question.id}" value="true" id="question_${question.id}_true" ${question.is_required ? 'required' : ''}>
                         <label class="form-check-label" for="question_${question.id}_true">True</label>
@@ -1380,12 +1561,22 @@
             `;
 
             case 'multiple_choice':
+                const hasImages = question.options.some(opt => opt.image);
                 return `
-                <div class="mt-2">
+                <div class="row g-2 mt-2 justify-content-center option-row">
                     ${question.options.map(option => `
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="question_${question.id}" value="${option.id}" id="question_${question.id}_option_${option.id}" ${question.is_required ? 'required' : ''}>
-                            <label class="form-check-label" for="question_${question.id}_option_${option.id}">${option.text}</label>
+                        <div class="col-6 ${hasImages ? '' : 'col-md-3'} option-col">
+                            <label class="form-check option-card p-1 relative text-center h-100" for="question_${question.id}_option_${option.id}">
+                                <input class="form-check-input ms-0 mt-0" type="radio" name="question_${question.id}" value="${option.id}" id="question_${question.id}_option_${option.id}" ${question.is_required ? 'required' : ''}>
+                                <div class="option-content mt-1">
+                                    ${option.image ? `
+                                        <div class="option-image-container mb-1">
+                                            <img src="${option.image}" alt="${option.text}" style="max-height: 150px; width: 100%; object-fit: contain;">
+                                        </div>
+                                    ` : ''}
+                                    <span class="d-block fw-bold small" style="font-size: 0.85rem;">${option.text}</span>
+                                </div>
+                            </label>
                         </div>
                     `).join('')}
                 </div>
@@ -1471,6 +1662,14 @@
             formData.append('patient_id', currentPatient.patient_id);
         }
 
+        if (currentVitalsId) {
+            formData.append('vitals_id', currentVitalsId);
+        }
+        
+        if (currentSessionId) {
+            formData.append('session_id', currentSessionId);
+        }
+
         fetch('/health-assistant/api/submit-questionnaire/', {
             method: 'POST',
             body: formData,
@@ -1479,7 +1678,23 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(response => response.json())
+            .then(async response => {
+                if (response.redirected && response.url.includes('/login/')) {
+                    showAlert('Session expired. Redirecting to login...', 'warning');
+                    setTimeout(() => window.location.href = response.url, 1500);
+                    throw new Error('Session expired');
+                }
+                
+                if (!response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    }
+                    throw new Error(`Server error (${response.status})`);
+                }
+
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showSuccessModal('completion');
@@ -1542,11 +1757,11 @@
             </div>
             <div class="row">
                 <div class="col-md-6">
-                    <p class="mb-2"><strong>Patient ID:</strong> <span class="badge bg-primary fs-6">${currentPatient.patient_id || currentPatient.id || 'N/A'}</span></p>
-                    <p class="mb-2"><strong>Setu ID:</strong> <span class="badge bg-light text-dark border">${currentPatient.setu_id || 'Not Provided'}</span></p>
+                    <p class="mb-2"><strong>Patient ID:</strong> <span class="badge bg-primary fs-6">${(currentPatient && currentPatient.patient_id) || (currentPatient && currentPatient.id) || 'N/A'}</span></p>
+                    <p class="mb-2"><strong>Setu ID:</strong> <span class="badge bg-light text-dark border">${(currentPatient && currentPatient.setu_id) || 'Not Provided'}</span></p>
                 </div>
                 <div class="col-md-6">
-                    <p class="mb-2"><strong>Name:</strong> ${currentPatient.name || (currentPatient.first_name + ' ' + currentPatient.last_name) || 'N/A'}</p>
+                    <p class="mb-2"><strong>Name:</strong> ${(currentPatient && (currentPatient.name || (currentPatient.first_name + ' ' + currentPatient.last_name))) || 'N/A'}</p>
                 </div>
             </div>
             <div class="row mt-2">

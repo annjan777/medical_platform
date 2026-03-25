@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from .models import Patient, MedicalRecord, VitalSigns, PatientNote, Document
+import re
 
 class BaseForm(forms.ModelForm):
     """Base form class with common functionality for all forms"""
@@ -63,6 +64,20 @@ class PatientForm(BaseForm):
         if dob and dob > timezone.now().date():
             raise ValidationError(_("Date of birth cannot be in the future"))
         return dob
+
+    def clean_phone_number(self):
+        """Validate phone number is exactly 10 digits"""
+        phone = self.cleaned_data.get('phone_number')
+        if not phone:
+            raise ValidationError(_("Phone number is mandatory."))
+            
+        # Remove any non-digit characters
+        digits = re.sub(r'\D', '', phone)
+        
+        if len(digits) != 10:
+            raise ValidationError(_(f"Phone number must be exactly 10 digits. You entered {len(digits)} digits."))
+            
+        return digits
 
 class MedicalRecordForm(BaseForm):
     """Form for creating and updating Medical Records"""

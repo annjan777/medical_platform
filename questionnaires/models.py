@@ -281,6 +281,13 @@ class Response(models.Model):
         blank=True,
         related_name='questionnaire_responses'
     )
+    vitals = models.ForeignKey(
+        'patients.PatientVitals',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='questionnaire_responses'
+    )
     is_complete = models.BooleanField(default=False)
     started_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(null=True, blank=True)

@@ -74,6 +74,9 @@ server {
         expires 30d;
     }
 
+    # Client max body size for file uploads
+    client_max_body_size 100M;
+
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;

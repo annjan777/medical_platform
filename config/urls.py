@@ -42,6 +42,7 @@ urlpatterns = [
     path("screening/", include(("screening.urls", "screening"), namespace="screening")),
     path("questionnaires/", include(("questionnaires.urls", "questionnaires"), namespace="questionnaires")),
     path("iot/", include(("iot_gateway.urls", "iot_gateway"), namespace="iot_gateway")),
+    path("api/session-ping/", include("core.urls")),
 ]
 
 # =========================

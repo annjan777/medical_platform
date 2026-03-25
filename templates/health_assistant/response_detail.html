@@ -231,12 +231,16 @@
                 {% elif answer.text_answer %}
                 <div class="text-sm text-gray-700 font-medium italic border-l-2 border-emerald-200 pl-3 py-1">{{ answer.text_answer }}</div>
                 {% elif answer.option_answer.exists %}
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-4">
                   {% for option in answer.option_answer.all %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold bg-white text-emerald-700 border border-emerald-200 shadow-sm">
-                      {% if option.option_image %}<img src="{{ option.option_image.url }}" class="h-4 w-4 rounded-full mr-1.5">{% endif %}
-                      {{ option.text }}
-                    </span>
+                    <div class="flex flex-col items-center p-2 rounded-xl bg-gray-50 border border-gray-100 shadow-sm min-w-[100px]">
+                      {% if option.option_image %}
+                        <img src="{{ option.option_image.url }}" class="h-32 w-32 object-contain rounded-lg mb-2 bg-white">
+                      {% endif %}
+                      <span class="text-xs font-bold text-emerald-700 text-center">
+                        {{ option.text }}
+                      </span>
+                    </div>
                   {% endfor %}
                 </div>
                 {% else %}

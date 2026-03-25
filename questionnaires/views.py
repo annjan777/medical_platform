@@ -22,6 +22,7 @@ from datetime import datetime
 from accounts.models import User
 from .models import Questionnaire, Question, QuestionOption, Response, Answer
 from .forms import QuestionnaireForm, QuestionForm, ResponseForm
+from patients.models import PatientVitals
 
 # Questionnaire Views
 class QuestionnaireListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -333,12 +334,29 @@ class ResponseDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['answers'] = self.object.answers.select_related('question')
-        # Fetch latest vitals for the patient associated with this response
-        if self.object.patient:
+        
+        # Use the specifically linked vital snapshot if it exists
+        if self.object.vitals:
+            context['vitals'] = self.object.vitals
+        # Fallback to vitals recorded around the time of the response (for older records)
+        elif self.object.patient:
             from patients.models import PatientVitals
+            # Prefer vitals recorded before or at the time of submission
+            from django.utils import timezone
+            base_time = self.object.submitted_at or self.object.started_at or timezone.now()
+            
+            # Find the most recent vitals recorded *before* this response was submitted
             context['vitals'] = PatientVitals.objects.filter(
-                patient=self.object.patient
+                patient=self.object.patient,
+                recorded_at__lte=base_time
             ).order_by('-recorded_at').first()
+            
+            # If no vitals were recorded before (e.g. recorded slightly after or same time),
+            # just get the very latest as the best guess
+            if not context['vitals']:
+                context['vitals'] = PatientVitals.objects.filter(
+                    patient=self.object.patient
+                ).order_by('-recorded_at').first()
         else:
             context['vitals'] = None
         return context
@@ -382,15 +400,34 @@ def get_response_edit_form(request, pk):
 
         # Get all questions in the questionnaire, not just the answered ones
         questions = response_obj.questionnaire.questions.all().order_by('order', 'id')
+        
+        # If a specific question ID is provided, figure out exactly which questions to show 
+        # (the question itself, plus any conditional descendants)
+        target_question_id = request.GET.get('question_id')
+        if target_question_id:
+            try:
+                target_question_id = int(target_question_id)
+                target_question = questions.get(id=target_question_id)
+                # Keep the target question and all its descendants
+                descendants = target_question.get_all_descendants()
+                descendant_ids = [d.id for d in descendants]
+                allowed_ids = set([target_question_id] + descendant_ids)
+                questions = [q for q in questions if q.id in allowed_ids]
+            except (ValueError, Question.DoesNotExist):
+                pass
+                
         # Create a map of question_id to answer for easier lookup
         answers_map = {a.question_id: a for a in response_obj.answers.all()}
         
         # Bundle question and answer together for easy template iteration
         bundled_data = []
+        allowed_ids = {q.id for q in questions}
         for q in questions:
+            is_parent_present = bool(q.parent_id and q.parent_id in allowed_ids)
             bundled_data.append({
                 'question': q,
-                'answer': answers_map.get(q.id)
+                'answer': answers_map.get(q.id),
+                'is_hidden': bool(q.parent and is_parent_present)
             })
         
         return render(request, 'questionnaires/partials/response_edit_form.html', {
@@ -756,9 +793,22 @@ def download_responses(request):
         
         # Write data rows
         for response in q_responses:
-            vitals = None
-            if response.patient:
-                vitals = PatientVitals.objects.filter(patient=response.patient).order_by('-recorded_at').first()
+            # Use specifically linked vitals snapshot if available
+            vitals = response.vitals
+            if not vitals and response.patient:
+                # Fallback: Find vitals recorded at or before the response time
+                # Uses submitted_at (if complete) or started_at
+                ref_time = response.submitted_at or response.started_at or timezone.now()
+                vitals = PatientVitals.objects.filter(
+                    patient=response.patient,
+                    recorded_at__lte=ref_time
+                ).order_by('-recorded_at').first()
+                
+                # If still none recorded before (backwards compatibility), get very latest
+                if not vitals:
+                    vitals = PatientVitals.objects.filter(
+                        patient=response.patient
+                    ).order_by('-recorded_at').first()
             
             row = [
                 response.id,

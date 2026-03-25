@@ -22,7 +22,8 @@ def _on_connect(client, userdata, flags, rc):
         client.subscribe("device/+/heartbeat")
         client.subscribe("device/+/status")
         client.subscribe("device/+/disconnect")
-        logger.info("[MQTT] Subscribed to device/+/heartbeat,status,disconnect")
+        client.subscribe("device/+/reading")
+        logger.info("[MQTT] Subscribed to device/+/heartbeat,status,disconnect,reading")
     else:
         logger.error(f"[MQTT] Connection failed with code {rc}")
 
@@ -30,7 +31,8 @@ def _on_connect(client, userdata, flags, rc):
 def _on_message(client, userdata, msg):
     """Process incoming MQTT messages and update Device.connection_status in DB."""
     from django.utils import timezone
-    from devices.models import Device
+    from devices.models import Device, DeviceReading
+    from screening.models import ScreeningSession
 
     topic = msg.topic
     try:
@@ -65,6 +67,32 @@ def _on_message(client, userdata, msg):
                     device.connection_status = Device.CONNECTION_DISCONNECTED
                     device.save(update_fields=['connection_status'])
                     logger.info(f"[MQTT] {device_id} explicitly DISCONNECTED")
+
+                elif action == 'reading':
+                    # New logic to handle MQTT based data ingestion
+                    try:
+                        data = json.loads(payload)
+                        session_id = data.get('session_id')
+                        reading_type = data.get('reading_type', 'vitals')
+                        value = data.get('value')
+
+                        if session_id and value:
+                            session = ScreeningSession.objects.get(pk=session_id)
+                            
+                            # Create a DeviceReading record
+                            DeviceReading.objects.create(
+                                device=device,
+                                patient=session.patient,
+                                reading_type=reading_type,
+                                reading_data={"value": value, "session_id": session_id, "source": "MQTT"},
+                                recorded_at=timezone.now(),
+                                recorded_by=session.conducted_by
+                            )
+                            logger.info(f"[MQTT] Created reading for session {session_id} from {device_id}")
+                        else:
+                            logger.warning(f"[MQTT] Missing session_id or value in reading payload: {payload}")
+                    except Exception as e:
+                        logger.error(f"[MQTT] Failed to process reading: {e}")
 
             except Device.DoesNotExist:
                 logger.warning(f"[MQTT] Device not found: {device_id}")

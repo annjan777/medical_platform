@@ -247,7 +247,7 @@
 
         resultsDiv.innerHTML = '<div class="spinner"></div>';
 
-        makeAjaxRequest(`/health-assistant/api/search-patients/?q=${query}`)
+        makeAjaxRequest(`/health-assistant/api/search-patients/?q=${encodeURIComponent(query)}`)
             .then(data => {
                 if (data.patients && data.patients.length > 0) {
                     resultsDiv.innerHTML = data.patients.map(patient => `
@@ -272,12 +272,15 @@
                         </div>
                     </div>
                 `).join('');
+                } else if (data.success === false) {
+                    resultsDiv.innerHTML = `<div class="alert alert-danger">${data.message || 'Error searching patients.'}</div>`;
                 } else {
                     resultsDiv.innerHTML = '<div class="alert alert-info">No patients found. Try a different search or register a new patient.</div>';
                 }
             })
             .catch(error => {
-                resultsDiv.innerHTML = '<div class="alert alert-danger">Error searching patients. Please try again.</div>';
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = `<div class="alert alert-danger">Error searching patients: ${error.message || 'Please try again.'}</div>`;
             });
     }
 
@@ -289,7 +292,13 @@
                     displaySelectedPatient();
                     // Auto-select first available product in background
                     loadAndAutoSelectProduct();
+                } else {
+                    showAlert(data.message || 'Failed to get patient details.', 'danger');
                 }
+            })
+            .catch(error => {
+                console.error("Error selecting patient:", error);
+                showAlert(`Error selecting patient: ${error.message || 'Please try again.'}`, 'danger');
             });
     }
 

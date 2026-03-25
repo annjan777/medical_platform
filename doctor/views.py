@@ -38,7 +38,7 @@ def doctor_home(request):
 
 class PatientListView(DoctorRequiredMixin, ListView):
     model = Patient
-    template_name = 'doctor/patient_list.html'
+    template_name = 'doctor/patient_management.html'
     context_object_name = 'patients'
     paginate_by = 20
 
@@ -84,6 +84,7 @@ class PendingConsultationListView(PatientListView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Pending Consultations"
         context['page_subtitle'] = "Patients waiting for dentist's consultation or needing active follow-up."
+        context['view'] = 'pending'
         return context
 
 class CompletedConsultationListView(PatientListView):
@@ -98,6 +99,7 @@ class CompletedConsultationListView(PatientListView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Completed Consultations"
         context['page_subtitle'] = "Patients who have received a consultation."
+        context['view'] = 'completed'
         return context
 
 class PatientDetailView(DoctorRequiredMixin, DetailView):
@@ -115,12 +117,51 @@ class PatientDetailView(DoctorRequiredMixin, DetailView):
 
 class ResponseListView(DoctorRequiredMixin, ListView):
     model = Response
-    template_name = 'doctor/response_list.html'
+    template_name = 'doctor/response_management.html'
     context_object_name = 'responses'
     paginate_by = 20
 
     def get_queryset(self):
-        return Response.objects.select_related('patient', 'questionnaire', 'respondent').order_by('-submitted_at')
+        queryset = Response.objects.select_related('patient', 'questionnaire', 'respondent')
+        
+        # Filter by questionnaire if specified
+        questionnaire_id = self.request.GET.get('questionnaire')
+        if questionnaire_id:
+            queryset = queryset.filter(questionnaire_id=questionnaire_id)
+            
+        # Filter by patient if specified
+        patient_id = self.request.GET.get('patient')
+        if patient_id:
+            queryset = queryset.filter(Q(patient__patient_id__icontains=patient_id) | 
+                                     Q(patient__first_name__icontains=patient_id) | 
+                                     Q(patient__last_name__icontains=patient_id))
+            
+        # Filter by date range if specified
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        
+        if date_from:
+            try:
+                from datetime import datetime
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                queryset = queryset.filter(started_at__date__gte=date_from_obj)
+            except ValueError:
+                pass
+                
+        if date_to:
+            try:
+                from datetime import datetime
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                queryset = queryset.filter(started_at__date__lte=date_to_obj)
+            except ValueError:
+                pass
+            
+        return queryset.order_by('-submitted_at', '-started_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['questionnaires'] = Questionnaire.objects.filter(is_active=True)
+        return context
 
 class ResponseDetailView(DoctorRequiredMixin, DetailView):
     model = Response

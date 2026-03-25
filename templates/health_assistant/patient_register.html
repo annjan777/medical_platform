@@ -61,7 +61,7 @@
 
                         <div class="col-md-4 mb-3">
                             <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">
-                                Date of Birth <span class="text-danger">*</span>
+                                Date of Birth
                             </label>
                             {{ form.date_of_birth }}
                             {% if form.date_of_birth.errors %}
@@ -102,10 +102,10 @@
 
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.email.id_for_label }}" class="form-label">
-                                Email Address
+                                Email Address <span class="text-danger">*</span>
                             </label>
                             {{ form.email }}
-                            <small class="text-muted">Optional: Email address</small>
+                            <small class="text-muted">Required: Email address</small>
                         </div>
                     </div>
 
@@ -255,6 +255,13 @@
             e.preventDefault();
             e.stopPropagation();
 
+            // Clear previous errors
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+            form.querySelectorAll('.text-danger').forEach(el => {
+                if (!el.closest('.alert')) el.remove(); // Keep alert messages
+            });
+
             console.log('Submit button clicked!');
 
             // Validate consent checkbox
@@ -297,7 +304,22 @@
 
                     } else {
                         console.log('Registration failed:', data.message);
-                        showAlert(data.message || 'Registration failed. Please try again.', 'danger');
+                        if (data.errors) {
+                            // Display field-specific errors
+                            for (const [field, messages] of Object.entries(data.errors)) {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    input.classList.add('is-invalid');
+                                    const feedback = document.createElement('div');
+                                    feedback.className = 'invalid-feedback d-block';
+                                    feedback.textContent = messages.join(' ');
+                                    input.after(feedback);
+                                }
+                            }
+                            showAlert('Please correct the highlighted errors.', 'danger');
+                        } else {
+                            showAlert(data.message || 'Registration failed. Please try again.', 'danger');
+                        }
                     }
                 })
                 .catch(error => {

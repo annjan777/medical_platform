@@ -21,8 +21,8 @@ urlpatterns = [
     # Screening Sessions
     path('screening/', views.screening_session, name='screening_session'),
     path('screening/<int:patient_id>/', views.screening_session, name='screening_with_patient'),
-    path('session/<int:session_id>/', views.session_detail, name='session_detail'),
-    path('session/<int:session_id>/overview/', views.session_overview, name='session_overview'),
+    path('session/<str:session_id>/', views.session_detail, name='session_detail'),
+    path('session/<str:session_id>/overview/', views.session_overview, name='session_overview'),
     path('sessions/', views.my_sessions, name='my_sessions'),
     
     # API Endpoints
@@ -40,5 +40,5 @@ urlpatterns = [
     path('api/create-session/', views.api_create_session, name='api_create_session'),
     path('api/submit-questionnaire/', views.api_submit_questionnaire, name='api_submit_questionnaire'),
     path('api/save-vitals/', views.api_save_vitals, name='api_save_vitals'),
-    path('api/session/<int:session_id>/associate-device/', views.api_associate_device, name='api_associate_device'),
+    path('api/session/<str:session_id>/associate-device/', views.api_associate_device, name='api_associate_device'),
 ]

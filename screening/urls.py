@@ -14,21 +14,21 @@ urlpatterns = [
     # Screening Session URLs
     path('sessions/', views.ScreeningSessionListView.as_view(), name='session_list'),
     path('sessions/create/', views.ScreeningSessionCreateView.as_view(), name='session_create'),
-    path('sessions/<int:pk>/', views.ScreeningSessionDetailView.as_view(), name='session_detail'),
-    path('sessions/<int:pk>/update/', views.ScreeningSessionUpdateView.as_view(), name='session_update'),
-    path('sessions/<int:pk>/delete/', views.ScreeningSessionDeleteView.as_view(), name='session_delete'),
-    path('sessions/<int:pk>/start/', views.start_screening, name='session_start'),
-    path('sessions/<int:pk>/complete/', views.complete_screening, name='session_complete'),
-    path('sessions/<int:pk>/cancel/', views.cancel_screening, name='session_cancel'),
+    path('sessions/<str:pk>/', views.ScreeningSessionDetailView.as_view(), name='session_detail'),
+    path('sessions/<str:pk>/update/', views.ScreeningSessionUpdateView.as_view(), name='session_update'),
+    path('sessions/<str:pk>/delete/', views.ScreeningSessionDeleteView.as_view(), name='session_delete'),
+    path('sessions/<str:pk>/start/', views.start_screening, name='session_start'),
+    path('sessions/<str:pk>/complete/', views.complete_screening, name='session_complete'),
+    path('sessions/<str:pk>/cancel/', views.cancel_screening, name='session_cancel'),
     
     # Screening Result URLs
-    path('sessions/<int:session_pk>/result/', views.ScreeningResultCreateView.as_view(), name='result_create'),
+    path('sessions/<str:session_pk>/result/', views.ScreeningResultCreateView.as_view(), name='result_create'),
     path('results/<int:pk>/', views.ScreeningResultDetailView.as_view(), name='result_detail'),
     path('results/<int:pk>/update/', views.ScreeningResultUpdateView.as_view(), name='result_update'),
     
     # API Endpoints
     path('api/screening-types/', views.ScreeningTypeListAPIView.as_view(), name='api_screening_type_list'),
     path('api/sessions/', views.ScreeningSessionListCreateAPIView.as_view(), name='api_session_list_create'),
-    path('api/sessions/<int:pk>/', views.ScreeningSessionRetrieveUpdateDestroyAPIView.as_view(), 
+    path('api/sessions/<str:pk>/', views.ScreeningSessionRetrieveUpdateDestroyAPIView.as_view(), 
          name='api_session_retrieve_update_destroy'),
 ]

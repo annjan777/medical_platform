@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 
 class Patient(models.Model):
     class Gender(models.TextChoices):
@@ -25,15 +25,22 @@ class Patient(models.Model):
     )
     first_name = models.CharField(_('first name'), max_length=150)
     last_name = models.CharField(_('last name'), max_length=150)
-    date_of_birth = models.DateField(_('date of birth'))
+    date_of_birth = models.DateField(_('date of birth'), null=True, blank=True)
     gender = models.CharField(
         _('gender'),
         max_length=1,
         choices=Gender.choices,
         default=Gender.UNSPECIFIED
     )
-    phone_number = models.CharField(_('phone number'), max_length=20, unique=True, null=False, blank=False)
-    email = models.EmailField(_('email address'), blank=True)
+    phone_number = models.CharField(
+        _('phone number'), 
+        max_length=15, 
+        unique=True, 
+        null=False, 
+        blank=False,
+        validators=[RegexValidator(regex=r'^\d{10}$', message=_("Phone number must be exactly 10 digits."))]
+    )
+    email = models.EmailField(_('email address'))
     address = models.TextField(_('address'), blank=True)
     city = models.CharField(_('city'), max_length=100, blank=True)
     state = models.CharField(_('state/province'), max_length=100, blank=True)
@@ -64,12 +71,39 @@ class Patient(models.Model):
         # Generate patient ID if it doesn't exist
         if not self.patient_id:
             self.patient_id = self.generate_patient_id()
+        
+        # Call super first to ensure patient exists in DB
         super().save(*args, **kwargs)
+        
+        # Ensure a default screening session exists for this patient
+        try:
+            from screening.models import ScreeningSession, ScreeningType
+            from django.utils import timezone
+            
+            # Use the first active screening type as default or any existing one
+            default_type = ScreeningType.objects.filter(is_active=True).first()
+            if default_type:
+                # Use update_or_create to ensure the ID matches patient_id
+                # and create session if it doesn't exist
+                ScreeningSession.objects.get_or_create(
+                    id=self.patient_id,
+                    defaults={
+                        'patient': self,
+                        'screening_type': default_type,
+                        'status': ScreeningSession.STATUS_SCHEDULED,
+                        'scheduled_date': timezone.now(),
+                    }
+                )
+        except Exception as e:
+            # We don't want to fail patient save if session creation fails
+            # but we should log it or handle it appropriately
+            print(f"Error creating default session for patient {self.patient_id}: {e}")
     
     def generate_patient_id(self):
-        """Generate a unique patient ID in format MDCP0001, MDCP0002, etc."""
+        """Generate a unique patient ID in format MDCP000001, MDCP000002, etc."""
         from django.db.models import Max
         
+        # Use 6 digits instead of 4 to support up to 999,999 students consistently.
         # Get the highest current patient ID number
         last_patient = Patient.objects.aggregate(
             max_id=Max('patient_id')
@@ -87,7 +121,7 @@ class Patient(models.Model):
             else:
                 new_number = 1
         
-        return f"MDCP{new_number:04d}"
+        return f"MDCP{new_number:06d}"
     
     @property
     def full_name(self):

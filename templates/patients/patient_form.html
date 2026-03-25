@@ -62,9 +62,9 @@
               </div>
               
               <div class="mb-3">
-                <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth *</label>
+                <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth</label>
                 <input type="date" name="{{ form.date_of_birth.name }}" id="{{ form.date_of_birth.id_for_label }}" 
-                       class="form-control" value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}" required>
+                       class="form-control" value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}">
                 {% if form.date_of_birth.errors %}
                   <div class="text-danger small mt-1">{{ form.date_of_birth.errors.0 }}</div>
                 {% endif %}
@@ -98,10 +98,10 @@
               </div>
               
               <div class="mb-3">
-                <label for="{{ form.email.id_for_label }}" class="form-label">Email Address</label>
+                <label for="{{ form.email.id_for_label }}" class="form-label">Email Address *</label>
                 <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" 
                        class="form-control" value="{{ form.email.value|default:'' }}" 
-                       placeholder="patient@example.com">
+                       placeholder="patient@example.com" required>
                 {% if form.email.errors %}
                   <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
                 {% endif %}

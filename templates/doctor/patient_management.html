@@ -1,0 +1,489 @@
+{% extends 'doctor/base.html' %}
+{% load static %}
+
+{% block title %}Patient Management - Dentist Portal{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Patient Management</li>
+{% endblock %}
+
+{% block page_title %}Patient Management{% endblock %}
+{% block page_subtitle %}Advanced search and management of patient records.{% endblock %}
+
+{% block content %}
+<style>
+    /* Pure CSS instant tooltips */
+    .has-tooltip {
+        position: relative;
+    }
+
+    .has-tooltip .tooltip-text {
+        visibility: hidden;
+        opacity: 0;
+        background-color: #1f2937;
+        color: #fff;
+        text-align: center;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        position: absolute;
+        bottom: calc(100% + 4px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        pointer-events: none;
+        transition: opacity 0.1s ease;
+    }
+
+    .has-tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+</style>
+
+<div class="container-fluid p-0">
+    <!-- Search Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form id="searchForm" class="row g-3">
+                <div class="col-md-4">
+                    <label for="searchInput" class="form-label fw-semibold">Search Patients</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0 ps-0" id="searchInput"
+                            placeholder="Search by name, ID, or phone..."
+                            value="{{ request.GET.q|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label for="genderFilter" class="form-label fw-semibold">Gender</label>
+                    <select class="form-select" id="genderFilter">
+                        <option value="">All Genders</option>
+                        <option value="M" {% if request.GET.gender == 'M' %}selected{% endif %}>Male</option>
+                        <option value="F" {% if request.GET.gender == 'F' %}selected{% endif %}>Female</option>
+                        <option value="O" {% if request.GET.gender == 'O' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="dateFrom" class="form-label fw-semibold">From Date</label>
+                    <input type="date" class="form-control" id="dateFrom"
+                        value="{{ request.GET.date_from|default:'' }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="dateTo" class="form-label fw-semibold">To Date</label>
+                    <input type="date" class="form-control" id="dateTo"
+                        value="{{ request.GET.date_to|default:'' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h6 class="mb-0 fw-bold">
+                    <span id="patientCount">Loading patients...</span>
+                </h6>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="exportPatients()">
+                        <i class="fas fa-download me-1"></i>Export CSV
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshPatients()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Patients Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="patientsTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-3 text-uppercase text-muted small fw-bold">ID (Setu / Patient)</th>
+                            <th class="text-uppercase text-muted small fw-bold">Name</th>
+                            <th class="text-uppercase text-muted small fw-bold">Info</th>
+                            <th class="text-uppercase text-muted small fw-bold">Phone</th>
+                            <th class="text-uppercase text-muted small fw-bold">Registered</th>
+                            <th class="text-end pe-3 text-uppercase text-muted small fw-bold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientsTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div class="mt-2 text-muted">Synchronizing patient database...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="p-3 border-top">
+                <nav aria-label="Patients pagination">
+                    <ul class="pagination justify-content-center mb-0" id="pagination">
+                        <!-- Pagination will be populated by JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Patient Modal -->
+<div class="modal fade" id="editPatientModal" tabindex="-1" aria-labelledby="editPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 1rem;">
+            <div class="modal-header bg-primary text-white border-0 py-3" style="border-radius: 1rem 1rem 0 0;">
+                <h5 class="modal-title font-bold" id="editPatientModalLabel">
+                    <i class="fas fa-user-edit me-2"></i>Edit Patient Information
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <form id="editPatientForm">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12 mb-2">
+                            <label for="editSetuId" class="form-label text-primary fw-bold small">
+                                <i class="fas fa-id-card me-1"></i>SETU ID (OPTIONAL)
+                            </label>
+                            <input type="text" class="form-control border-primary bg-white" id="editSetuId" name="setu_id" placeholder="Enter Setu ID if available">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="editFirstName" class="form-label fw-semibold small">FIRST NAME</label>
+                            <input type="text" class="form-control" id="editFirstName" name="first_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editLastName" class="form-label fw-semibold small">LAST NAME</label>
+                            <input type="text" class="form-control" id="editLastName" name="last_name" required>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="editDateOfBirth" class="form-label fw-semibold small">DATE OF BIRTH</label>
+                            <input type="date" class="form-control" id="editDateOfBirth" name="date_of_birth">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editGender" class="form-label fw-semibold small">GENDER</label>
+                            <select class="form-select" id="editGender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                                <option value="O">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editPhone" class="form-label fw-semibold small">PHONE NUMBER</label>
+                            <input type="tel" class="form-control" id="editPhone" name="phone_number">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="editEmail" class="form-label fw-semibold small">EMAIL ADDRESS</label>
+                            <input type="email" class="form-control" id="editEmail" name="email">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editCity" class="form-label fw-semibold small">CITY</label>
+                            <input type="text" class="form-control" id="editCity" name="city">
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="editAddress" class="form-label fw-semibold small">STREET ADDRESS</label>
+                            <textarea class="form-control" id="editAddress" name="address" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <input type="hidden" id="editPatientId" name="patient_id">
+                </form>
+            </div>
+            <div class="modal-footer border-0 p-3 bg-white" style="border-radius: 0 0 1rem 1rem;">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary px-4 fw-bold" onclick="updatePatient()">
+                    <i class="fas fa-check-circle me-1"></i>Commit Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Alert -->
+<div id="successAlertContainer" class="position-fixed top-0 start-50 translate-middle-x mt-4" style="z-index: 2000;"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    let currentPage = 1;
+    let currentQuery = '';
+    let currentGender = '';
+    let currentDateFrom = '';
+    let currentDateTo = '';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadPatients();
+
+        document.getElementById('searchForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            currentPage = 1;
+            loadPatients();
+        });
+    });
+
+    function loadPatients() {
+        currentQuery = document.getElementById('searchInput').value;
+        currentGender = document.getElementById('genderFilter').value;
+        currentDateFrom = document.getElementById('dateFrom').value;
+        currentDateTo = document.getElementById('dateTo').value;
+
+        const params = new URLSearchParams({
+            q: currentQuery,
+            gender: currentGender,
+            date_from: currentDateFrom,
+            date_to: currentDateTo,
+            page: currentPage,
+            view: '{{ view|default:"" }}'
+        });
+
+        document.getElementById('patientsTableBody').innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="mt-2 text-muted">Retrieving patient records...</div>
+                </td>
+            </tr>
+        `;
+
+        fetch(`/health-assistant/api/search-patients/?${params.toString()}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => response.json())
+            .then(data => {
+                displayPatients(data.patients || []);
+                updatePagination(data.pagination || {});
+                updatePatientCount(data.total_count || 0);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('patientsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i> Failed to load patient data.
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function displayPatients(patients) {
+        const tbody = document.getElementById('patientsTableBody');
+        if (patients.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5">No patients found.</td></tr>';
+            return;
+        }
+
+        let html = '';
+        patients.forEach(patient => {
+            const fullName = `${patient.first_name} ${patient.last_name}`;
+            const initials = `${patient.first_name.charAt(0)}${patient.last_name.charAt(0)}`;
+            
+            html += `
+            <tr>
+                <td class="ps-3">
+                    <div class="d-flex flex-column">
+                        <span class="badge bg-light text-primary border border-primary-subtle px-2 mb-1" style="width: fit-content;">${patient.setu_id || 'NO SETU'}</span>
+                        <span class="badge bg-light text-secondary border px-2" style="width: fit-content;">${patient.patient_id}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-weight: bold; font-size: 0.8rem;">
+                            ${initials}
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">${fullName}</div>
+                            <div class="text-muted small">${patient.email || 'No email provided'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="small">
+                        <span class="text-muted">Age:</span> <span class="fw-medium">${patient.age || '-'}</span><br>
+                        <span class="text-muted">Sex:</span> <span class="fw-medium">${patient.gender_display}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="fw-medium text-dark"><i class="fas fa-phone-alt me-2 text-muted small"></i>${patient.phone_number || '-'}</div>
+                    <div class="text-muted small">${patient.city || '-'}</div>
+                </td>
+                <td>
+                    <div class="text-dark small">${formatDate(patient.created_at)}</div>
+                </td>
+                <td class="text-end pe-3">
+                    <div class="btn-group shadow-sm" style="border-radius: 0.5rem; overflow: hidden;">
+                        <button class="btn btn-white btn-sm px-3 has-tooltip" onclick="editPatient(${patient.id})" title="Edit Patient">
+                            <i class="fas fa-user-edit text-primary"></i>
+                            <span class="tooltip-text">Edit Records</span>
+                        </button>
+                        ${patient.latest_response_id ? `
+                        <button class="btn btn-success btn-sm px-3 has-tooltip me-1" onclick="viewConsultation(${patient.latest_response_id})" title="Consult Patient">
+                            <i class="fas fa-stethoscope"></i>
+                            <span class="tooltip-text">Start Consultation</span>
+                        </button>` : ''}
+                        <button class="btn btn-primary btn-sm px-3 has-tooltip" onclick="viewPatient(${patient.id})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                            <span class="tooltip-text">View Detailed File</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function editPatient(patientId) {
+        fetch(`/health-assistant/api/get-patient/${patientId}/`)
+            .then(response => response.json())
+            .then(data => {
+                const patient = data.patient;
+                document.getElementById('editPatientId').value = patient.id;
+                document.getElementById('editSetuId').value = patient.setu_id || '';
+                document.getElementById('editFirstName').value = patient.first_name;
+                document.getElementById('editLastName').value = patient.last_name;
+                document.getElementById('editDateOfBirth').value = patient.date_of_birth;
+                document.getElementById('editGender').value = patient.gender;
+                document.getElementById('editPhone').value = patient.phone_number;
+                document.getElementById('editEmail').value = patient.email || '';
+                document.getElementById('editCity').value = patient.city || '';
+                document.getElementById('editAddress').value = patient.address || '';
+
+                new bootstrap.Modal(document.getElementById('editPatientModal')).show();
+            });
+    }
+
+    function updatePatient() {
+        const patientId = document.getElementById('editPatientId').value;
+        const formData = new FormData(document.getElementById('editPatientForm'));
+
+        fetch(`/health-assistant/api/patients/${patientId}/update/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('editPatientModal')).hide();
+                    showSuccess('Patient record updated successfully');
+                    loadPatients();
+                } else {
+                    alert('Error updating patient: ' + (data.error || 'Check input data'));
+                }
+            });
+    }
+
+    function viewConsultation(responseId) {
+        window.location.href = `/doctor/responses/${responseId}/`;
+    }
+
+    function viewPatient(patientId) {
+        window.location.href = `/doctor/patients/${patientId}/`;
+    }
+
+    function refreshPatients() {
+        loadPatients();
+    }
+
+    function exportPatients() {
+        const params = new URLSearchParams({
+            q: currentQuery,
+            gender: currentGender,
+            date_from: currentDateFrom,
+            date_to: currentDateTo,
+            export: 'csv'
+        });
+        window.location.href = `/health-assistant/api/search-patients/?${params.toString()}`;
+    }
+
+    function updatePagination(pagination) {
+        const paginationEl = document.getElementById('pagination');
+        if (!pagination.total_pages || pagination.total_pages <= 1) {
+            paginationEl.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        if (pagination.has_previous) {
+            html += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="changePage(${pagination.previous_page})"><i class="fas fa-chevron-left"></i></a></li>`;
+        }
+
+        for (let i = 1; i <= pagination.total_pages; i++) {
+            const active = i === pagination.current_page ? 'active' : '';
+            html += `<li class="page-item ${active}"><a class="page-link" href="javascript:void(0)" onclick="changePage(${i})">${i}</a></li>`;
+        }
+
+        if (pagination.has_next) {
+            html += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="changePage(${pagination.next_page})"><i class="fas fa-chevron-right"></i></a></li>`;
+        }
+        paginationEl.innerHTML = html;
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        loadPatients();
+    }
+
+    function updatePatientCount(count) {
+        document.getElementById('patientCount').innerText = `${count} Total Patient Records`;
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function showSuccess(msg) {
+        const container = document.getElementById('successAlertContainer');
+        container.innerHTML = `
+            <div class="alert alert-success border-0 shadow-lg alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i><strong>Success!</strong> ${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        setTimeout(() => {
+            const alert = bootstrap.Alert.getInstance(container.querySelector('.alert'));
+            if (alert) alert.close();
+        }, 3000);
+    }
+</script>
+{% endblock %}

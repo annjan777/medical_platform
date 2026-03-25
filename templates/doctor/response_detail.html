@@ -131,8 +131,9 @@
                         <thead class="bg-light">
                             <tr>
                                 <th class="ps-4" style="width: 5%;">#</th>
-                                <th style="width: 55%;">Question</th>
-                                <th>Response</th>
+                                <th style="width: 50%;">Question</th>
+                                <th style="width: 35%;">Response</th>
+                                <th class="text-end pe-4" style="width: 10%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -152,11 +153,22 @@
                                         <i class="fas fa-file-download me-1"></i> View/Download
                                     </a>
                                     {% elif answer.option_answer.exists %}
-                                    <div class="d-flex flex-wrap gap-1">
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
                                         {% for option in answer.option_answer.all %}
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
-                                            {{ option.text }}
-                                        </span>
+                                        {% if option.option_image %}
+                                            <div class="d-inline-block border rounded p-1 bg-white shadow-sm text-center">
+                                                <img src="{{ option.option_image.url }}" alt="{{ option.text|default:'Option Image' }}" style="max-height: 80px; max-width: 120px; border-radius: 4px; object-fit: contain;">
+                                                {% if option.text %}<span class="small d-block mt-1 fw-semibold text-muted">{{ option.text }}</span>{% endif %}
+                                            </div>
+                                        {% elif option.text %}
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                                                {{ option.text }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                                                Option {{ option.id }}
+                                            </span>
+                                        {% endif %}
                                         {% endfor %}
                                     </div>
                                     {% elif answer.text_answer %}
@@ -166,10 +178,15 @@
                                     <span class="text-muted small fst-italic">No answer</span>
                                     {% endif %}
                                 </td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal({{ response.pk|default:'null' }}, {{ answer.question.id }})" title="Edit Answer">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="3" class="text-center py-4 text-muted">No answers recorded.</td>
+                                <td colspan="4" class="text-center py-4 text-muted">No answers recorded.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -299,6 +316,37 @@
         
     </div>
 </div>
+
+<!-- Edit Response Modal -->
+<div class="modal fade" id="editResponseModal" tabindex="-1" aria-labelledby="editResponseModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="editResponseModalLabel">
+                    <i class="fas fa-edit me-2"></i> Edit Record
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <div id="editModalAlert" class="d-none mb-3"></div>
+                <form id="editResponseForm" class="p-2">
+                    <div id="modalLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2 fw-semibold">Retrieving clinical data...</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button id="saveBtn" type="button" class="btn btn-primary" onclick="saveEditResponse(this)">
+                    <i class="fas fa-save me-1"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -324,5 +372,128 @@
             container.appendChild(newRow);
         });
     });
+
+    let currentEditResponseId = null;
+
+    async function openEditModal(responseId, questionId = null) {
+        if (!responseId) return;
+        currentEditResponseId = responseId;
+        const modalEl = document.getElementById('editResponseModal');
+        const form = document.getElementById('editResponseForm');
+        const alertEl = document.getElementById('editModalAlert');
+        
+        alertEl.classList.add('d-none');
+        form.innerHTML = `
+            <div id="modalLoading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2 fw-semibold">Retrieving clinical data...</p>
+            </div>`;
+        
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        try {
+            let fetchUrl = `/questionnaires/responses/${responseId}/edit-form/`;
+            if (questionId) {
+                fetchUrl += `?question_id=${questionId}`;
+            }
+            const resp = await fetch(fetchUrl);
+            if (resp.ok) {
+                const html = await resp.text();
+                const range = document.createRange();
+                range.selectNode(form);
+                const fragment = range.createContextualFragment(html);
+                
+                form.innerHTML = '';
+                form.appendChild(fragment);
+
+                if (window.initializeEditFormVisibility) {
+                    setTimeout(window.initializeEditFormVisibility, 50);
+                }
+            } else {
+                const errorData = await resp.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to authorize access.');
+            }
+        } catch (e) {
+            form.innerHTML = `
+                <div class="alert alert-danger d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-3 fs-4"></i>
+                    <div>
+                        <strong>Access Denied / Error</strong><br>
+                        <small>${e.message || 'Error loading response data.'}</small>
+                    </div>
+                </div>`;
+        }
+    }
+
+    async function saveEditResponse(btn) {
+        if (!currentEditResponseId) return;
+
+        const form = document.getElementById('editResponseForm');
+        const alertEl = document.getElementById('editModalAlert');
+        const answers = {};
+
+        const elements = form.querySelectorAll('input[name], textarea[name], select[name]');
+        const seen = new Set();
+        elements.forEach(el => {
+            if (!el.name || el.name === 'csrfmiddlewaretoken') return;
+            const qId = el.name.replace('q_', '');
+            if (el.type === 'radio') {
+                if (el.checked) {
+                    answers[qId] = el.value;
+                    seen.add(qId);
+                } else if (!seen.has(qId)) {
+                    answers[qId] = null;
+                }
+            } else if (el.type === 'checkbox') {
+                if (!answers[qId]) answers[qId] = [];
+                if (el.checked) {
+                    answers[qId].push(el.value);
+                }
+            } else {
+                answers[qId] = el.value;
+            }
+        });
+
+        // Try to find CSRF token specifically dynamically within the form
+        const csrfTokenEl = form.querySelector('[name=csrfmiddlewaretoken]');
+        // Fallback to page's global CSRF token if the form didn't load properly or was manipulated
+        const csrfToken = csrfTokenEl ? csrfTokenEl.value : document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (!csrfToken) return;
+
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Saving...';
+
+        try {
+            const resp = await fetch(`/questionnaires/responses/${currentEditResponseId}/api-update/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ answers })
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+                alertEl.classList.remove('d-none', 'alert-danger');
+                alertEl.classList.add('alert', 'alert-success');
+                alertEl.innerHTML = `<i class="fas fa-check-circle me-2"></i> ${data.message}`;
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alertEl.classList.remove('d-none', 'alert-success');
+                alertEl.classList.add('alert', 'alert-danger');
+                alertEl.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i> ${data.message}`;
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        } catch (e) {
+            alertEl.classList.remove('d-none', 'alert-success');
+            alertEl.classList.add('alert', 'alert-danger');
+            alertEl.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i> Failed to securely update response.`;
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
 </script>
 {% endblock %}

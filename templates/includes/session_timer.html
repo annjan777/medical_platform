@@ -1,0 +1,119 @@
+<!-- Session Timeout Modal -->
+<div class="modal fade" id="sessionTimeoutModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-warning text-dark border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Session Security Alert
+                </h5>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <i class="fas fa-clock fa-3x text-warning opacity-75"></i>
+                </div>
+                <h4 class="mb-2">Your session is about to expire</h4>
+                <p class="text-muted mb-4">
+                    For your security, you will be automatically logged out due to inactivity.<br>
+                    <strong>Time remaining: <span id="timeoutCountdown" class="text-danger fw-bold">15</span> seconds.</strong>
+                </p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary btn-lg shadow-sm" onclick="location.reload();">
+                        <i class="fas fa-sync-alt me-2"></i>Stay Logged In
+                    </button>
+                    <a href="{% url 'logout' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        {% if request.user.is_authenticated %}
+        const SESSION_TIMEOUT_SEC = {{ request.session.get_expiry_age|default:1740 }};
+        const SESSION_TIMEOUT_MS = SESSION_TIMEOUT_SEC * 1000;
+        let sessionExpiryTime = Date.now() + SESSION_TIMEOUT_MS;
+        let isExpired = false;
+        let lastResetTime = Date.now();
+        let lastPingTime = Date.now();
+        const PING_INTERVAL_MS = Math.min(60000, SESSION_TIMEOUT_MS / 3);
+
+        function resetTimer() {
+            if (!isExpired) {
+                const now = Date.now();
+                if (now - lastResetTime > 1000) {
+                    sessionExpiryTime = now + SESSION_TIMEOUT_MS;
+                    lastResetTime = now;
+                    if (now - lastPingTime > PING_INTERVAL_MS) {
+                        fetch('/api/session-ping/ping/').catch(() => {});
+                        lastPingTime = now;
+                    }
+                }
+            }
+        }
+
+        function checkSessionTimeout() {
+            if (isExpired) return;
+            const now = Date.now();
+            if (now >= sessionExpiryTime) {
+                isExpired = true;
+                showSessionExpired();
+            } else {
+                setTimeout(checkSessionTimeout, 2000);
+            }
+        }
+
+        function showSessionExpired() {
+            const modalElement = document.getElementById('sessionTimeoutModal');
+            if (!modalElement || modalElement.classList.contains('show')) return;
+            
+            // Handle case where Bootstrap is not loaded globally (admin)
+            if (typeof bootstrap === 'undefined') {
+                // Fallback for admin if bootstrap isn't loaded - simplified alert or load on demand
+                if (confirm("Your session has expired. Would you like to stay logged in?")) {
+                    location.reload();
+                } else {
+                    window.location.href = "{% url 'logout' %}";
+                }
+                return;
+            }
+
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+
+            let secondsLeft = 15;
+            const countdownEl = document.getElementById('timeoutCountdown');
+            if (countdownEl) countdownEl.textContent = secondsLeft;
+            
+            const timer = setInterval(() => {
+                secondsLeft--;
+                if (countdownEl) countdownEl.textContent = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(timer);
+                    window.location.href = "{% url 'logout' %}";
+                }
+            }, 1000);
+        }
+
+        document.addEventListener('mousedown', resetTimer);
+        document.addEventListener('keypress', resetTimer);
+        document.addEventListener('touchstart', resetTimer);
+        document.addEventListener('mousemove', resetTimer);
+        document.addEventListener('scroll', resetTimer);
+
+        // Initialization
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                checkSessionTimeout();
+            });
+        } else {
+            checkSessionTimeout();
+        }
+        window.resetTimer = resetTimer;
+        window.checkSessionTimeout = checkSessionTimeout;
+        {% endif %}
+    })();
+</script>
