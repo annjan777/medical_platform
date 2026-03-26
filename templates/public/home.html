@@ -1,161 +1,407 @@
 {% extends "base/base.html" %}
 {% load static %}
 
-{% block title %}Welcome to Medical Data Collection Platform{% endblock %}
+{% block title %}Welcome to Dental Care Platform{% endblock %}
 
 {% block extra_css %}
 <style>
 :root {
-    --saffron-primary: #f59e0b;
-    --saffron-dark: #d97706;
-    --blue-primary: #3b82f6;
-    --blue-dark: #2563eb;
-    --green-primary: #10b981;
-    --green-dark: #059669;
-    --white: #ffffff;
-    --gray-light: #f8fafc;
+    --dental-navy: #0f3d56;
+    --dental-sky: #57b5d9;
+    --dental-mint: #c9f1ee;
+    --dental-cream: #f7fbfa;
+    --dental-coral: #ff8f70;
+    --dental-ink: #173042;
+    --dental-border: rgba(15, 61, 86, 0.12);
 }
 
 .hero-section {
-    background: linear-gradient(135deg, #fef3c7 0%, #dbeafe 100%);
-    color: #1f2937;
-    min-height: 500px;
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top left, rgba(87, 181, 217, 0.24), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(201, 241, 238, 0.9), transparent 32%),
+        linear-gradient(135deg, #f7fbfa 0%, #eef8fb 48%, #fdfefe 100%);
+    color: var(--dental-ink);
+    min-height: 100vh;
 }
 
-.floating-card {
-    background: white;
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.floating-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.stat-number {
-    font-size: 3rem;
-    font-weight: 700;
-    color: var(--blue-primary);
-}
-
-.feature-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-    color: white;
-    font-size: 2rem;
-    transition: transform 0.3s ease;
-}
-
-.feature-icon:hover {
-    transform: scale(1.1);
-}
-
-.feature-icon.saffron {
-    background: var(--saffron-primary);
-}
-
-.feature-icon.blue {
-    background: var(--blue-primary);
-}
-
-.feature-icon.green {
-    background: var(--green-primary);
-}
-
-.testimonial-card {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border: none;
-    transition: transform 0.3s ease;
-}
-
-.testimonial-card:hover {
-    transform: translateY(-3px);
-}
-
-.testimonial-card::before {
-    content: '"';
+.hero-section::before,
+.hero-section::after {
+    content: "";
     position: absolute;
-    top: -10px;
-    left: 20px;
-    font-size: 4rem;
-    color: var(--blue-primary);
-    opacity: 0.3;
+    border-radius: 9999px;
+    pointer-events: none;
+}
+
+.hero-section::before {
+    width: 18rem;
+    height: 18rem;
+    top: -4rem;
+    right: -5rem;
+    background: rgba(87, 181, 217, 0.14);
+}
+
+.hero-section::after {
+    width: 26rem;
+    height: 26rem;
+    bottom: -12rem;
+    left: -8rem;
+    background: rgba(201, 241, 238, 0.7);
+}
+
+.hero-panel {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 2rem;
+    box-shadow: 0 30px 80px rgba(15, 61, 86, 0.12);
+    backdrop-filter: blur(14px);
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(87, 181, 217, 0.22);
+    color: var(--dental-navy);
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.eyebrow-dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, var(--dental-sky), var(--dental-coral));
+    box-shadow: 0 0 0 6px rgba(87, 181, 217, 0.12);
+}
+
+.hero-title {
+    font-family: "Georgia", "Times New Roman", serif;
+    color: var(--dental-navy);
+    line-height: 1.02;
+    letter-spacing: -0.05em;
+}
+
+.hero-copy {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #4f6676;
 }
 
 .btn-primary-custom {
-    background: var(--saffron-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    background: linear-gradient(135deg, var(--dental-navy), #195876);
     border: none;
-    border-radius: 8px;
-    padding: 12px 30px;
-    font-weight: 600;
+    border-radius: 9999px;
+    padding: 0.95rem 1.7rem;
+    font-weight: 700;
     color: white;
-    transition: all 0.3s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 18px 30px rgba(15, 61, 86, 0.2);
 }
 
 .btn-primary-custom:hover {
-    background: var(--saffron-dark);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 22px 36px rgba(15, 61, 86, 0.24);
+}
+
+.btn-secondary-custom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    border: 1px solid rgba(15, 61, 86, 0.16);
+    background: rgba(255, 255, 255, 0.86);
+    color: var(--dental-navy);
+    border-radius: 9999px;
+    padding: 0.95rem 1.7rem;
+    font-weight: 700;
+    transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.btn-secondary-custom:hover {
+    transform: translateY(-2px);
+    background: white;
+    border-color: rgba(15, 61, 86, 0.28);
+}
+
+.hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(15, 61, 86, 0.08);
+    border-radius: 1rem;
+    color: #395568;
+    font-weight: 600;
+    box-shadow: 0 14px 28px rgba(15, 61, 86, 0.06);
+}
+
+.hero-visual-wrap {
+    position: relative;
+    padding: 1.5rem;
+    border-radius: 2rem;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.55));
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 28px 60px rgba(15, 61, 86, 0.14);
+}
+
+.hero-visual {
+    width: 100%;
+    height: 100%;
+    min-height: 420px;
+    border-radius: 1.5rem;
+    object-fit: cover;
+    box-shadow: 0 18px 40px rgba(15, 61, 86, 0.12);
+}
+
+.floating-note,
+.floating-stat {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(15, 61, 86, 0.08);
+    border-radius: 1.25rem;
+    box-shadow: 0 18px 34px rgba(15, 61, 86, 0.12);
+    backdrop-filter: blur(10px);
+}
+
+.floating-note {
+    left: -1.5rem;
+    bottom: 2rem;
+    padding: 1rem 1.1rem;
+    max-width: 15rem;
+}
+
+.floating-stat {
+    right: -1rem;
+    top: 2rem;
+    padding: 1.1rem 1.2rem;
+    min-width: 12rem;
+}
+
+.stat-kicker {
+    display: block;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #698090;
+    font-weight: 700;
+}
+
+.stat-number {
+    font-size: 2.3rem;
+    line-height: 1;
+    color: var(--dental-navy);
+    font-weight: 800;
+}
+
+.section-shell {
+    background: linear-gradient(180deg, #ffffff 0%, #f5fbfb 100%);
+}
+
+.section-kicker {
+    color: var(--dental-sky);
+    font-size: 0.88rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
 }
 
 .section-title {
-    color: var(--blue-primary);
+    color: var(--dental-navy);
+    font-family: "Georgia", "Times New Roman", serif;
     font-weight: 700;
-    margin-bottom: 1rem;
+    letter-spacing: -0.03em;
 }
 
 .text-muted-custom {
-    color: #6c757d;
-    font-size: 1.1rem;
+    color: #678091;
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+.feature-card,
+.journey-card {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid var(--dental-border);
+    border-radius: 1.5rem;
+    box-shadow: 0 16px 36px rgba(15, 61, 86, 0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.feature-card:hover,
+.journey-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(87, 181, 217, 0.28);
+    box-shadow: 0 26px 52px rgba(15, 61, 86, 0.12);
+}
+
+.feature-icon {
+    width: 4.2rem;
+    height: 4.2rem;
+    border-radius: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.4rem;
+    background: linear-gradient(145deg, rgba(87, 181, 217, 0.18), rgba(201, 241, 238, 0.95));
+    color: var(--dental-navy);
+    font-size: 1.45rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.feature-title {
+    color: var(--dental-ink);
+}
+
+.journey-step {
+    width: 2.2rem;
+    height: 2.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: var(--dental-navy);
+    color: white;
+    font-weight: 800;
+    margin-bottom: 1.1rem;
+}
+
+.cta-section {
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 26%),
+        linear-gradient(125deg, var(--dental-navy) 0%, #135a73 48%, #2f8db5 100%);
+}
+
+.cta-card {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 2rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+}
+
+.btn-light-custom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    background: #ffffff;
+    color: var(--dental-navy);
+    border-radius: 9999px;
+    padding: 0.95rem 1.7rem;
+    font-weight: 700;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.btn-light-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px rgba(13, 44, 60, 0.18);
+}
+
+@media (max-width: 768px) {
+    .hero-panel {
+        border-radius: 1.5rem;
+    }
+
+    .hero-title {
+        font-size: 3.25rem !important;
+    }
+
+    .hero-visual {
+        min-height: 320px;
+    }
+
+    .floating-note,
+    .floating-stat {
+        position: static;
+        margin-top: 1rem;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-section min-h-screen flex items-center">
-    <div class="container mx-auto px-6">
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-            <!-- Left Content -->
-            <div class="text-gray-800">
-                <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-                    <span class="text-amber-600">Medical Device </span><br>
-                    <span class="text-blue-600">
-                        Data Collection Platform
-                    </span>
+<section class="hero-section flex items-center py-12 lg:py-20">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="hero-panel grid lg:grid-cols-2 gap-12 items-center px-6 py-8 md:px-10 md:py-12 lg:px-14 lg:py-14">
+            <div>
+                <div class="eyebrow mb-6">
+                    <span class="eyebrow-dot"></span>
+                    Dentist-Focused Care Experience
+                </div>
+
+                <h1 class="hero-title text-5xl md:text-6xl mb-6">
+                    Modern dental visits,
+                    <span class="text-sky-500">organized from first smile to follow-up.</span>
                 </h1>
-                
-                <p class="text-xl mb-8 text-gray-600 leading-relaxed">
-                    Desired Text Here
+
+                <p class="hero-copy mb-8 max-w-2xl">
+                    Present your clinic like a trusted dental home with streamlined patient intake, secure records,
+                    device-supported assessments, and faster chairside coordination for every appointment.
                 </p>
-                
+
                 <div class="flex flex-col sm:flex-row gap-4 mb-8">
                     <a href="{% url 'login' %}" class="btn-primary-custom">
-                        <i class="fas fa-sign-in-alt mr-2"></i> Access Portal
+                        <i class="fas fa-sign-in-alt"></i> Access Portal
                     </a>
-                    <a href="#features" class="border-2 border-amber-600 text-amber-600 px-8 py-4 rounded-lg font-semibold hover:bg-amber-600 hover:text-white transition-colors">
-                        <i class="fas fa-info-circle mr-2"></i> Learn More
+                    <a href="#features" class="btn-secondary-custom">
+                        <i class="fas fa-tooth"></i> Explore Features
                     </a>
                 </div>
+
+                <div class="hero-badges">
+                    <div class="hero-badge">
+                        <i class="fas fa-shield-alt text-sky-500"></i>
+                        Secure patient histories
+                    </div>
+                    <div class="hero-badge">
+                        <i class="fas fa-clipboard-check text-sky-500"></i>
+                        Faster intake workflows
+                    </div>
+                    <div class="hero-badge">
+                        <i class="fas fa-wave-square text-sky-500"></i>
+                        Connected device data
+                    </div>
+                </div>
             </div>
-            
-            <!-- Right Content - Health Professional Image -->
+
             <div class="relative">
-                <div class="floating-card rounded-lg p-8">
-                    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef" 
-                         alt="Healthcare Professional Using Medical Technology" 
-                         class="rounded-lg w-full h-auto object-cover">
+                <div class="hero-visual-wrap">
+                    <img src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1200&q=80"
+                         alt="Dentist consulting with a patient in a bright clinic"
+                         class="hero-visual">
+
+                    <div class="floating-note">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <p class="mb-0 font-semibold text-slate-800">Chairside Ready</p>
+                                <p class="mb-0 text-sm text-slate-500">History, screening, and notes in one place.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -163,75 +409,103 @@
 </section>
 
 <!-- Features Section -->
-<section id="features" class="py-20 bg-gray-50">
-    <div class="container mx-auto px-6">
+<section id="features" class="section-shell py-20">
+    <div class="max-w-7xl mx-auto px-6">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold mb-4 section-title">Powerful Features for Modern Healthcare</h2>
+            <p class="section-kicker mb-3">Designed for Dental Teams</p>
+            <h2 class="text-4xl md:text-5xl mb-4 section-title">Everything a modern dentist homepage should communicate</h2>
             <p class="text-xl text-muted-custom max-w-3xl mx-auto">
-                Everything you need to streamline your medical practice and enhance patient care
+                Reassure patients, support staff, and highlight the systems that keep consultations, screenings, and
+                treatment planning running smoothly.
             </p>
         </div>
-        
+
         <div class="grid md:grid-cols-3 gap-8">
-            <div class="text-center group">
-                <div class="feature-icon mx-auto group-hover:scale-110 transition-transform">
-                    <i class="fas fa-user-shield text-white text-2xl"></i>
+            <div class="feature-card p-8">
+                <div class="feature-icon">
+                    <i class="fas fa-user-md"></i>
                 </div>
-                <h3 class="text-xl font-bold mb-3 text-gray-800">Role-Based Access</h3>
-                <p class="text-gray-600">Secure, tailored interfaces for admins, assistants, and doctors with granular permissions</p>
+                <h3 class="text-2xl font-bold mb-3 feature-title">Clinic Team Access</h3>
+                <p class="text-gray-600">Keep reception, assistants, and dentists aligned with role-based views built for day-to-day practice flow.</p>
             </div>
-            
-            <div class="text-center group">
-                <div class="feature-icon green mx-auto group-hover:scale-110 transition-transform">
-                    <i class="fas fa-notes-medical text-white text-2xl"></i>
+
+            <div class="feature-card p-8">
+                <div class="feature-icon">
+                    <i class="fas fa-file-medical"></i>
                 </div>
-                <h3 class="text-xl font-bold mb-3 text-gray-800">Medical Records</h3>
-                <p class="text-gray-600">Comprehensive patient records with privacy protection and seamless data flow</p>
+                <h3 class="text-2xl font-bold mb-3 feature-title">Patient Histories</h3>
+                <p class="text-gray-600">Surface dental histories, screening forms, and important care notes in one organized patient record.</p>
             </div>
-            
-            <div class="text-center group">
-                <div class="feature-icon saffron mx-auto group-hover:scale-110 transition-transform">
-                    <i class="fas fa-edit text-white text-2xl"></i>
+
+            <div class="feature-card p-8">
+                <div class="feature-icon">
+                    <i class="fas fa-clipboard-list"></i>
                 </div>
-                <h3 class="text-xl font-bold mb-3 text-gray-800">Dynamic Questionnaires</h3>
-                <p class="text-gray-600">Create and modify screening forms on-the-fly with our intuitive builder</p>
+                <h3 class="text-2xl font-bold mb-3 feature-title">Custom Intake Forms</h3>
+                <p class="text-gray-600">Capture pre-visit details, consent information, and chairside questionnaires with flexible workflows.</p>
             </div>
-            
-            <div class="text-center group">
-                <div class="feature-icon mx-auto group-hover:scale-110 transition-transform">
-                    <i class="fas fa-laptop-medical text-white text-2xl"></i>
+
+            <div class="feature-card p-8">
+                <div class="feature-icon">
+                    <i class="fas fa-laptop-medical"></i>
                 </div>
-                <h3 class="text-xl font-bold mb-3 text-gray-800">Device Integration</h3>
-                <p class="text-gray-600">Real-time data from up to 5 medical devices with automatic syncing</p>
+                <h3 class="text-2xl font-bold mb-3 feature-title">Device Integration</h3>
+                <p class="text-gray-600">Connect diagnostic inputs and clinical measurements so teams can review information without extra friction.</p>
             </div>
-            
-            <div class="text-center group">
-                <div class="feature-icon green mx-auto group-hover:scale-110 transition-transform">
-                    <i class="fas fa-chart-line text-white text-2xl"></i>
+
+            <div class="feature-card p-8">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
                 </div>
-                <h3 class="text-xl font-bold mb-3 text-gray-800">Analytics & Insights</h3>
-                <p class="text-gray-600">Advanced visualization tools and export capabilities for research</p>
+                <h3 class="text-2xl font-bold mb-3 feature-title">Practice Insights</h3>
+                <p class="text-gray-600">Highlight the visibility your clinic has into treatment progress, screening trends, and operational readiness.</p>
             </div>
-            
-            <div class="text-center group">
-                <div class="feature-icon blue mx-auto group-hover:scale-110 transition-transform">
-                    <i class="fas fa-fingerprint text-white text-2xl"></i>
+
+            <div class="feature-card p-8">
+                <div class="feature-icon">
+                    <i class="fas fa-lock"></i>
                 </div>
-                <h3 class="text-xl font-bold mb-3 text-gray-800">Secure Authentication</h3>
-                <p class="text-gray-600">Multi-factor authentication and encrypted data storage for maximum security</p>
+                <h3 class="text-2xl font-bold mb-3 feature-title">Trusted Security</h3>
+                <p class="text-gray-600">Reinforce that every patient interaction is supported by secure authentication and protected health data handling.</p>
             </div>
         </div>
     </div>
 </section>
-                <!-- CTA Section -->
-<section class="py-20 bg-gradient-to-r from-amber-600 to-blue-600 text-white">
-    <div class="container mx-auto px-6 text-center">
-        <h2 class="text-4xl font-bold mb-4">Display Your Text</h2>
-        <p class="text-xl mb-8 opacity-90"></p>
-        <a href="{% url 'login' %}" class="bg-white text-amber-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-            <i class="fas fa-rocket mr-2"></i> Get Started Today
-        </a>
+
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="grid lg:grid-cols-3 gap-8">
+            <div class="journey-card p-8">
+                <span class="journey-step">1</span>
+                <h3 class="text-2xl font-bold mb-3 text-slate-800">Welcome New Patients</h3>
+                <p class="text-gray-600">Introduce the clinic with calm, reassuring messaging that feels bright, professional, and family friendly.</p>
+            </div>
+            <div class="journey-card p-8">
+                <span class="journey-step">2</span>
+                <h3 class="text-2xl font-bold mb-3 text-slate-800">Simplify Every Visit</h3>
+                <p class="text-gray-600">Show how your team manages forms, records, and screenings efficiently before the patient even sits down.</p>
+            </div>
+            <div class="journey-card p-8">
+                <span class="journey-step">3</span>
+                <h3 class="text-2xl font-bold mb-3 text-slate-800">Build Ongoing Trust</h3>
+                <p class="text-gray-600">Use the homepage to reflect clean workflows, attentive care, and the confidence patients expect from a dentist.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section py-20 text-white">
+    <div class="max-w-5xl mx-auto px-6 text-center">
+        <div class="cta-card px-6 py-12 md:px-10">
+            <p class="section-kicker mb-3 text-cyan-100">Ready for Your Team</p>
+            <h2 class="text-4xl md:text-5xl font-bold mb-4 text-white">A warm, patient-first dental experience from the very first click</h2>
+            <p class="text-lg md:text-xl mb-8 text-cyan-50 max-w-3xl mx-auto">
+                Help patients feel reassured, informed, and ready for their visit with a homepage that reflects gentle care, trust, and a modern dental practice.
+            </p>
+            <a href="{% url 'login' %}" class="btn-light-custom">
+                <i class="fas fa-arrow-right"></i> Get Started Today
+            </a>
+        </div>
     </div>
 </section>
 {% endblock %}
-
