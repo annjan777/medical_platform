@@ -1,79 +1,141 @@
 {% extends 'base/base.html' %}
 
-{% block title %}Login - Medical Data Collection Platform{% endblock %}
+{% block title %}Login - Dental Care Platform{% endblock %}
 
 {% block extra_css %}
 <style>
-.login-section {
-    background: linear-gradient(135deg, #fef3c7 0%, #dbeafe 100%);
+.login-page {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top left, rgba(87, 181, 217, 0.18), transparent 28%),
+        linear-gradient(180deg, #f7fbfa 0%, #eef7fa 100%);
 }
-.feature-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+.background-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(8px);
+    pointer-events: none;
+    opacity: 0.75;
 }
-.feature-icon.saffron {
-    background: #fef3c7;
-    color: #f59e0b;
+
+.orb-one {
+    width: 18rem;
+    height: 18rem;
+    top: 6%;
+    left: -4rem;
+    background: linear-gradient(135deg, rgba(87, 181, 217, 0.2), rgba(255, 255, 255, 0.06));
 }
-.feature-icon.blue {
-    background: #dbeafe;
-    color: #3b82f6;
+
+.orb-two {
+    width: 14rem;
+    height: 14rem;
+    right: 8%;
+    top: 14%;
+    background: linear-gradient(135deg, rgba(15, 61, 86, 0.12), rgba(87, 181, 217, 0.08));
 }
-.feature-icon.green {
-    background: #d1fae5;
-    color: #10b981;
+
+.orb-three {
+    width: 12rem;
+    height: 12rem;
+    right: -2rem;
+    bottom: 8%;
+    background: linear-gradient(135deg, rgba(141, 207, 227, 0.16), rgba(255, 255, 255, 0.08));
 }
-.login-card {
-    background: white;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.form-input {
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    padding-left: 2.5rem;
+
+.login-shell {
+    position: relative;
+    z-index: 1;
     width: 100%;
-    transition: border-color 0.2s;
+    max-width: 28rem;
 }
-.form-input:focus {
-    outline: none;
-    border-color: #f59e0b;
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+
+.login-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(15, 61, 86, 0.08);
+    border-radius: 1.75rem;
+    box-shadow: 0 24px 48px rgba(15, 61, 86, 0.12);
+    backdrop-filter: blur(10px);
 }
+
+.login-title {
+    font-family: "Georgia", "Times New Roman", serif;
+    color: #12374d;
+    letter-spacing: -0.03em;
+}
+
+.login-copy {
+    color: #5d7483;
+    line-height: 1.7;
+}
+
 .form-label {
     display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #27465a;
+    margin-bottom: 0.6rem;
 }
-.btn-primary {
-    background: #f59e0b;
-    color: white;
-    border: none;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-    cursor: pointer;
+
+.form-input {
     width: 100%;
+    border: 1px solid rgba(15, 61, 86, 0.12);
+    border-radius: 1rem;
+    padding: 0.95rem 1rem 0.95rem 2.8rem;
+    background: #f9fcfc;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+.form-input:focus {
+    outline: none;
+    border-color: #57b5d9;
+    box-shadow: 0 0 0 4px rgba(87, 181, 217, 0.14);
+    background: white;
+}
+
+.btn-primary {
+    width: 100%;
+    border: none;
+    border-radius: 9999px;
+    padding: 0.95rem 1rem;
+    background: linear-gradient(135deg, #0f3d56, #1b7191);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 14px 28px rgba(15, 61, 86, 0.18);
+}
+
 .btn-primary:hover {
-    background: #d97706;
+    transform: translateY(-1px);
+    box-shadow: 0 18px 32px rgba(15, 61, 86, 0.22);
 }
+
+.helper-link {
+    color: #1b7191;
+    font-weight: 700;
+}
+
+.helper-link:hover {
+    color: #0f3d56;
+}
+
 .alert-error {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
-    padding: 0.75rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
+    background: #fff5f3;
+    border: 1px solid #ffd5ca;
+    color: #b8492d;
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
 }
+
+.support-note {
+    border-top: 1px solid rgba(15, 61, 86, 0.08);
+    color: #647988;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -82,27 +144,31 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    background-color: rgba(15, 43, 58, 0.45);
+    backdrop-filter: blur(6px);
 }
+
 .modal-content {
-    background-color: white;
+    background: rgba(255, 255, 255, 0.96);
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 2rem;
-    border-radius: 12px;
+    border-radius: 1.5rem;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 28px 52px rgba(15, 61, 86, 0.16);
+    border: 1px solid rgba(15, 61, 86, 0.08);
 }
+
 .modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1.5rem;
 }
+
 .close {
     color: #6b7280;
     font-size: 24px;
@@ -111,127 +177,87 @@
     line-height: 1;
     transition: color 0.2s;
 }
+
 .close:hover {
-    color: #374151;
+    color: #27465a;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen">
-  <div class="login-section min-h-screen flex">
-    <div class="hidden lg:flex lg:w-1/2 p-12 items-center justify-center">
-      <div class="max-w-lg">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-lg bg-white shadow-md border border-gray-200 flex items-center justify-center">
-            <i class="fas fa-heartbeat text-amber-600 text-2xl"></i>
-          </div>
-          <div>
-
-            <h1 class="text-3xl font-bold text-gray-800">Medical Data Collection Platform</h1>
-          </div>
-        </div>
-
-        <p class="mt-6 text-lg text-gray-600 leading-relaxed">
-          Desired Text Here!
+<div class="login-page flex items-center justify-center px-6 py-10">
+  <div class="background-orb orb-one" aria-hidden="true"></div>
+  <div class="background-orb orb-two" aria-hidden="true"></div>
+  <div class="background-orb orb-three" aria-hidden="true"></div>
+  <div class="login-shell">
+    <div class="login-card p-8 md:p-10">
+      <div class="text-center">
+        <h1 class="login-title text-4xl font-bold mb-3">Welcome back</h1>
+        <p class="login-copy mb-0">
+          Sign in to access your dental team workspace, patient records, and daily care tools.
         </p>
+      </div>
 
-        <!-- Internal Access Image -->
-        <div class="mt-8 rounded-lg overflow-hidden border border-gray-200">
-          <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=300&fit=crop" 
-               alt="Medical Professional Access - Internal Use Only" 
-               class="w-full h-auto object-cover">
-          <div class="bg-amber-50 px-4 py-3 border-t border-gray-200">
-            <div class="flex items-center gap-2">
-              <i class="fas fa-lock text-amber-600"></i>
-              <p class="text-sm font-semibold text-amber-800">Internal Access Only</p>
-            </div>
-            <p class="text-xs text-amber-700 mt-1">Authorized project staff, medical personnel, and administrators only.
+      {% if form.errors %}
+      <div class="mt-6 alert-error">
+        <div class="flex items-start">
+          <div class="flex-shrink-0" style="margin-top: 2px;"><i class="fas fa-exclamation-circle"></i></div>
+          <div class="ml-3">
+            <p class="text-sm font-semibold mb-0">Invalid username or password. Please try again.</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
 
-</p>
+      <form class="mt-6 space-y-4" method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div>
+          <label for="id_username" class="form-label">Email</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
+              <i class="fas fa-envelope"></i>
+            </span>
+            <input id="id_username" name="username" type="email" required autofocus
+                   class="form-input" placeholder="Enter your email">
           </div>
         </div>
 
-        <div class="mt-8 space-y-4">
+        <div>
+          <label for="id_password" class="form-label">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
+              <i class="fas fa-key"></i>
+            </span>
+            <input id="id_password" name="password" type="password" autocomplete="current-password" required
+                   class="form-input" placeholder="Enter your password">
+          </div>
         </div>
+
+        <div class="flex items-center justify-between pt-1 gap-4">
+          <label class="flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" class="h-4 w-4 text-sky-600 border-slate-300 rounded">
+            Remember me
+          </label>
+
+          <a href="#" onclick="openModal()" class="text-sm helper-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <span class="mr-2"><i class="fas fa-sign-in-alt"></i></span>
+          Sign in
+        </button>
+      </form>
+
+      <div class="support-note mt-6 pt-5 text-center text-sm">
+        Internal access only. Contact your administrator if you need help signing in.
       </div>
     </div>
 
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 bg-white">
-      <div class="w-full max-w-md">
-        <div class="login-card rounded-lg p-8">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-2xl font-bold text-gray-800">Sign in</h2>
-              <p class="mt-1 text-sm text-gray-600">Use your credentials to continue.</p>
-            </div>
-            <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-              <i class="fas fa-user-md"></i>
-            </div>
-          </div>
-
-          {% if form.errors %}
-          <div class="mt-6 alert-error">
-            <div class="flex items-start">
-              <div class="flex-shrink-0" style="margin-top: 2px;"><i class="fas fa-exclamation-circle"></i></div>
-              <div class="ml-3">
-                <p class="text-sm font-semibold">Invalid username or password. Please try again.</p>
-              </div>
-            </div>
-          </div>
-          {% endif %}
-
-          <form class="mt-6 space-y-4" method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ next }}">
-
-            <div>
-              <label for="id_username" class="form-label">Email</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <i class="fas fa-envelope"></i>
-                </span>
-                <input id="id_username" name="username" type="email" required autofocus
-                       class="form-input" placeholder="Enter your email">
-              </div>
-            </div>
-
-            <div>
-              <label for="id_password" class="form-label">Password</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <i class="fas fa-key"></i>
-                </span>
-                <input id="id_password" name="password" type="password" autocomplete="current-password" required
-                       class="form-input" placeholder="Enter your password">
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between pt-2">
-              <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" class="h-4 w-4 text-amber-600 border-gray-300 rounded">
-                Remember me
-              </label>
-
-              <a href="#" onclick="openModal()" class="text-sm font-semibold text-amber-600 hover:text-amber-700">Forgot password?</a>
-            </div>
-
-            <button type="submit" class="btn-primary">
-              <span class="mr-2"><i class="fas fa-sign-in-alt"></i></span>
-              Sign in
-            </button>
-
-            <p class="text-xs text-gray-500 text-center pt-2">
-              For access, contact your administrator.
-            </p>
-          </form>
-        </div>
-
-        <p class="mt-6 text-center text-xs text-gray-500">
-          &copy; {% now "Y" %} Medical Data Collection Platform
-        </p>
-      </div>
-    </div>
+    <p class="mt-6 text-center text-xs text-slate-500">
+      &copy; {% now "Y" %} Dental Care Platform
+    </p>
   </div>
 </div>
 
@@ -239,23 +265,23 @@
 <div id="forgotPasswordModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3 class="text-xl font-bold text-gray-800">Password Reset</h3>
+      <h3 class="text-xl font-bold text-slate-800">Password Reset</h3>
       <span class="close" onclick="closeModal()">&times;</span>
     </div>
     <div class="text-center">
-      <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <i class="fas fa-user-shield text-amber-600 text-2xl"></i>
+      <div class="w-16 h-16 bg-sky-50 rounded-full flex items-center justify-center mx-auto mb-4 text-sky-600">
+        <i class="fas fa-user-shield text-2xl"></i>
       </div>
-      <h4 class="text-lg font-semibold text-gray-800 mb-2">Contact Your Administrator</h4>
-      <p class="text-gray-600 mb-6">
+      <h4 class="text-lg font-semibold text-slate-800 mb-2">Contact Your Administrator</h4>
+      <p class="text-slate-600 mb-6">
         For security reasons, password resets must be handled by your system administrator. Please contact them directly to reset your password.
       </p>
-      <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+      <div class="bg-sky-50 border border-sky-100 rounded-xl p-4 mb-6 text-left">
         <div class="flex items-center gap-2 mb-2">
-          <i class="fas fa-info-circle text-amber-600"></i>
-          <p class="text-sm font-semibold text-amber-800">Administrator Contact</p>
+          <i class="fas fa-info-circle text-sky-600"></i>
+          <p class="text-sm font-semibold text-slate-800 mb-0">Administrator Contact</p>
         </div>
-        <p class="text-xs text-amber-700">
+        <p class="text-xs text-slate-600 mb-0">
           Please reach out to your department administrator or IT support team for assistance with password reset.
         </p>
       </div>
