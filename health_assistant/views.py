@@ -187,6 +187,31 @@ def patient_register(request):
             print(f"DEBUG: Patient first_name: {patient.first_name}")
             print(f"DEBUG: Patient last_name: {patient.last_name}")
             
+            # Auto-create empty screening session to simplify workflow
+            from screening.models import ScreeningType, ScreeningSession
+            from django.utils import timezone
+            
+            default_type = ScreeningType.objects.first()
+            if not default_type:
+                default_type = ScreeningType.objects.create(
+                    name="General Initial Screening",
+                    code="general-initial-screening",
+                    description="Auto-generated default screening type for registration workflow."
+                )
+                
+            ScreeningSession.objects.get_or_create(
+                id=patient.patient_id,
+                defaults={
+                    'patient': patient,
+                    'screening_type': default_type,
+                    'status': ScreeningSession.STATUS_IN_PROGRESS,
+                    'scheduled_date': timezone.now(),
+                    'created_by': request.user,
+                    'consent_obtained': True,
+                    'consented_at': timezone.now()
+                }
+            )
+            
             messages.success(request, f'Patient {patient.full_name} registered successfully!')
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -226,23 +251,14 @@ def patient_register(request):
 
 @login_required
 def screening_session(request, patient_id=None):
-    """Handle screening session creation"""
+    """Handle screening session creation (Redirect to new automated workflow)"""
     if request.user.role != User.Role.HEALTH_ASSISTANT:
         messages.error(request, 'Access denied. Health assistant role required.')
         return redirect('login')
     
-    # If patient_id is provided, pre-select the patient
-    selected_patient = None
-    if patient_id:
-        try:
-            selected_patient = Patient.objects.get(id=patient_id)
-        except Patient.DoesNotExist:
-            messages.error(request, 'Patient not found.')
-            return redirect('health_assistant:patient_list')
-    
-    return render(request, 'health_assistant/screening_session.html', {
-        'selected_patient': selected_patient
-    })
+    # In the simplified workflow, we no longer use manual device selection. 
+    # All sessions are automatically created during patient registration/selection.
+    return redirect('health_assistant:landing')
 
 
 @login_required
@@ -296,8 +312,8 @@ def session_detail(request, session_id):
 @login_required
 def session_overview(request, session_id):
     """View a completed screening session overview specifically for Health Assistants."""
-    if request.user.role != User.Role.HEALTH_ASSISTANT:
-        messages.error(request, 'Access denied. Health assistant role required.')
+    if request.user.role not in [User.Role.HEALTH_ASSISTANT, User.Role.DOCTOR]:
+        messages.error(request, 'Access denied. Health assistant or Doctor role required.')
         return redirect('login')
     
     session = get_object_or_404(ScreeningSession, id=session_id)
@@ -320,9 +336,14 @@ def session_overview(request, session_id):
         except (ValueError, TypeError):
             pass
     
+    base_template = 'doctor/base.html' if request.user.role == User.Role.DOCTOR else 'health_assistant/base_clean.html'
+    back_url = 'doctor:patient_list' if request.user.role == User.Role.DOCTOR else 'health_assistant:my_sessions'
+    
     return render(request, 'health_assistant/session_overview.html', {
         'session': session,
-        'readings': readings
+        'readings': readings,
+        'base_template': base_template,
+        'back_url': back_url
     })
 
 
@@ -569,6 +590,32 @@ def api_get_patient(request, patient_id):
     
     try:
         patient = Patient.objects.get(id=patient_id)
+        
+        # Auto-create empty screening session for this existing patient to simplify workflow
+        from screening.models import ScreeningType, ScreeningSession
+        from django.utils import timezone
+        
+        default_type = ScreeningType.objects.first()
+        if not default_type:
+            default_type = ScreeningType.objects.create(
+                name="General Initial Screening",
+                code="general-initial-screening",
+                description="Auto-generated default screening type for workflow."
+            )
+            
+        ScreeningSession.objects.get_or_create(
+            id=patient.patient_id,
+            defaults={
+                'patient': patient,
+                'screening_type': default_type,
+                'status': ScreeningSession.STATUS_IN_PROGRESS,
+                'scheduled_date': timezone.now(),
+                'created_by': request.user,
+                'consent_obtained': True,
+                'consented_at': timezone.now()
+            }
+        )
+        
         return JsonResponse({
             'success': True,
             'patient': {

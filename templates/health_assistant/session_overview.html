@@ -1,4 +1,4 @@
-{% extends "health_assistant/base_clean.html" %}
+{% extends base_template|default:"health_assistant/base_clean.html" %}
 {% load static %}
 
 {% block title %}Screening Session #{{ session.id }} Overview{% endblock %}
@@ -9,8 +9,8 @@
     <div class="d-flex justify-content-between mb-4">
         <h4>Session Information</h4>
         <div class="d-flex gap-2">
-            <a href="{% url 'health_assistant:my_sessions' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-2"></i> Back to Sessions
+            <a href="{% if back_url %}{% url back_url %}{% else %}{% url 'health_assistant:my_sessions' %}{% endif %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back
             </a>
             {% if session.can_complete %}
             <a href="{% url 'screening:session_complete' session.id %}" class="btn btn-primary">
@@ -44,8 +44,8 @@
                     </span>
                 </div>
                 <div class="col-md-4">
-                    <p class="text-muted small mb-1">Device Used</p>
-                    <p class="text-dark fw-bold mb-0">{{ session.device_used.name|default:"N/A" }}</p>
+                    <p class="text-muted small mb-1">Devices Used</p>
+                    <p class="text-dark fw-bold mb-0">{{ session.active_devices_list }}</p>
                 </div>
                 <div class="col-md-4">
                     <p class="text-muted small mb-1">Scheduled Date</p>

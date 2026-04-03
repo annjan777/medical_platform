@@ -1,4 +1,4 @@
-{% extends "health_assistant/base_clean.html" %}
+{% extends "doctor/base.html" %}
 
 {% block title %}My Sessions{% endblock %}
 
@@ -14,13 +14,8 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-history me-2"></i>My Screening Sessions
+                            <i class="fas fa-history me-2"></i>Screening Sessions
                         </h5>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <a href="{% url 'health_assistant:landing' %}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>New Screening Session
-                        </a>
                     </div>
                 </div>
             </div>
@@ -76,7 +71,7 @@
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="fas fa-filter me-1"></i>Filter
                                             </button>
-                                            <a href="{% url 'health_assistant:my_sessions' %}"
+                                            <a href="{% url 'doctor:session_list' %}"
                                                 class="btn btn-outline-secondary">
                                                 <i class="fas fa-times me-1"></i>Clear
                                             </a>
@@ -161,24 +156,10 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
                                         <a href="{% url 'health_assistant:session_overview' session_id=session.id %}"
                                             class="btn btn-outline-primary" title="View Details">
-                                            <i class="fas fa-eye"></i>
+                                            <i class="fas fa-eye"></i> View Results
                                         </a>
-                                        {% if session.status == 'in_progress' %}
-                                        <a href="#" class="btn btn-outline-success" title="Continue Session"
-                                            data-session-id="{{ session.id }}" data-action="continue">
-                                            <i class="fas fa-play"></i>
-                                        </a>
-                                        {% endif %}
-                                        {% if session.status == 'completed' %}
-                                        <a href="{% url 'health_assistant:session_overview' session_id=session.id %}"
-                                            class="btn btn-outline-info" title="View Results">
-                                            <i class="fas fa-chart-line"></i>
-                                        </a>
-                                        {% endif %}
-                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -221,21 +202,18 @@
                 </nav>
                 {% endif %}
                 {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">No screening sessions found</h5>
-                    <p class="text-muted">
-                        {% if status_filter or date_from or date_to %}
-                        Try adjusting your filters or
-                        <a href="{% url 'health_assistant:my_sessions' %}">clear all filters</a>.
-                        {% else %}
-                        Start your first screening session to see it here.
-                        {% endif %}
-                    </p>
-                    <a href="{% url 'health_assistant:landing' %}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Start Screening Session
-                    </a>
-                </div>
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No screening sessions found</h5>
+                        <p class="text-muted">
+                            {% if status_filter or date_from or date_to %}
+                            Try adjusting your filters or
+                            <a href="{% url 'doctor:session_list' %}">clear all filters</a>.
+                            {% else %}
+                            No screening sessions have been recorded yet.
+                            {% endif %}
+                        </p>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -261,78 +239,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    $(document).ready(function () {
-        // Handle session action clicks
-        $('[data-action]').click(function (e) {
-            e.preventDefault();
-            const sessionId = $(this).data('session-id');
-            const action = $(this).data('action');
-
-            switch (action) {
-                case 'view':
-                    viewSessionDetails(sessionId);
-                    break;
-                case 'continue':
-                    continueSession(sessionId);
-                    break;
-                case 'results':
-                    viewResults(sessionId);
-                    break;
-            }
-        });
-    });
-
-    function viewSessionDetails(sessionId) {
-        makeAjaxRequest(`/health-assistant/api/session-details/${sessionId}/`)
-            .then(data => {
-                if (data.session) {
-                    const session = data.session;
-                    const content = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Patient Information</h6>
-                            <div class="patient-info">
-                                <strong>Name:</strong> ${session.patient.name}<br>
-                                <strong>ID:</strong> ${session.patient.external_id || session.patient.id}<br>
-                                <strong>Age:</strong> ${session.patient.age}<br>
-                                <strong>Gender:</strong> ${session.patient.gender}<br>
-                                <strong>Phone:</strong> ${session.patient.phone || 'Not provided'}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Session Information</h6>
-                            <div>
-                                <strong>Screening Type:</strong> ${session.product.name}<br>
-                                <strong>Device:</strong> ${session.device.name}<br>
-                                <strong>Status:</strong> <span class="status-badge status-${session.status}">${session.status_display}</span><br>
-                                <strong>Created:</strong> ${formatDate(session.created_at)}<br>
-                                ${session.completed_at ? `<strong>Completed:</strong> ${formatDate(session.completed_at)}` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                    document.getElementById('sessionDetailsContent').innerHTML = content;
-                    new bootstrap.Modal(document.getElementById('sessionDetailsModal')).show();
-                }
-            })
-            .catch(error => {
-                showAlert('Error loading session details', 'danger');
-            });
-    }
-
-    function continueSession(sessionId) {
-        if (confirm('Are you sure you want to continue this screening session?')) {
-            window.location.href = `/health-assistant/session/${sessionId}/`;
-        }
-    }
-
-    function viewResults(sessionId) {
-        window.location.href = `/health-assistant/session/${sessionId}/results/`;
-    }
-</script>
 {% endblock %}

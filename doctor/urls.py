@@ -11,4 +11,5 @@ urlpatterns = [
     path('consultations/completed/', views.CompletedConsultationListView.as_view(), name='completed_consultations'),
     path('responses/', views.ResponseListView.as_view(), name='response_list'),
     path('responses/<int:pk>/', views.ResponseDetailView.as_view(), name='response_detail'),
+    path('sessions/', views.SessionListView.as_view(), name='session_list'),
 ]
