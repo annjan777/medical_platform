@@ -199,7 +199,7 @@ def patient_register(request):
                     description="Auto-generated default screening type for registration workflow."
                 )
                 
-            ScreeningSession.objects.get_or_create(
+            session, created = ScreeningSession.objects.get_or_create(
                 id=patient.patient_id,
                 defaults={
                     'patient': patient,
@@ -211,6 +211,14 @@ def patient_register(request):
                     'consented_at': timezone.now()
                 }
             )
+            
+            # If the session was auto-created by the patient signal, update it.
+            if not created and not session.created_by:
+                session.created_by = request.user
+                session.status = ScreeningSession.STATUS_IN_PROGRESS
+                session.consent_obtained = True
+                session.consented_at = timezone.now()
+                session.save()
             
             messages.success(request, f'Patient {patient.full_name} registered successfully!')
             
