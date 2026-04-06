@@ -355,13 +355,17 @@
                             <span class="tooltip-text">Edit Records</span>
                         </button>
                         ${patient.latest_response_id ? `
-                        <button class="btn btn-success btn-sm px-3 has-tooltip me-1" onclick="viewConsultation(${patient.latest_response_id})" title="Consult Patient">
+                        <button class="btn btn-success btn-sm px-3 has-tooltip" onclick="viewConsultation(${patient.latest_response_id})" title="Consult Patient">
                             <i class="fas fa-stethoscope"></i>
                             <span class="tooltip-text">Start Consultation</span>
                         </button>` : ''}
                         <button class="btn btn-primary btn-sm px-3 has-tooltip" onclick="viewPatient(${patient.id})" title="View Details">
-                            <i class="fas fa-eye"></i>
-                            <span class="tooltip-text">View Detailed File</span>
+                            <i class="fas fa-user-injured text-white"></i>
+                            <span class="tooltip-text">Patient File</span>
+                        </button>
+                        <button class="btn btn-info btn-sm px-3 has-tooltip text-white" onclick="window.location.href='/health-assistant/session/${patient.patient_id}/overview/'" title="Session Overview">
+                            <i class="fas fa-eye text-white"></i>
+                            <span class="tooltip-text">Active Session</span>
                         </button>
                     </div>
                 </td>

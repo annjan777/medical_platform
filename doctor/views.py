@@ -7,7 +7,9 @@ from django.db.models import Q, Subquery, OuterRef
 from accounts.models import User
 from patients.models import Patient
 from questionnaires.models import Response, Questionnaire
+from screening.models import ScreeningSession
 from textwrap import dedent
+
 
 class DoctorRequiredMixin(LoginRequiredMixin):
     """Mixin to ensure user is a Doctor"""
@@ -16,6 +18,37 @@ class DoctorRequiredMixin(LoginRequiredMixin):
             messages.error(request, 'Access denied. Dentist role required.')
             return redirect('login')
         return super().dispatch(request, *args, **kwargs)
+
+class SessionListView(DoctorRequiredMixin, ListView):
+    model = ScreeningSession
+    template_name = 'doctor/session_list.html'
+    context_object_name = 'sessions'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = ScreeningSession.objects.select_related('patient', 'screening_type').order_by('-created_at')
+        
+        q = self.request.GET.get('q')
+        status = self.request.GET.get('status')
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        
+        if q:
+            queryset = queryset.filter(
+                Q(patient__first_name__icontains=q) | 
+                Q(patient__last_name__icontains=q) | 
+                Q(patient__patient_id__icontains=q)
+            )
+        
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        if date_from:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__date__lte=date_to)
+            
+        return queryset
 
 @login_required
 def doctor_home(request):

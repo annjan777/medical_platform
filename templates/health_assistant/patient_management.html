@@ -526,6 +526,9 @@ function displayPatients(patients) {
                         <button class="btn btn-outline-info btn-sm" onclick="startScreening(${patient.id})" title="Start Screening">
                             <i class="fas fa-play"></i>
                         </button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="window.location.href='/health-assistant/session/${patient.patient_id}/overview/'" title="Session Overview">
+                            <i class="fas fa-file-medical-alt"></i>
+                        </button>
                     </div>
                 </td>
             </tr>

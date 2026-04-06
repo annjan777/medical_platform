@@ -122,7 +122,7 @@
                                 <span class="text-black">{{ session.scheduled_date|date:"M d, Y H:i" }}</span>
                             </td>
                             <td>
-                                <span class="text-black">{{ session.device_used.name|default:"N/A" }}</span>
+                                <span class="text-black">{{ session.active_devices_list }}</span>
                             </td>
                             <td>
                                 <div class="flex space-x-2">

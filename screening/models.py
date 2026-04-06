@@ -204,6 +204,38 @@ class ScreeningSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    @property
+    def active_devices_list(self):
+        """Returns a list of device names that have actually sent data for this session."""
+        try:
+            from devices.models import DeviceReading
+            # Filter readings associated with this session's patient and session ID
+            readings = DeviceReading.objects.filter(
+                patient=self.patient,
+                reading_data__session_id=str(self.id)
+            ).select_related('device')
+            
+            devices = {r.device.name for r in readings if r.device}
+            
+            # Check integer session_id for older records
+            if not devices and str(self.id).isdigit():
+                try:
+                    readings_int = DeviceReading.objects.filter(
+                        patient=self.patient,
+                        reading_data__session_id=int(self.id)
+                    ).select_related('device')
+                    devices = {r.device.name for r in readings_int if r.device}
+                except (ValueError, TypeError):
+                    pass
+                    
+            if devices:
+                return ", ".join(sorted(list(devices)))
+                
+        except Exception:
+            pass
+            
+        return "No data recorded"
+    
     class Meta:
         ordering = ['-scheduled_date']
         verbose_name = 'screening session'
