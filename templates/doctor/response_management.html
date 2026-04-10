@@ -135,7 +135,7 @@
             </td>
             <td class="px-6 py-4 text-right">
               <div class="flex justify-end space-x-2">
-                <a href="{% url 'doctor:response_detail' response.pk %}" class="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-blue-600 hover:text-white transition-all shadow-sm group-hover:shadow-blue-100" title="View Full Analysis">
+                <a href="{% url 'doctor:response_readonly' response.pk %}" class="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-blue-600 hover:text-white transition-all shadow-sm group-hover:shadow-blue-100" title="View Full Analysis">
                   <i class="fas fa-eye text-xs"></i>
                 </a>
                 <button onclick="openEditModal({{ response.pk }}, '{{ response.questionnaire.title|escapejs }}')" class="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-blue-600 hover:text-white transition-all shadow-sm group-hover:shadow-blue-100" title="Modify Record">

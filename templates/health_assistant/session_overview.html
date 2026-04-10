@@ -168,7 +168,19 @@
                                     {{ reading.reading_type|title }}
                                 </span>
                             </td>
-                            <td class="fw-bold text-dark">{{ reading.reading_data.value }}</td>
+                            <td class="fw-bold text-dark">
+                                {% if reading.reading_type == 'image_upload' %}
+                                    {% if reading.attachment_url %}
+                                    <a href="{{ reading.attachment_url }}" target="_blank" class="text-primary text-decoration-none">
+                                        <i class="fas fa-paperclip me-1"></i> Data Attached
+                                    </a>
+                                    {% else %}
+                                    <span class="text-primary"><i class="fas fa-paperclip me-1"></i> Data Attached</span>
+                                    {% endif %}
+                                {% else %}
+                                    {{ reading.reading_data.value }}
+                                {% endif %}
+                            </td>
                             <td class="text-muted small">{{ reading.recorded_at|date:"M d, Y H:i:s" }}</td>
                             <td class="text-muted small">{{ reading.device.name }}</td>
                         </tr>
@@ -182,8 +194,8 @@
 
     <!-- Attachments (S3 Remote Storage) -->
     {% if session.attachments.exists %}
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-white">
+    <div class="card shadow-sm border-0 mb-4" id="attachments">
+        <div class="card-header bg-white border-bottom">
             <h5 class="mb-0 text-dark"><i class="fas fa-paperclip me-2"></i>Data Attachments</h5>
         </div>
         <div class="card-body">
@@ -192,18 +204,28 @@
                 <div class="d-flex align-items-center justify-content-between p-3 border rounded bg-light">
                     <div class="d-flex align-items-center">
                         {% if attachment.file_type == 'application/zip' %}
-                        <i class="fas fa-file-archive text-primary fs-3 me-3"></i>
+                        <div class="bg-primary bg-opacity-10 text-primary p-3 rounded me-3">
+                            <i class="fas fa-file-archive fs-4"></i>
+                        </div>
                         {% else %}
-                        <i class="fas fa-file-alt text-secondary fs-3 me-3"></i>
+                        <div class="bg-secondary bg-opacity-10 text-secondary p-3 rounded me-3">
+                            <i class="fas fa-file-image fs-4"></i>
+                        </div>
                         {% endif %}
                         <div>
-                            <p class="text-dark fw-bold mb-0">{{ attachment.file.name|slice:"15:"|default:"Attached File" }}</p>
-                            <p class="text-muted small mb-0">{{ attachment.description|default:"No description" }}</p>
+                            <p class="text-dark fw-bold mb-1">
+                                {% if 'zip' in attachment.file.name %}
+                                    Compressed ZIP Data
+                                {% elif 'pdf' in attachment.file.name %}
+                                    PDF Document
+                                {% else %}
+                                    Image Scan
+                                {% endif %}
+                            </p>
+                            <p class="text-muted small mb-0">{{ attachment.description|default:"IoT Data Upload" }}</p>
                         </div>
                     </div>
-                    <!-- Direct download securely leveraging Boto3 presigned AWS URLs -->
-                    <a href="{{ attachment.file.url }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm"
-                        target="_blank" rel="noopener noreferrer">
+                    <a href="{{ attachment.file.url }}" class="btn btn-emerald px-4 shadow-sm" target="_blank">
                         <i class="fas fa-cloud-download-alt me-2"></i> Download Data
                     </a>
                 </div>

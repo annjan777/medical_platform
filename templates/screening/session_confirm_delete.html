@@ -1,0 +1,45 @@
+{% extends "dashboard/admin/base.html" %}
+
+{% block page_title %}Delete Screening Session{% endblock %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <div class="bg-white rounded-lg shadow-md border border-red-200 overflow-hidden">
+        <div class="bg-red-50 border-b border-red-200 px-6 py-4">
+            <h2 class="text-xl font-bold text-red-700 flex items-center">
+                <i class="fas fa-exclamation-triangle mr-3"></i> Confirm Deletion
+            </h2>
+        </div>
+        
+        <div class="p-6">
+            <p class="text-gray-700 text-base mb-4">
+                Are you absolutely sure you want to permanently delete the screening session for <strong class="text-black">{{ object.patient.get_full_name|default:object.patient.email }}</strong> ({% if object.patient.setu_id %}{{ object.patient.setu_id }}{% else %}{{ object.patient.patient_id }}{% endif %})?
+            </p>
+            
+            <div class="bg-gray-50 rounded p-4 mb-6 text-sm text-gray-600 border border-gray-200">
+                <ul class="list-disc pl-5 space-y-1">
+                    <li><strong>Session Type:</strong> {{ object.screening_type.name }}</li>
+                    <li><strong>Date Created:</strong> {{ object.created_at|date:"M d, Y" }}</li>
+                    <li><strong>Current Status:</strong> <span class="capitalize">{{ object.get_status_display }}</span></li>
+                </ul>
+            </div>
+            
+            <p class="text-red-600 font-bold text-sm mb-6">
+                Warning: This action cannot be undone. All clinical results, attachments, and device readings associated natively with this session will also be destroyed.
+            </p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex items-center justify-end space-x-3">
+                    <a href="{% url 'screening:session_list' %}" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+                        Cancel & Go Back
+                    </a>
+                    <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium shadow-sm transition-colors flex items-center">
+                        <i class="fas fa-trash-alt mr-2"></i> Yes, Permanently Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

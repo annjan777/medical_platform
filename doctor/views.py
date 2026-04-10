@@ -208,6 +208,18 @@ class ResponseDetailView(DoctorRequiredMixin, DetailView):
         context['previous_consultations'] = self.object.patient.notes.filter(note_type='CONSULTATION').order_by('-created_at')
         return context
 
+class ResponseReadOnlyView(DoctorRequiredMixin, DetailView):
+    model = Response
+    template_name = 'doctor/response_detail.html'
+    context_object_name = 'response'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['vitals'] = self.object.patient.vitals.order_by('-recorded_at').first()
+        context['previous_consultations'] = self.object.patient.notes.filter(note_type='CONSULTATION').order_by('-created_at')
+        context['read_only'] = True
+        return context
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         patient = self.object.patient

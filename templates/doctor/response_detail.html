@@ -229,6 +229,7 @@
         {% endif %}
 
         <!-- Consultation Form -->
+        {% if not read_only %}
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom py-3">
                 <h5 class="mb-0 fw-bold"><i class="fas fa-tooth text-primary me-2"></i>Dentist's Consultation Notes</h5>
@@ -249,13 +250,13 @@
                                         <th style="width: 25%">Medicine Name & Strength</th>
                                         <th style="width: 15%">Dosage</th>
                                         <th style="width: 15%">Instructions</th>
-                                        <th style="width: 10%">Duration (Days)</th>
-                                        <th style="width: 15%">Others <small class="fw-normal text-muted">[Optional]</small></th>
+                                        <th style="width: 10%">Duration<br><small>(Days)</small></th>
+                                        <th style="width: 15%">Others <small class="text-muted">[Optional]</small></th>
                                     </tr>
                                 </thead>
                                 <tbody id="prescriptions-container">
-                                    <!-- Initial 3 rows -->
-                                    {% for i in "123"|make_list %}
+                                    <!-- Default 3 rows -->
+                                    {% for i in "123" %}
                                     <tr>
                                         <td class="align-middle text-center text-muted col-num">{{ forloop.counter }}</td>
                                         <td><input type="text" class="form-control form-control-sm" name="pres_type[]" placeholder="e.g. Tablet"></td>
@@ -268,42 +269,42 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        </div>
-                        <div class="mt-2">
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="add-prescription-btn">
-                                <i class="fas fa-plus me-1"></i> Add Another Row
-                            </button>
+                            <div class="p-2 border-top bg-light text-start">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="add-prescription-btn">
+                                    <i class="fas fa-plus"></i> Add Another Row
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row g-4 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Provisional Diagnosis</label>
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label class="fw-bold mb-2">Provisional Diagnosis</label>
                             <textarea class="form-control" name="provisional_diagnosis" rows="3" placeholder="Enter provisional diagnosis here..."></textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">On Examination</label>
+                            <label class="fw-bold mb-2">On Examination</label>
                             <textarea class="form-control" name="on_examination" rows="3" placeholder="Clinical findings..."></textarea>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Investigations</label>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label class="fw-bold mb-2">Investigations</label>
                             <textarea class="form-control" name="investigations" rows="3" placeholder="Required tests..."></textarea>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Advice</label>
+                            <label class="fw-bold mb-2">Advice</label>
                             <textarea class="form-control" name="advice" rows="3" placeholder="General advice, diet instructions..."></textarea>
                         </div>
                     </div>
 
-                    <div class="border rounded p-3 mb-4 bg-light">
-                        <div class="form-check form-switch custom-switch">
+                    <div class="mb-4 p-3 bg-light rounded border">
+                        <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="furtherFollowup" name="further_followup">
                             <label class="form-check-label fw-bold ms-2" for="furtherFollowup">
                                 Further Followup Required
                             </label>
-                        </div>
-                        <div class="form-text mt-2 ms-5">
-                            Check this box if the complaint requires further followup.
                         </div>
                     </div>
 
@@ -313,6 +314,7 @@
                 </form>
             </div>
         </div>
+        {% endif %}
         
     </div>
 </div>

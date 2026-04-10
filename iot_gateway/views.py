@@ -107,6 +107,16 @@ def receive_image_data(request):
                 uploaded_by=session.conducted_by
             )
 
+            # Create a DeviceReading so the session lists this device as active
+            DeviceReading.objects.create(
+                device=device,
+                patient=session.patient,
+                reading_type='image_upload',
+                reading_data={"attachment_id": attachment.id, "session_id": session_id},
+                recorded_at=timezone.now(),
+                recorded_by=session.conducted_by
+            )
+
             # Update device state (Heartbeat)
             device.last_heartbeat_at = timezone.now()
             device.connection_status = Device.CONNECTION_CONNECTED

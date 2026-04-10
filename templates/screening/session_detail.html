@@ -155,9 +155,16 @@
                         <i class="fas fa-file-alt text-gray-400 text-xl mr-3"></i>
                         {% endif %}
                         <div>
-                            <p class="text-black font-medium">{{ attachment.file.name|slice:"15:"|default:"Attached
-                                File" }}</p>
-                            <p class="text-gray-500 text-sm">{{ attachment.description|default:"No description" }}</p>
+                            <p class="text-black font-medium">
+                                {% if 'zip' in attachment.file.name %}
+                                    Compressed ZIP Data
+                                {% elif 'pdf' in attachment.file.name %}
+                                    PDF Document
+                                {% else %}
+                                    Image Scan
+                                {% endif %}
+                            </p>
+                            <p class="text-gray-500 text-sm">{{ attachment.description|default:"IoT Data Upload" }}</p>
                         </div>
                     </div>
                     <!-- Downloading attachment.file.url securely leverages Boto3 to generate a 1-hour presigned AWS URL! -->
