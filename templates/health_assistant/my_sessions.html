@@ -31,35 +31,7 @@
                         <div class="card bg-light">
                             <div class="card-body">
                                 <form method="get" class="row g-3">
-                                    <div class="col-md-3">
-                                        <label for="status" class="form-label">Status</label>
-                                        <select name="status" id="status" class="form-select">
-                                            <option value="">All Status</option>
-                                            {% if status_filter == 'in_progress' %}
-                                            <option value="in_progress" selected>In Progress</option>
-                                            {% else %}
-                                            <option value="in_progress">In Progress</option>
-                                            {% endif %}
 
-                                            {% if status_filter == 'completed' %}
-                                            <option value="completed" selected>Completed</option>
-                                            {% else %}
-                                            <option value="completed">Completed</option>
-                                            {% endif %}
-
-                                            {% if status_filter == 'cancelled' %}
-                                            <option value="cancelled" selected>Cancelled</option>
-                                            {% else %}
-                                            <option value="cancelled">Cancelled</option>
-                                            {% endif %}
-
-                                            {% if status_filter == 'failed' %}
-                                            <option value="failed" selected>Failed</option>
-                                            {% else %}
-                                            <option value="failed">Failed</option>
-                                            {% endif %}
-                                        </select>
-                                    </div>
                                     <div class="col-md-3">
                                         <label for="date_from" class="form-label">From Date</label>
                                         <input type="date" name="date_from" id="date_from" class="form-control"
@@ -95,11 +67,8 @@
                         <thead>
                             <tr>
                                 <th>Patient</th>
-                                <th>Screening Type</th>
                                 <th>Device</th>
-                                <th>Status</th>
                                 <th>Date</th>
-                                <th>Duration</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -117,15 +86,7 @@
                                         </small>
                                     </div>
                                 </td>
-                                <td>
-                                    <div>
-                                        <strong>{{ session.screening_type.name }}</strong>
-                                        <br>
-                                        <small class="text-muted">
-                                            {{ session.screening_type.description|truncatechars:50 }}
-                                        </small>
-                                    </div>
-                                </td>
+
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <i
@@ -135,11 +96,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <span class="status-badge status-{{ session.status|lower }}">
-                                        {{ session.get_status_display }}
-                                    </span>
-                                </td>
+
                                 <td>
                                     <div>
                                         <strong>{{ session.created_at|date:"M d, Y" }}</strong>
@@ -147,37 +104,13 @@
                                         <small class="text-muted">{{ session.created_at|time:"H:i" }}</small>
                                     </div>
                                 </td>
-                                <td>
-                                    {% if session.actual_end_time %}
-                                    {% with duration=session.actual_end_time|timeuntil:session.created_at %}
-                                    <span class="text-muted">{{ duration }}</span>
-                                    {% endwith %}
-                                    {% elif session.status == 'in_progress' %}
-                                    <span class="text-warning">
-                                        <i class="fas fa-clock me-1"></i>In Progress
-                                    </span>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
+
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a href="{% url 'health_assistant:session_overview' session_id=session.id %}"
                                             class="btn btn-outline-primary" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        {% if session.status == 'in_progress' %}
-                                        <a href="#" class="btn btn-outline-success" title="Continue Session"
-                                            data-session-id="{{ session.id }}" data-action="continue">
-                                            <i class="fas fa-play"></i>
-                                        </a>
-                                        {% endif %}
-                                        {% if session.status == 'completed' %}
-                                        <a href="{% url 'health_assistant:session_overview' session_id=session.id %}"
-                                            class="btn btn-outline-info" title="View Results">
-                                            <i class="fas fa-chart-line"></i>
-                                        </a>
-                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
