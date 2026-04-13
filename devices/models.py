@@ -203,3 +203,14 @@ class DeviceReading(models.Model):
     
     def __str__(self):
         return f"{self.reading_type} reading for {self.patient} at {self.recorded_at}"
+
+    @property
+    def attachment_url(self):
+        if self.reading_type == 'image_upload' and 'attachment_id' in self.reading_data:
+            try:
+                from screening.models import ScreeningAttachment
+                attachment = ScreeningAttachment.objects.get(id=self.reading_data['attachment_id'])
+                return attachment.file.url
+            except Exception:
+                pass
+        return None

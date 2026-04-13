@@ -2,6 +2,14 @@
 
 A professional, enterprise-grade healthcare platform engineered for high-security medical data collection, patient lifecycle management, and real-time IoT device orchestration. Specifically tailored for clinical screenings and specialized dental workflows.
 
+## 📖 Project Description
+
+The Medical Data Collection Platform is a comprehensive digital health solution designed to bridge the gap between frontline healthcare workers and clinical specialists. By integrating direct IoT medical device data feeds with dynamic, logic-driven questionnaires, the platform eliminates manual data-entry errors and accelerates patient triage. It serves as a unified ecosystem where Health Assistants can securely register patients and conduct remote screenings, seamlessly transmitting vital statistics and diagnostic imagery to specialized doctors (e.g., Dentists) for comprehensive remote consultation and diagnosis. 
+
+## 🎯 Project Outcome
+
+The primary outcome of the MDCP is a highly streamlined, paperless clinical pipeline that significantly reduces patient wait times and enhances diagnostic accuracy. By automating data ingestion from hardware devices directly into structured patient portfolios, clinicians receive a real-time, holistic view of patient health. The platform ensures strict data integrity, enforces role-based access to safeguard patient privacy, and drastically improves overall operational efficiency for medical camps and remote health centers.
+
 ---
 
 ## 🏗️ System Architecture
