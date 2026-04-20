@@ -65,7 +65,6 @@ class HealthAssistantDashboardView(HealthAssistantRequiredMixin, TemplateView):
         # Get today's statistics
         today = timezone.now().date()
         todays_sessions = ScreeningSession.objects.filter(
-            created_by=user,
             created_at__date=today
         )
         
@@ -73,15 +72,13 @@ class HealthAssistantDashboardView(HealthAssistantRequiredMixin, TemplateView):
         context['completed_sessions'] = todays_sessions.filter(status='completed').count()
         context['pending_sessions'] = todays_sessions.filter(status='in_progress').count()
         
-        # Total patients this health assistant has worked with
-        context['total_patients'] = Patient.objects.filter(
-            screening_sessions__created_by=user
-        ).distinct().count()
+        # Total patients in the system
+        context['total_patients'] = Patient.objects.count()
         
         # Recent sessions
-        context['recent_sessions'] = ScreeningSession.objects.filter(
-            created_by=user
-        ).select_related('patient', 'screening_type').order_by('-created_at')[:10]
+        context['recent_sessions'] = ScreeningSession.objects.select_related(
+            'patient', 'screening_type'
+        ).order_by('-created_at')[:10]
         
         # Device status (Only show available devices, or ones already assigned to this HA)
         context['devices'] = Device.objects.filter(
@@ -276,9 +273,9 @@ def my_sessions(request):
         messages.error(request, 'Access denied. Health assistant role required.')
         return redirect('login')
     
-    sessions = ScreeningSession.objects.filter(
-        created_by=request.user
-    ).select_related('patient', 'screening_type').order_by('-created_at')
+    sessions = ScreeningSession.objects.select_related(
+        'patient', 'screening_type'
+    ).order_by('-created_at')
     
     # Filter by status if provided
     status_filter = request.GET.get('status')
@@ -389,7 +386,6 @@ def api_today_stats(request):
     
     # Get today's sessions
     todays_sessions = ScreeningSession.objects.filter(
-        created_by=user,
         created_at__date=today
     )
     
@@ -397,9 +393,7 @@ def api_today_stats(request):
         'todays_sessions': todays_sessions.count(),
         'completed_sessions': todays_sessions.filter(status='completed').count(),
         'pending_sessions': todays_sessions.filter(status='in_progress').count(),
-        'total_patients': Patient.objects.filter(
-            screening_sessions__created_by=user
-        ).distinct().count()
+        'total_patients': Patient.objects.count()
     }
     
     return JsonResponse(stats)
@@ -414,9 +408,9 @@ def api_recent_activity(request):
     user = request.user
     
     # Get recent sessions
-    recent_sessions = ScreeningSession.objects.filter(
-        created_by=user
-    ).select_related('patient', 'screening_type').order_by('-created_at')[:5]
+    recent_sessions = ScreeningSession.objects.select_related(
+        'patient', 'screening_type'
+    ).order_by('-created_at')[:5]
     
     activities = []
     for session in recent_sessions:
