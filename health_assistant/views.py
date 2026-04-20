@@ -290,13 +290,19 @@ def my_sessions(request):
     if date_to:
         sessions = sessions.filter(created_at__date__lte=date_to)
     
+    # Pagination
+    paginator = Paginator(sessions, 10) # 10 sessions per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     return render(request, 'health_assistant/my_sessions.html', {
-        'sessions': sessions,
+        'sessions': page_obj,
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
         'status_filter': status_filter,
         'date_from': date_from,
         'date_to': date_to
     })
-
 
 @login_required
 def session_detail(request, session_id):
