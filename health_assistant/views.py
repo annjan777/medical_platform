@@ -295,13 +295,20 @@ def my_sessions(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Preserve filters in pagination links while excluding duplicate 'page' arguments
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        del query_params['page']
+    query_string = query_params.urlencode()
+    
     return render(request, 'health_assistant/my_sessions.html', {
         'sessions': page_obj,
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
         'status_filter': status_filter,
         'date_from': date_from,
-        'date_to': date_to
+        'date_to': date_to,
+        'query_string': query_string
     })
 
 @login_required
