@@ -196,7 +196,72 @@ class ResponseListView(DoctorRequiredMixin, ListView):
         context['questionnaires'] = Questionnaire.objects.filter(is_active=True)
         return context
 
-class ResponseDetailView(DoctorRequiredMixin, DetailView):
+class ConsultationNoteCreateMixin:
+    """Handle consultation note submission from the editable response view."""
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        patient = self.object.patient
+
+        # Gather data from the form
+        provisional_diagnosis = request.POST.get('provisional_diagnosis', '').strip()
+        on_examination = request.POST.get('on_examination', '').strip()
+        investigations = request.POST.get('investigations', '').strip()
+        advice = request.POST.get('advice', '').strip()
+        further_followup = request.POST.get('further_followup') == 'on'
+
+        # Gather prescriptions
+        prescription_types = request.POST.getlist('pres_type[]')
+        medicine_names = request.POST.getlist('pres_medicine[]')
+        dosages = request.POST.getlist('pres_dosage[]')
+        instructions = request.POST.getlist('pres_instructions[]')
+        durations = request.POST.getlist('pres_duration[]')
+        others = request.POST.getlist('pres_others[]')
+
+        prescriptions_text = ""
+        for i in range(len(medicine_names)):
+            med = medicine_names[i].strip()
+            if med:
+                typ = prescription_types[i].strip() if i < len(prescription_types) else ""
+                dos = dosages[i].strip() if i < len(dosages) else ""
+                ins = instructions[i].strip() if i < len(instructions) else ""
+                dur = durations[i].strip() if i < len(durations) else ""
+                oth = others[i].strip() if i < len(others) else ""
+                prescriptions_text += f"&bull; <em>{typ}</em>: <strong>{med}</strong> | {dos} | {dur} days | {ins} | {oth}<br>"
+
+        # Build the final content
+        content_lines = []
+        if provisional_diagnosis:
+            content_lines.append(f"<strong>Provisional Diagnosis</strong><br>{provisional_diagnosis}")
+        if on_examination:
+            content_lines.append(f"<strong>On Examination</strong><br>{on_examination}")
+        if investigations:
+            content_lines.append(f"<strong>Investigations</strong><br>{investigations}")
+        if prescriptions_text:
+            content_lines.append(f"<strong>Prescriptions</strong><br>{prescriptions_text}")
+        if advice:
+            content_lines.append(f"<strong>Advice</strong><br>{advice}")
+
+        followup_text = "Yes" if further_followup else "No"
+        content_lines.append(f"<strong>Further Followup Required</strong><br>{followup_text}")
+
+        content = "<br><br>".join(content_lines)
+
+        from patients.models import PatientNote
+        PatientNote.objects.create(
+            patient=patient,
+            author=request.user,
+            note_type=PatientNote.NoteType.CONSULTATION,
+            title=f"Consultation Note - {self.object.questionnaire.title}",
+            content=content,
+            is_important=further_followup
+        )
+
+        messages.success(request, "Consultation note added successfully to patient's record.")
+        return redirect('doctor:pending_consultations')
+
+
+class ResponseDetailView(ConsultationNoteCreateMixin, DoctorRequiredMixin, DetailView):
     model = Response
     template_name = 'doctor/response_detail.html'
     context_object_name = 'response'
@@ -219,64 +284,3 @@ class ResponseReadOnlyView(DoctorRequiredMixin, DetailView):
         context['previous_consultations'] = self.object.patient.notes.filter(note_type='CONSULTATION').order_by('-created_at')
         context['read_only'] = True
         return context
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        patient = self.object.patient
-        
-        # Gather data from the form
-        provisional_diagnosis = request.POST.get('provisional_diagnosis', '').strip()
-        on_examination = request.POST.get('on_examination', '').strip()
-        investigations = request.POST.get('investigations', '').strip()
-        advice = request.POST.get('advice', '').strip()
-        further_followup = request.POST.get('further_followup') == 'on'
-        
-        # Gather prescriptions
-        prescription_types = request.POST.getlist('pres_type[]')
-        medicine_names = request.POST.getlist('pres_medicine[]')
-        dosages = request.POST.getlist('pres_dosage[]')
-        instructions = request.POST.getlist('pres_instructions[]')
-        durations = request.POST.getlist('pres_duration[]')
-        others = request.POST.getlist('pres_others[]')
-        
-        prescriptions_text = ""
-        for i in range(len(medicine_names)):
-            med = medicine_names[i].strip()
-            if med:
-                typ = prescription_types[i].strip() if i < len(prescription_types) else ""
-                dos = dosages[i].strip() if i < len(dosages) else ""
-                ins = instructions[i].strip() if i < len(instructions) else ""
-                dur = durations[i].strip() if i < len(durations) else ""
-                oth = others[i].strip() if i < len(others) else ""
-                prescriptions_text += f"&bull; <em>{typ}</em>: <strong>{med}</strong> | {dos} | {dur} days | {ins} | {oth}<br>"
-        
-        # Build the final content
-        content_lines = []
-        if provisional_diagnosis:
-            content_lines.append(f"<strong>Provisional Diagnosis</strong><br>{provisional_diagnosis}")
-        if on_examination:
-            content_lines.append(f"<strong>On Examination</strong><br>{on_examination}")
-        if investigations:
-            content_lines.append(f"<strong>Investigations</strong><br>{investigations}")
-        if prescriptions_text:
-            content_lines.append(f"<strong>Prescriptions</strong><br>{prescriptions_text}")
-        if advice:
-            content_lines.append(f"<strong>Advice</strong><br>{advice}")
-            
-        followup_text = "Yes" if further_followup else "No"
-        content_lines.append(f"<strong>Further Followup Required</strong><br>{followup_text}")
-        
-        content = "<br><br>".join(content_lines)
-        
-        from patients.models import PatientNote
-        PatientNote.objects.create(
-            patient=patient,
-            author=request.user,
-            note_type=PatientNote.NoteType.CONSULTATION,
-            title=f"Consultation Note - {self.object.questionnaire.title}",
-            content=content,
-            is_important=further_followup
-        )
-        
-        messages.success(request, "Consultation note added successfully to patient's record.")
-        return redirect('doctor:pending_consultations')
