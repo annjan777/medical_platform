@@ -276,9 +276,19 @@ def my_sessions(request):
         messages.error(request, 'Access denied. Health assistant role required.')
         return redirect('login')
     
+    from django.db.models import Q
     sessions = ScreeningSession.objects.select_related(
         'patient', 'screening_type'
     ).order_by('-created_at')
+    
+    # Search by patient name or id
+    q = request.GET.get('q')
+    if q:
+        sessions = sessions.filter(
+            Q(patient__first_name__icontains=q) | 
+            Q(patient__last_name__icontains=q) | 
+            Q(patient__patient_id__icontains=q)
+        )
     
     # Filter by status if provided
     status_filter = request.GET.get('status')
@@ -311,6 +321,7 @@ def my_sessions(request):
         'status_filter': status_filter,
         'date_from': date_from,
         'date_to': date_to,
+        'q': q,
         'query_string': query_string
     })
 
