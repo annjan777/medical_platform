@@ -2,22 +2,25 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
-from django.http import JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.contrib import messages
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
 import json
+import mimetypes
+from urllib.parse import urlencode
 from django.utils.dateformat import DateFormat
 import re
+import zipfile
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from accounts.models import User
 from patients.models import Patient, PatientVitals
-from screening.models import ScreeningSession, ScreeningType
+from screening.models import ScreeningAttachment, ScreeningSession, ScreeningType
 from devices.models import Device
 from questionnaires.models import Questionnaire, Question
 from .forms import PatientRegistrationForm, VitalsForm
@@ -362,6 +365,399 @@ def session_overview(request, session_id):
         'readings': readings,
         'base_template': base_template,
         'back_url': back_url
+    })
+
+
+def _user_can_view_session_file(user, session):
+    if user.is_staff or getattr(user, 'is_super_admin', False):
+        return True
+    if user.role == User.Role.DOCTOR:
+        return True
+    if user.role == User.Role.HEALTH_ASSISTANT:
+        return session.created_by_id == user.id
+    return False
+
+
+IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'}
+TEXT_EXTENSIONS = {'txt', 'csv', 'json', 'xml', 'log', 'md', 'tsv'}
+
+
+def _attachment_preview_context(attachment):
+    file_name = attachment.file.name.rsplit('/', 1)[-1] if attachment.file else 'Attachment'
+    file_name_lower = file_name.lower()
+    guessed_type = mimetypes.guess_type(file_name)[0] or ''
+    file_type = (attachment.file_type or guessed_type or '').lower()
+    extension = file_name_lower.rsplit('.', 1)[-1] if '.' in file_name_lower else ''
+
+    if file_type.startswith('image/') or extension in IMAGE_EXTENSIONS:
+        preview_type = 'image'
+        attachment_label = 'Image Scan'
+    elif file_type.startswith('text/') or extension in TEXT_EXTENSIONS:
+        preview_type = 'text'
+        attachment_label = 'Text File'
+    elif file_type == 'application/pdf' or extension == 'pdf':
+        preview_type = 'pdf'
+        attachment_label = 'PDF Document'
+    elif file_type == 'application/zip' or extension == 'zip':
+        preview_type = 'zip'
+        attachment_label = 'Compressed ZIP Data'
+    else:
+        preview_type = 'unsupported'
+        attachment_label = 'Data Attachment'
+
+    return {
+        'file_name': file_name,
+        'file_type': file_type or 'Unknown file type',
+        'preview_type': preview_type,
+        'attachment_label': attachment_label,
+    }
+
+
+def _zip_entry_preview_type(entry_name):
+    guessed_type = mimetypes.guess_type(entry_name)[0] or ''
+    extension = entry_name.lower().rsplit('.', 1)[-1] if '.' in entry_name else ''
+
+    if guessed_type.startswith('image/') or extension in IMAGE_EXTENSIONS:
+        return 'image'
+    if guessed_type.startswith('text/') or extension in TEXT_EXTENSIONS:
+        return 'text'
+    return 'unsupported'
+
+
+def _format_file_size(size):
+    if size < 1024:
+        return f'{size} B'
+    if size < 1024 * 1024:
+        return f'{size / 1024:.1f} KB'
+    return f'{size / (1024 * 1024):.1f} MB'
+
+
+def _is_safe_zip_path(entry_name):
+    entry_name = entry_name.replace('\\', '/')
+    if not entry_name or entry_name.startswith('/') or ':' in entry_name:
+        return False
+    return all(part not in ('', '.', '..') for part in entry_name.split('/'))
+
+
+def _normalize_zip_folder(folder_name):
+    folder_name = folder_name.replace('\\', '/').strip('/')
+    if not folder_name:
+        return ''
+    if not _is_safe_zip_path(folder_name):
+        raise Http404('ZIP folder not found')
+    return folder_name + '/'
+
+
+def _zip_entry_url(session, attachment, entry_name, raw=False):
+    query = {'path': entry_name}
+    if raw:
+        query['raw'] = '1'
+    return '{}?{}'.format(
+        reverse('health_assistant:session_zip_entry_view', kwargs={
+            'session_id': session.id,
+            'attachment_id': attachment.id,
+        }),
+        urlencode(query),
+    )
+
+
+def _zip_folder_url(session, attachment, folder_name):
+    query = {}
+    if folder_name:
+        query['folder'] = folder_name.rstrip('/')
+    url = reverse('health_assistant:session_attachment_view', kwargs={
+        'session_id': session.id,
+        'attachment_id': attachment.id,
+    })
+    if query:
+        return '{}?{}'.format(url, urlencode(query))
+    return url
+
+
+def _zip_breadcrumbs(session, attachment, current_folder):
+    breadcrumbs = [{
+        'name': 'ZIP Root',
+        'url': _zip_folder_url(session, attachment, ''),
+        'active': current_folder == '',
+    }]
+    parts = [part for part in current_folder.strip('/').split('/') if part]
+    for index, part in enumerate(parts):
+        folder_path = '/'.join(parts[:index + 1]) + '/'
+        breadcrumbs.append({
+            'name': part,
+            'url': _zip_folder_url(session, attachment, folder_path),
+            'active': folder_path == current_folder,
+        })
+    return breadcrumbs
+
+
+def _zip_parent_url(session, attachment, current_folder):
+    parts = [part for part in current_folder.strip('/').split('/') if part]
+    if not parts:
+        return ''
+    parent_folder = '/'.join(parts[:-1]) + '/' if len(parts) > 1 else ''
+    return _zip_folder_url(session, attachment, parent_folder)
+
+
+def _get_zip_folder_entries(session, attachment, current_folder):
+    folders = {}
+    rows = []
+
+    try:
+        attachment.file.open('rb')
+        try:
+            with zipfile.ZipFile(attachment.file) as archive:
+                for info in sorted(archive.infolist(), key=lambda item: item.filename.lower()):
+                    entry_name = info.filename.replace('\\', '/').strip('/')
+                    if not _is_safe_zip_path(entry_name):
+                        continue
+
+                    entry_path = entry_name + '/' if info.is_dir() else entry_name
+                    if current_folder and not entry_path.startswith(current_folder):
+                        continue
+
+                    remainder = entry_path[len(current_folder):] if current_folder else entry_path
+                    remainder = remainder.strip('/')
+                    if not remainder:
+                        continue
+
+                    parts = remainder.split('/')
+                    if len(parts) > 1:
+                        child_folder = current_folder + parts[0] + '/'
+                        if child_folder not in folders:
+                            folders[child_folder] = {
+                                'kind': 'folder',
+                                'name': parts[0],
+                                'path': child_folder,
+                                'size_label': 'Folder',
+                                'preview_type': 'folder',
+                                'preview_url': '',
+                                'folder_url': _zip_folder_url(session, attachment, child_folder),
+                            }
+                        continue
+
+                    if info.is_dir():
+                        child_folder = current_folder + parts[0] + '/'
+                        if child_folder not in folders:
+                            folders[child_folder] = {
+                                'kind': 'folder',
+                                'name': parts[0],
+                                'path': child_folder,
+                                'size_label': 'Folder',
+                                'preview_type': 'folder',
+                                'preview_url': '',
+                                'folder_url': _zip_folder_url(session, attachment, child_folder),
+                            }
+                        continue
+
+                    preview_type = _zip_entry_preview_type(entry_name)
+                    rows.append({
+                        'kind': 'file',
+                        'name': parts[0],
+                        'path': entry_name,
+                        'size_label': _format_file_size(info.file_size),
+                        'preview_type': preview_type,
+                        'preview_url': _zip_entry_url(session, attachment, entry_name) if preview_type in ('image', 'text') else '',
+                        'folder_url': '',
+                    })
+        finally:
+            attachment.file.close()
+    except zipfile.BadZipFile:
+        return [], 'This ZIP file could not be opened. Download it to inspect the original file.'
+    except Exception:
+        return [], 'This ZIP file could not be opened for inline browsing. Download it to inspect the original file.'
+
+    combined_rows = list(folders.values()) + rows
+    combined_rows.sort(key=lambda row: (1 if row['kind'] == 'file' else 0, row['name'].lower()))
+    return combined_rows, ''
+
+
+def _get_session_attachment_for_user(request, session_id, attachment_id):
+    session = get_object_or_404(
+        ScreeningSession.objects.select_related('patient', 'screening_type', 'created_by'),
+        id=session_id,
+    )
+    attachment = get_object_or_404(ScreeningAttachment, id=attachment_id, session=session)
+
+    if not _user_can_view_session_file(request.user, session):
+        raise Http404('Attachment not found')
+
+    return session, attachment
+
+
+def _attachment_base_navigation(request, session):
+    if request.user.role == User.Role.DOCTOR:
+        return 'doctor/base.html', reverse('health_assistant:session_overview', kwargs={'session_id': session.id})
+    if request.user.is_staff or getattr(request.user, 'is_super_admin', False):
+        return 'health_assistant/base_clean.html', reverse('screening:session_detail', kwargs={'pk': session.id})
+    return 'health_assistant/base_clean.html', reverse('health_assistant:session_overview', kwargs={'session_id': session.id})
+
+
+@login_required
+def session_attachment_view(request, session_id, attachment_id):
+    """Preview a session attachment in a dedicated page."""
+    if request.user.role not in [User.Role.HEALTH_ASSISTANT, User.Role.DOCTOR, User.Role.SUPER_ADMIN] and not request.user.is_staff:
+        messages.error(request, 'Access denied. Authorized medical staff only.')
+        return redirect('login')
+
+    try:
+        session, attachment = _get_session_attachment_for_user(request, session_id, attachment_id)
+    except Http404:
+        messages.error(request, 'You do not have permission to view this session attachment.')
+        return redirect('health_assistant:my_sessions')
+
+    preview_context = _attachment_preview_context(attachment)
+    file_url = attachment.file.url if attachment.file else ''
+    text_preview = ''
+    text_preview_truncated = False
+    text_preview_error = ''
+    zip_entries = []
+    zip_preview_error = ''
+    zip_current_folder = ''
+    zip_breadcrumbs = []
+    zip_parent_url = ''
+
+    if preview_context['preview_type'] == 'text' and attachment.file:
+        preview_limit = 512 * 1024
+        try:
+            attachment.file.open('rb')
+            try:
+                raw_data = attachment.file.read(preview_limit + 1)
+            finally:
+                attachment.file.close()
+
+            text_preview_truncated = len(raw_data) > preview_limit
+            raw_data = raw_data[:preview_limit]
+            try:
+                text_preview = raw_data.decode('utf-8')
+            except UnicodeDecodeError:
+                text_preview = raw_data.decode('latin-1', errors='replace')
+        except Exception:
+            text_preview_error = 'This text file could not be opened for inline preview. Download it to view the full file.'
+    elif preview_context['preview_type'] == 'zip' and attachment.file:
+        zip_current_folder = _normalize_zip_folder(request.GET.get('folder', ''))
+        zip_entries, zip_preview_error = _get_zip_folder_entries(session, attachment, zip_current_folder)
+        zip_breadcrumbs = _zip_breadcrumbs(session, attachment, zip_current_folder)
+        zip_parent_url = _zip_parent_url(session, attachment, zip_current_folder)
+
+    base_template, back_href = _attachment_base_navigation(request, session)
+
+    return render(request, 'health_assistant/session_attachment_view.html', {
+        'session': session,
+        'attachment': attachment,
+        'file_url': file_url,
+        'download_label': 'Download ZIP' if preview_context['preview_type'] == 'zip' else 'Download Data',
+        'text_preview': text_preview,
+        'text_preview_truncated': text_preview_truncated,
+        'text_preview_error': text_preview_error,
+        'zip_entries': zip_entries,
+        'zip_preview_error': zip_preview_error,
+        'zip_current_folder': zip_current_folder,
+        'zip_breadcrumbs': zip_breadcrumbs,
+        'zip_parent_url': zip_parent_url,
+        'is_zip_entry': False,
+        'base_template': base_template,
+        'back_href': back_href,
+        **preview_context,
+    })
+
+
+@login_required
+def session_zip_entry_view(request, session_id, attachment_id):
+    """Preview or stream a supported file from inside a ZIP attachment."""
+    if request.user.role not in [User.Role.HEALTH_ASSISTANT, User.Role.DOCTOR, User.Role.SUPER_ADMIN] and not request.user.is_staff:
+        messages.error(request, 'Access denied. Authorized medical staff only.')
+        return redirect('login')
+
+    try:
+        session, attachment = _get_session_attachment_for_user(request, session_id, attachment_id)
+    except Http404:
+        messages.error(request, 'You do not have permission to view this session attachment.')
+        return redirect('health_assistant:my_sessions')
+
+    entry_name = request.GET.get('path', '').replace('\\', '/').strip('/')
+    if not _is_safe_zip_path(entry_name):
+        raise Http404('ZIP entry not found')
+
+    preview_type = _zip_entry_preview_type(entry_name)
+    if preview_type not in ('image', 'text'):
+        raise Http404('ZIP entry cannot be previewed')
+
+    entry_basename = entry_name.rsplit('/', 1)[-1]
+    content_type = mimetypes.guess_type(entry_name)[0] or 'application/octet-stream'
+    raw_mode = request.GET.get('raw') == '1'
+    raw_data = b''
+    text_preview = ''
+    text_preview_truncated = False
+    text_preview_error = ''
+
+    try:
+        attachment.file.open('rb')
+        try:
+            with zipfile.ZipFile(attachment.file) as archive:
+                try:
+                    entry_info = archive.getinfo(entry_name)
+                except KeyError as exc:
+                    raise Http404('ZIP entry not found') from exc
+
+                if entry_info.is_dir():
+                    raise Http404('ZIP entry not found')
+
+                if raw_mode:
+                    raw_data = archive.read(entry_info)
+                elif preview_type == 'text':
+                    preview_limit = 512 * 1024
+                    with archive.open(entry_info) as entry_file:
+                        raw_text = entry_file.read(preview_limit + 1)
+                    text_preview_truncated = len(raw_text) > preview_limit
+                    raw_text = raw_text[:preview_limit]
+                    try:
+                        text_preview = raw_text.decode('utf-8')
+                    except UnicodeDecodeError:
+                        text_preview = raw_text.decode('latin-1', errors='replace')
+        finally:
+            attachment.file.close()
+    except Http404:
+        raise
+    except zipfile.BadZipFile:
+        raise Http404('ZIP file could not be opened')
+    except Exception:
+        if raw_mode:
+            raise Http404('ZIP entry could not be opened')
+        text_preview_error = 'This file could not be opened for inline preview. Download the ZIP to inspect it.'
+
+    if raw_mode:
+        response = HttpResponse(raw_data, content_type=content_type)
+        response['Content-Disposition'] = f'inline; filename="{entry_basename}"'
+        return response
+
+    base_template, _session_back_href = _attachment_base_navigation(request, session)
+    zip_back_href = reverse('health_assistant:session_attachment_view', kwargs={
+        'session_id': session.id,
+        'attachment_id': attachment.id,
+    })
+    raw_file_url = _zip_entry_url(session, attachment, entry_name, raw=True) if preview_type == 'image' else ''
+
+    return render(request, 'health_assistant/session_attachment_view.html', {
+        'session': session,
+        'attachment': attachment,
+        'file_url': raw_file_url,
+        'download_label': 'Open File',
+        'file_name': entry_basename,
+        'file_type': content_type,
+        'preview_type': preview_type,
+        'attachment_label': 'Image Scan' if preview_type == 'image' else 'Text File',
+        'text_preview': text_preview,
+        'text_preview_truncated': text_preview_truncated,
+        'text_preview_error': text_preview_error,
+        'zip_entries': [],
+        'zip_preview_error': '',
+        'zip_current_folder': '',
+        'zip_breadcrumbs': [],
+        'zip_parent_url': '',
+        'is_zip_entry': True,
+        'base_template': base_template,
+        'back_href': zip_back_href,
     })
 
 

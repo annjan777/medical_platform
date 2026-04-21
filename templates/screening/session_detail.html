@@ -1,83 +1,82 @@
-{% extends "dashboard/admin/base.html" %}
+{% extends base_template|default:"health_assistant/base_clean.html" %}
 {% load static %}
 
+{% block title %}Screening Session #{{ session.id }}{% endblock %}
 {% block page_title %}Screening Session #{{ session.id }}{% endblock %}
 
-{% block admin_content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Header layout -->
-    <div class="flex justify-end mb-6">
-        <div class="flex space-x-4">
-            <a href="{% url 'screening:session_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Sessions
-            </a>
-            {% if session.can_complete %}
-            <a href="{% url 'screening:session_complete' session.id %}" class="btn btn-primary">
-                <i class="fas fa-check mr-2"></i> Complete Session
-            </a>
-            {% endif %}
-        </div>
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'screening:session_list' %}">Sessions</a></li>
+<li class="breadcrumb-item active">Session #{{ session.id }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap justify-content-end gap-2 mb-4">
+        <a href="{% url 'screening:session_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Back to Sessions
+        </a>
+        {% if session.can_complete %}
+        <a href="{% url 'screening:session_complete' session.id %}" class="btn btn-primary">
+            <i class="fas fa-check me-2"></i> Complete Session
+        </a>
+        {% endif %}
     </div>
 
-    <!-- Session Info Card -->
-    <div class="card mb-8">
+    <div class="card shadow-sm border-0 mb-4">
         <div class="card-header">
-            <h2 class="text-lg font-semibold text-black">Session Information</h2>
+            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Session Information</h5>
         </div>
         <div class="card-body">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                    <p class="text-gray-400 text-sm">Patient</p>
-                    <p class="text-black font-medium">{{ session.patient.get_full_name|default:session.patient.email }}
-                    </p>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <p class="text-muted small mb-1">Patient</p>
+                    <p class="text-dark fw-bold mb-0">{{ session.patient.get_full_name|default:session.patient.email }}</p>
                 </div>
-                <div>
-                    <p class="text-gray-400 text-sm">Screening Type</p>
-                    <p class="text-black font-medium">{{ session.screening_type.name }}</p>
+                <div class="col-md-4">
+                    <p class="text-muted small mb-1">Screening Type</p>
+                    <p class="text-dark fw-bold mb-0">{{ session.screening_type.name }}</p>
                 </div>
-                <div>
-                    <p class="text-gray-400 text-sm">Status</p>
-                    <span
-                        class="px-2 py-1 text-xs font-medium rounded-full {% if session.status == 'completed' %}bg-green-900 text-green-200{% elif session.status == 'in_progress' %}bg-blue-900 text-blue-200{% elif session.status == 'scheduled' %}bg-yellow-900 text-yellow-200{% else %}bg-gray-700 text-gray-300{% endif %}">
+                <div class="col-md-4">
+                    <p class="text-muted small mb-1">Status</p>
+                    <span class="badge px-3 py-2 {% if session.status == 'completed' %}bg-success{% elif session.status == 'in_progress' %}bg-primary{% elif session.status == 'scheduled' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
                         {{ session.get_status_display }}
                     </span>
                 </div>
-                <div>
-                    <p class="text-gray-400 text-sm">Device Used</p>
-                    <p class="text-black font-medium">{{ session.active_devices_list }}</p>
+                <div class="col-md-4">
+                    <p class="text-muted small mb-1">Device Used</p>
+                    <p class="text-dark fw-bold mb-0">{{ session.active_devices_list }}</p>
                 </div>
-                <div>
-                    <p class="text-gray-400 text-sm">Scheduled Date</p>
-                    <p class="text-black font-medium">{{ session.scheduled_date|date:"M d, Y H:i" }}</p>
+                <div class="col-md-4">
+                    <p class="text-muted small mb-1">Scheduled Date</p>
+                    <p class="text-dark fw-bold mb-0">{{ session.scheduled_date|date:"M d, Y H:i" }}</p>
                 </div>
-                <div>
-                    <p class="text-gray-400 text-sm">Conducted By</p>
-                    <p class="text-black font-medium">{{
-                        session.conducted_by.get_full_name|default:session.conducted_by.email|default:"Not assigned" }}
+                <div class="col-md-4">
+                    <p class="text-muted small mb-1">Conducted By</p>
+                    <p class="text-dark fw-bold mb-0">
+                        {{ session.conducted_by.get_full_name|default:session.conducted_by.email|default:"Not assigned" }}
                     </p>
                 </div>
             </div>
 
             {% if session.notes %}
-            <div class="mt-6">
-                <p class="text-gray-400 text-sm mb-2">Notes</p>
-                <p class="text-black">{{ session.notes }}</p>
+            <div class="mt-4 p-3 bg-light rounded text-dark">
+                <p class="text-muted small mb-2"><i class="fas fa-sticky-note me-1"></i>Notes</p>
+                <p class="mb-0">{{ session.notes }}</p>
             </div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Timing Information -->
     {% if session.actual_start_time or session.actual_end_time %}
-    <div class="card mb-8">
+    <div class="card shadow-sm border-0 mb-4">
         <div class="card-header">
-            <h2 class="text-lg font-semibold text-black">Timing Information</h2>
+            <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Timing Information</h5>
         </div>
         <div class="card-body">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <p class="text-gray-400 text-sm">Start Time</p>
-                    <p class="text-black font-medium">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <p class="text-muted small mb-1">Start Time</p>
+                    <p class="text-dark fw-bold mb-0">
                         {% if session.actual_start_time %}
                         {{ session.actual_start_time|date:"M d, Y H:i" }}
                         {% else %}
@@ -85,9 +84,9 @@
                         {% endif %}
                     </p>
                 </div>
-                <div>
-                    <p class="text-gray-400 text-sm">End Time</p>
-                    <p class="text-black font-medium">
+                <div class="col-md-6">
+                    <p class="text-muted small mb-1">End Time</p>
+                    <p class="text-dark fw-bold mb-0">
                         {% if session.actual_end_time %}
                         {{ session.actual_end_time|date:"M d, Y H:i" }}
                         {% else %}
@@ -98,86 +97,100 @@
             </div>
             {% if session.duration %}
             <div class="mt-4">
-                <p class="text-gray-400 text-sm">Duration</p>
-                <p class="text-black font-medium">{{ session.duration }} minutes</p>
+                <p class="text-muted small mb-1">Duration</p>
+                <p class="text-dark fw-bold mb-0">{{ session.duration }} minutes</p>
             </div>
             {% endif %}
         </div>
     </div>
     {% endif %}
 
-    <!-- Results Section -->
     {% if session.screening_result %}
-    <div class="card">
+    <div class="card shadow-sm border-0 mb-4">
         <div class="card-header">
-            <h2 class="text-lg font-semibold text-black">Screening Results</h2>
+            <h5 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Screening Results</h5>
         </div>
         <div class="card-body">
             <div class="mb-4">
-                <p class="text-gray-400 text-sm mb-2">Result Status</p>
-                <span
-                    class="px-2 py-1 text-xs font-medium rounded-full {% if session.result_status == 'normal' %}bg-green-900 text-green-200{% elif session.result_status == 'abnormal' %}bg-red-900 text-red-200{% elif session.result_status == 'inconclusive' %}bg-yellow-900 text-yellow-200{% else %}bg-gray-700 text-gray-300{% endif %}">
+                <p class="text-muted small mb-2">Result Status</p>
+                <span class="badge px-3 py-2 {% if session.result_status == 'normal' %}bg-success{% elif session.result_status == 'abnormal' %}bg-danger{% elif session.result_status == 'inconclusive' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
                     {{ session.get_result_status_display }}
                 </span>
             </div>
 
             {% if session.screening_result.findings %}
             <div class="mb-4">
-                <p class="text-gray-400 text-sm mb-2">Findings</p>
-                <p class="text-black">{{ session.screening_result.findings }}</p>
+                <p class="text-muted small mb-2">Findings</p>
+                <p class="text-dark mb-0">{{ session.screening_result.findings }}</p>
             </div>
             {% endif %}
 
             {% if session.screening_result.recommendations %}
-            <div class="mb-4">
-                <p class="text-gray-400 text-sm mb-2">Recommendations</p>
-                <p class="text-black">{{ session.screening_result.recommendations }}</p>
+            <div class="mb-0">
+                <p class="text-muted small mb-2">Recommendations</p>
+                <p class="text-dark mb-0">{{ session.screening_result.recommendations }}</p>
             </div>
             {% endif %}
         </div>
     </div>
     {% endif %}
 
-    <!-- Attachments (S3 Remote Storage) -->
     {% if session.attachments.exists %}
-    <div class="card mb-8">
+    <div class="card shadow-sm border-0 mb-4" id="attachments">
         <div class="card-header">
-            <h2 class="text-lg font-semibold text-black">Data Attachments</h2>
+            <h5 class="mb-0"><i class="fas fa-paperclip me-2"></i>Data Attachments</h5>
         </div>
         <div class="card-body">
-            <div class="space-y-4">
+            <div class="d-flex flex-column gap-3">
                 {% for attachment in session.attachments.all %}
-                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
-                    <div class="flex items-center">
-                        {% if attachment.file_type == 'application/zip' %}
-                        <i class="fas fa-file-archive text-purple-500 text-xl mr-3"></i>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 p-3 border rounded bg-light">
+                    <div class="d-flex align-items-center">
+                        {% if attachment.file_type == 'application/zip' or 'zip' in attachment.file.name %}
+                        <div class="bg-primary bg-opacity-10 text-primary p-3 rounded me-3">
+                            <i class="fas fa-file-archive fs-4"></i>
+                        </div>
+                        {% elif 'text' in attachment.file_type or 'txt' in attachment.file.name or 'csv' in attachment.file.name or 'json' in attachment.file.name or 'xml' in attachment.file.name %}
+                        <div class="bg-success bg-opacity-10 text-success p-3 rounded me-3">
+                            <i class="fas fa-file-lines fs-4"></i>
+                        </div>
                         {% else %}
-                        <i class="fas fa-file-alt text-gray-400 text-xl mr-3"></i>
+                        <div class="bg-secondary bg-opacity-10 text-secondary p-3 rounded me-3">
+                            <i class="fas fa-file-alt fs-4"></i>
+                        </div>
                         {% endif %}
                         <div>
-                            <p class="text-black font-medium">
+                            <p class="text-dark fw-bold mb-1">
                                 {% if 'zip' in attachment.file.name %}
                                     Compressed ZIP Data
                                 {% elif 'pdf' in attachment.file.name %}
                                     PDF Document
+                                {% elif 'text' in attachment.file_type or 'txt' in attachment.file.name or 'csv' in attachment.file.name or 'json' in attachment.file.name or 'xml' in attachment.file.name %}
+                                    Text File
                                 {% else %}
                                     Image Scan
                                 {% endif %}
                             </p>
-                            <p class="text-gray-500 text-sm">{{ attachment.description|default:"IoT Data Upload" }}</p>
+                            <p class="text-muted small mb-0">{{ attachment.description|default:"IoT Data Upload" }}</p>
                         </div>
                     </div>
-                    <!-- Downloading attachment.file.url securely leverages Boto3 to generate a 1-hour presigned AWS URL! -->
-                    <a href="{{ attachment.file.url }}" class="btn btn-primary btn-sm" target="_blank"
-                        rel="noopener noreferrer">
-                        <i class="fas fa-cloud-download-alt mr-2"></i> Download from S3
-                    </a>
+                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                        <a href="{% url 'health_assistant:session_attachment_view' session_id=session.id attachment_id=attachment.id %}"
+                            class="btn btn-outline-primary px-4 shadow-sm">
+                            <i class="fas fa-eye me-2"></i> View
+                        </a>
+                        <a href="{{ attachment.file.url }}" class="btn btn-primary px-4 shadow-sm" target="_blank"
+                            rel="noopener noreferrer">
+                            <i class="fas fa-cloud-download-alt me-2"></i> Download Data
+                        </a>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
+            <p class="text-muted small mt-3 mb-0">
+                <i class="fas fa-info-circle me-1"></i>Downloads fetch securely signed short-lived URLs directly from AWS S3.
+            </p>
         </div>
     </div>
     {% endif %}
 </div>
-
 {% endblock %}

@@ -1,0 +1,161 @@
+
+<div class="session-attachment-page">
+    <div class="attachment-topbar">
+        <div class="attachment-title-group">
+            <h2>{{ attachment_label }}</h2>
+            <p>Session #{{ session.id }} for {{ session.patient.get_full_name|default:session.patient.email }}</p>
+        </div>
+        <div class="attachment-actions">
+            <a href="{{ back_href }}" class="attachment-btn attachment-btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Session
+            </a>
+            {% if file_url %}
+            <a href="{{ file_url }}" class="attachment-btn attachment-btn-primary" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-cloud-download-alt"></i> {{ download_label|default:"Download Data" }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="attachment-shell">
+        <div class="attachment-summary">
+            <h3><i class="fas fa-paperclip"></i> Data Attachment</h3>
+        </div>
+
+        <div class="attachment-meta">
+            <div class="attachment-meta-item">
+                <span>File</span>
+                <strong>{{ file_name }}</strong>
+            </div>
+            <div class="attachment-meta-item">
+                <span>Type</span>
+                <strong>{{ file_type }}</strong>
+            </div>
+            <div class="attachment-meta-item">
+                <span>Uploaded</span>
+                <strong>{{ attachment.created_at|date:"M d, Y H:i" }}</strong>
+            </div>
+        </div>
+
+        <div class="attachment-preview">
+            {% if preview_type == "image" and file_url %}
+            <div class="attachment-image-frame">
+                <img src="{{ file_url }}" alt="{{ attachment_label }}">
+            </div>
+            {% elif preview_type == "text" %}
+                {% if text_preview_error %}
+                <div class="attachment-empty-frame">
+                    <i class="fas fa-file-lines"></i>
+                    <h4>Preview unavailable</h4>
+                    <p>{{ text_preview_error }}</p>
+                </div>
+                {% else %}
+                <div class="attachment-text-frame">
+                    <pre>{{ text_preview }}</pre>
+                </div>
+                {% if text_preview_truncated %}
+                <p class="attachment-note">
+                    <i class="fas fa-info-circle"></i> Showing the first 512 KB of this text file.
+                </p>
+                {% endif %}
+                {% endif %}
+            {% elif preview_type == "pdf" and file_url %}
+            <div class="attachment-document-frame">
+                <iframe src="{{ file_url }}" title="{{ attachment_label }}"></iframe>
+            </div>
+            {% elif preview_type == "zip" %}
+                <div class="zip-pathbar">
+                    {% for crumb in zip_breadcrumbs %}
+                        {% if not forloop.first %}<span>/</span>{% endif %}
+                        {% if crumb.active %}
+                        <span>{{ crumb.name }}</span>
+                        {% else %}
+                        <a href="{{ crumb.url }}">{{ crumb.name }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% if zip_parent_url %}
+                <a href="{{ zip_parent_url }}" class="zip-up-link">
+                    <i class="fas fa-level-up-alt"></i> Up One Folder
+                </a>
+                {% endif %}
+                {% if zip_preview_error %}
+                <div class="attachment-empty-frame">
+                    <i class="fas fa-file-archive"></i>
+                    <h4>Preview unavailable</h4>
+                    <p>{{ zip_preview_error }}</p>
+                </div>
+                {% elif zip_entries %}
+                <div class="zip-browser">
+                    <div class="zip-browser-header">
+                        <div>Name</div>
+                        <div>Size</div>
+                        <div>Action</div>
+                    </div>
+                    {% for entry in zip_entries %}
+                    <div class="zip-row {% if entry.kind == 'file' %}zip-row-file{% endif %}">
+                        <div class="zip-name">
+                            {% if entry.kind == "folder" %}
+                            <a href="{{ entry.folder_url }}" class="zip-folder-link">
+                                <i class="fas fa-folder zip-folder-icon"></i>
+                                <span>{{ entry.name }}</span>
+                            </a>
+                            {% elif entry.preview_type == "image" %}
+                            <i class="fas fa-file-image zip-file-icon"></i>
+                            <span>{{ entry.name }}</span>
+                            {% elif entry.preview_type == "text" %}
+                            <i class="fas fa-file-lines zip-file-icon"></i>
+                            <span>{{ entry.name }}</span>
+                            {% else %}
+                            <i class="fas fa-file zip-file-icon"></i>
+                            <span>{{ entry.name }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="zip-muted">{{ entry.size_label|default:"Folder" }}</div>
+                        <div>
+                            {% if entry.kind == "folder" %}
+                            <a href="{{ entry.folder_url }}" class="zip-view-link">
+                                <i class="fas fa-folder-open"></i> Open
+                            </a>
+                            {% elif entry.preview_url %}
+                            <a href="{{ entry.preview_url }}" class="zip-view-link">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            {% elif entry.kind == "file" %}
+                            <span class="zip-muted">No preview</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="attachment-empty-frame">
+                    <i class="fas fa-folder-open"></i>
+                    <h4>No files found</h4>
+                    <p>This folder does not contain any files.</p>
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="attachment-empty-frame">
+                <i class="fas fa-file-download"></i>
+                <h4>Preview unavailable</h4>
+                <p>This file type cannot be opened inline. Use Download Data to view the full attachment.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if preview_type == "zip" %}
+    <p class="attachment-note">
+        <i class="fas fa-info-circle"></i> ZIP contents are opened from the original attachment. Image and text files can be previewed without saving extracted files to disk.
+    </p>
+    {% elif is_zip_entry %}
+    <p class="attachment-note">
+        <i class="fas fa-info-circle"></i> This file is being previewed from inside the uploaded ZIP attachment.
+    </p>
+    {% else %}
+    <p class="attachment-note">
+        <i class="fas fa-info-circle"></i> Downloads fetch securely signed short-lived URLs directly from AWS S3.
+    </p>
+    {% endif %}
+</div>
