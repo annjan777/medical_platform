@@ -1,0 +1,383 @@
+{% extends base_template|default:"health_assistant/base_clean.html" %}
+
+{% block title %}{{ attachment_label }} - Session #{{ session.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .session-attachment-page {
+        color: #1f2937;
+    }
+
+    .attachment-topbar {
+        align-items: center;
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .attachment-title-group h2 {
+        color: #111827;
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        margin: 0;
+    }
+
+    .attachment-title-group p {
+        color: #6b7280;
+        margin: 0.35rem 0 0;
+    }
+
+    .attachment-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: flex-end;
+    }
+
+    .attachment-btn {
+        align-items: center;
+        border-radius: 8px;
+        display: inline-flex;
+        font-weight: 700;
+        gap: 0.5rem;
+        min-height: 44px;
+        padding: 0.75rem 1.1rem;
+        text-decoration: none;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    .attachment-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .attachment-btn-secondary {
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        color: #374151;
+    }
+
+    .attachment-btn-secondary:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
+
+    .attachment-btn-primary {
+        background: #10b981;
+        border: 1px solid #10b981;
+        color: #ffffff;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.18);
+    }
+
+    .attachment-btn-primary:hover {
+        background: #059669;
+        border-color: #059669;
+        color: #ffffff;
+    }
+
+    .attachment-summary {
+        background: linear-gradient(135deg, #10b981 0%, #5b6770 100%);
+        border-radius: 8px 8px 0 0;
+        color: #ffffff;
+        padding: 1.35rem 1.5rem;
+    }
+
+    .attachment-summary h3 {
+        align-items: center;
+        display: flex;
+        font-size: 1.35rem;
+        font-weight: 700;
+        gap: 0.75rem;
+        letter-spacing: 0;
+        margin: 0;
+    }
+
+    .attachment-shell {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+
+    .attachment-meta {
+        border-bottom: 1px solid #e5e7eb;
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 1.25rem 1.5rem;
+    }
+
+    .attachment-meta-item span {
+        color: #6b7280;
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+    }
+
+    .attachment-meta-item strong {
+        color: #111827;
+        display: block;
+        overflow-wrap: anywhere;
+    }
+
+    .attachment-preview {
+        background: #f8fafc;
+        min-height: 440px;
+        padding: 1.5rem;
+    }
+
+    .attachment-image-frame,
+    .attachment-document-frame,
+    .attachment-text-frame,
+    .attachment-empty-frame {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        min-height: 420px;
+        overflow: hidden;
+    }
+
+    .attachment-image-frame {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .attachment-image-frame img {
+        border-radius: 8px;
+        display: block;
+        max-height: 72vh;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .attachment-document-frame iframe {
+        border: 0;
+        display: block;
+        height: 72vh;
+        min-height: 520px;
+        width: 100%;
+    }
+
+    .attachment-text-frame {
+        max-height: 72vh;
+        overflow: auto;
+        padding: 1.25rem;
+    }
+
+    .attachment-text-frame pre {
+        color: #111827;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 0.92rem;
+        line-height: 1.6;
+        margin: 0;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+
+    .attachment-empty-frame {
+        align-items: center;
+        color: #6b7280;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .attachment-empty-frame i {
+        color: #9ca3af;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .zip-browser {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .zip-pathbar {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .zip-pathbar a {
+        color: #047857;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .zip-pathbar span {
+        color: #6b7280;
+        font-weight: 700;
+    }
+
+    .zip-up-link {
+        align-items: center;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        color: #374151;
+        display: inline-flex;
+        font-weight: 700;
+        gap: 0.45rem;
+        margin-bottom: 1rem;
+        padding: 0.55rem 0.8rem;
+        text-decoration: none;
+    }
+
+    .zip-up-link:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
+
+    .zip-browser-header,
+    .zip-row {
+        align-items: center;
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: minmax(0, 1fr) 120px 130px;
+        padding: 0.85rem 1rem;
+    }
+
+    .zip-browser-header {
+        background: #f3f4f6;
+        color: #4b5563;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .zip-row {
+        border-top: 1px solid #eef2f7;
+        color: #1f2937;
+    }
+
+    .zip-row-file:hover {
+        background: #f8fafc;
+    }
+
+    .zip-name {
+        align-items: center;
+        display: flex;
+        gap: 0.65rem;
+        min-width: 0;
+    }
+
+    .zip-name span {
+        overflow-wrap: anywhere;
+    }
+
+    .zip-folder-icon {
+        color: #f59e0b;
+    }
+
+    .zip-file-icon {
+        color: #6b7280;
+    }
+
+    .zip-view-link {
+        align-items: center;
+        border: 1px solid #10b981;
+        border-radius: 8px;
+        color: #047857;
+        display: inline-flex;
+        font-weight: 700;
+        gap: 0.4rem;
+        justify-content: center;
+        padding: 0.45rem 0.75rem;
+        text-decoration: none;
+    }
+
+    .zip-view-link:hover {
+        background: #10b981;
+        color: #ffffff;
+    }
+
+    .zip-folder-link {
+        align-items: center;
+        color: #111827;
+        display: inline-flex;
+        gap: 0.65rem;
+        min-width: 0;
+        text-decoration: none;
+    }
+
+    .zip-folder-link:hover {
+        color: #047857;
+    }
+
+    .zip-muted {
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    .attachment-note {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin: 1rem 0 0;
+    }
+
+    .attachment-note i {
+        color: #4b5563;
+    }
+
+    @media (max-width: 768px) {
+        .attachment-topbar {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .attachment-actions {
+            justify-content: stretch;
+        }
+
+        .attachment-btn {
+            justify-content: center;
+            width: 100%;
+        }
+
+        .attachment-meta {
+            grid-template-columns: 1fr;
+        }
+
+        .zip-browser-header {
+            display: none;
+        }
+
+        .zip-row {
+            align-items: flex-start;
+            grid-template-columns: 1fr;
+        }
+
+        .attachment-title-group h2 {
+            font-size: 1.45rem;
+        }
+
+        .attachment-preview {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "health_assistant/partials/session_attachment_view_body.html" %}
+{% endblock %}
+
+{% block admin_content %}
+{% include "health_assistant/partials/session_attachment_view_body.html" %}
+{% endblock %}

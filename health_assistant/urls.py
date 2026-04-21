@@ -23,6 +23,8 @@ urlpatterns = [
     path('screening/<int:patient_id>/', views.screening_session, name='screening_with_patient'),
     path('session/<str:session_id>/', views.session_detail, name='session_detail'),
     path('session/<str:session_id>/overview/', views.session_overview, name='session_overview'),
+    path('session/<str:session_id>/attachments/<int:attachment_id>/', views.session_attachment_view, name='session_attachment_view'),
+    path('session/<str:session_id>/attachments/<int:attachment_id>/zip-entry/', views.session_zip_entry_view, name='session_zip_entry_view'),
     path('sessions/', views.my_sessions, name='my_sessions'),
     
     # API Endpoints

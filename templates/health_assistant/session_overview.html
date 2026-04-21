@@ -105,11 +105,15 @@
         <div class="card-body">
             <div class="d-flex flex-column gap-3">
                 {% for attachment in session.attachments.all %}
-                <div class="d-flex align-items-center justify-content-between p-3 border rounded bg-light">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 p-3 border rounded bg-light">
                     <div class="d-flex align-items-center">
-                        {% if attachment.file_type == 'application/zip' %}
+                        {% if attachment.file_type == 'application/zip' or 'zip' in attachment.file.name %}
                         <div class="bg-primary bg-opacity-10 text-primary p-3 rounded me-3">
                             <i class="fas fa-file-archive fs-4"></i>
+                        </div>
+                        {% elif 'text' in attachment.file_type or 'txt' in attachment.file.name or 'csv' in attachment.file.name or 'json' in attachment.file.name or 'xml' in attachment.file.name %}
+                        <div class="bg-success bg-opacity-10 text-success p-3 rounded me-3">
+                            <i class="fas fa-file-lines fs-4"></i>
                         </div>
                         {% else %}
                         <div class="bg-secondary bg-opacity-10 text-secondary p-3 rounded me-3">
@@ -122,6 +126,8 @@
                                     Compressed ZIP Data
                                 {% elif 'pdf' in attachment.file.name %}
                                     PDF Document
+                                {% elif 'text' in attachment.file_type or 'txt' in attachment.file.name or 'csv' in attachment.file.name or 'json' in attachment.file.name or 'xml' in attachment.file.name %}
+                                    Text File
                                 {% else %}
                                     Image Scan
                                 {% endif %}
@@ -129,9 +135,15 @@
                             <p class="text-muted small mb-0">{{ attachment.description|default:"IoT Data Upload" }}</p>
                         </div>
                     </div>
-                    <a href="{{ attachment.file.url }}" class="btn btn-emerald px-4 shadow-sm" target="_blank">
-                        <i class="fas fa-cloud-download-alt me-2"></i> Download Data
-                    </a>
+                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                        <a href="{% url 'health_assistant:session_attachment_view' session_id=session.id attachment_id=attachment.id %}"
+                            class="btn btn-outline-primary px-4 shadow-sm">
+                            <i class="fas fa-eye me-2"></i> View
+                        </a>
+                        <a href="{{ attachment.file.url }}" class="btn btn-emerald px-4 shadow-sm" target="_blank">
+                            <i class="fas fa-cloud-download-alt me-2"></i> Download Data
+                        </a>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
