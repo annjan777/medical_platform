@@ -49,9 +49,10 @@
 
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.last_name.id_for_label }}" class="form-label">
-                                Last Name <span class="text-danger">*</span>
+                                Last Name
                             </label>
                             {{ form.last_name }}
+                            <small class="text-muted">Optional: Last name</small>
                             {% if form.last_name.errors %}
                             <div class="text-danger small mt-1">
                                 {{ form.last_name.errors.0 }}

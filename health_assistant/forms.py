@@ -25,7 +25,7 @@ class PatientRegistrationForm(forms.ModelForm):
             }),
             'last_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Last name'
+                'placeholder': 'Last name (optional)'
             }),
             'date_of_birth': forms.DateInput(attrs={
                 'class': 'form-control',
@@ -67,14 +67,14 @@ class PatientRegistrationForm(forms.ModelForm):
         
         # Make required fields clear
         self.fields['first_name'].required = True
-        self.fields['last_name'].required = True
+        self.fields['last_name'].required = False
         self.fields['email'].required = True
         self.fields['gender'].required = True
         self.fields['phone_number'].required = True  # Phone is now mandatory
         
         # Make optional fields clear
         optional_fields = [
-            'date_of_birth', 'address', 'city', 
+            'last_name', 'date_of_birth', 'address', 'city',
             'state', 'postal_code'
         ]
         for field in optional_fields:
@@ -85,8 +85,8 @@ class PatientRegistrationForm(forms.ModelForm):
     def clean_first_name(self):
         """Validate patient first name"""
         first_name = self.cleaned_data.get('first_name')
-        if not first_name or len(first_name.strip()) < 2:
-            raise forms.ValidationError("First name must be at least 2 characters long.")
+        if not first_name or len(first_name.strip()) < 1:
+            raise forms.ValidationError("First name must be at least 1 characters long.")
         
         # Remove extra whitespace
         first_name = ' '.join(first_name.split())
@@ -100,8 +100,8 @@ class PatientRegistrationForm(forms.ModelForm):
     def clean_last_name(self):
         """Validate patient last name"""
         last_name = self.cleaned_data.get('last_name')
-        if not last_name or len(last_name.strip()) < 2:
-            raise forms.ValidationError("Last name must be at least 2 characters long.")
+        if not last_name or not last_name.strip():
+            return ''
         
         # Remove extra whitespace
         last_name = ' '.join(last_name.split())
