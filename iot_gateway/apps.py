@@ -1,5 +1,5 @@
-import os
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class IotGatewayConfig(AppConfig):
@@ -13,6 +13,9 @@ class IotGatewayConfig(AppConfig):
         Starts the MQTT listener as a background thread automatically.
         Works with both `manage.py runserver` and gunicorn.
         """
+        if not settings.MQTT_ENABLED:
+            return
+
         import sys
 
         # Skip for management commands that don't need the listener
