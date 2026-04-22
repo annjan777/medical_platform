@@ -176,6 +176,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 if AWS_ACCESS_KEY_ID:
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
+
+def env_bool(name, default=False):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+MQTT_ENABLED = env_bool('MQTT_ENABLED', default=False)
+MQTT_BROKER_URL = os.environ.get('MQTT_BROKER_URL', 'localhost')
+MQTT_BROKER_PORT = int(os.environ.get('MQTT_BROKER_PORT', 1883))
+
 # Session and Security Settings
 SESSION_COOKIE_AGE = 1740 # 29 minutes
 SESSION_SAVE_EVERY_REQUEST = True

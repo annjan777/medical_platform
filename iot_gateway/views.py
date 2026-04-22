@@ -13,6 +13,28 @@ from screening.models import ScreeningSession, ScreeningAttachment
 from devices.models import Device, DeviceReading
 from patients.models import Patient
 
+
+def _mqtt_disabled_response():
+    return JsonResponse(
+        {"status": "error", "message": "MQTT is disabled"},
+        status=503,
+    )
+
+
+def _publish_mqtt_message(topic, payload):
+    if not settings.MQTT_ENABLED:
+        return False
+
+    import paho.mqtt.publish as publish
+
+    publish.single(
+        topic,
+        payload=payload,
+        hostname=settings.MQTT_BROKER_URL,
+        port=settings.MQTT_BROKER_PORT,
+    )
+    return True
+
 @csrf_exempt
 def receive_text_data(request):
     """
@@ -141,14 +163,13 @@ def get_server_info(request):
     return JsonResponse({
         "server_time": timezone.now().isoformat(),
         "public_ip": public_ip,
-        "mqtt_broker": os.environ.get('MQTT_BROKER_URL', 'localhost'),
+        "mqtt_enabled": settings.MQTT_ENABLED,
+        "mqtt_broker": settings.MQTT_BROKER_URL if settings.MQTT_ENABLED else None,
         "endpoints": {
             "text": request.build_absolute_uri('/iot/receive-text/'),
             "image": request.build_absolute_uri('/iot/receive-image/')
         }
     })
-
-import paho.mqtt.publish as publish
 
 @csrf_exempt
 def trigger_scan(request, session_id):
@@ -159,6 +180,9 @@ def trigger_scan(request, session_id):
     """
     if request.method != 'POST':
         return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+
+    if not settings.MQTT_ENABLED:
+        return _mqtt_disabled_response()
     
     try:
         session = get_object_or_404(ScreeningSession, pk=session_id)
@@ -179,13 +203,8 @@ def trigger_scan(request, session_id):
         
         # MQTT Topic: device_id/session_id/scan_type
         topic = f"{device.device_id}/{session.id}/{scan_type}"
-        
-        # MQTT Broker settings
-        broker = os.environ.get('MQTT_BROKER_URL', 'localhost')
-        port = int(os.environ.get('MQTT_BROKER_PORT', 1883))
-        
-        # Publish message
-        publish.single(topic, payload=patient_info, hostname=broker, port=port)
+
+        _publish_mqtt_message(topic, patient_info)
         
         return JsonResponse({
             "status": "success",
@@ -204,15 +223,15 @@ def ping_device(request, device_id):
     """
     if request.method != 'POST':
         return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+
+    if not settings.MQTT_ENABLED:
+        return _mqtt_disabled_response()
         
     try:
         device = get_object_or_404(Device, pk=device_id)
         topic = f"{device.device_id}/ping"
-        
-        # Publish request
-        broker = os.environ.get('MQTT_BROKER_URL', 'localhost')
-        port = int(os.environ.get('MQTT_BROKER_PORT', 1883))
-        publish.single(topic, payload="status", hostname=broker, port=port)
+
+        _publish_mqtt_message(topic, "status")
         
         return JsonResponse({"status": "success", "message": f"Ping sent to {device.name}"})
     except Exception as e:

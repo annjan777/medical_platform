@@ -1,17 +1,22 @@
-import os
 import time
-import paho.mqtt.client as mqtt
 from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from devices.models import Device
+from django.conf import settings
 
 class Command(BaseCommand):
     help = 'Runs a background loop to verify device health and timeout inactive ones'
 
     def handle(self, *args, **options):
-        broker = os.environ.get('MQTT_BROKER_URL', 'localhost')
-        port = int(os.environ.get('MQTT_BROKER_PORT', 1883))
+        if not settings.MQTT_ENABLED:
+            self.stdout.write(self.style.WARNING("MQTT is disabled"))
+            return
+
+        import paho.mqtt.client as mqtt
+
+        broker = settings.MQTT_BROKER_URL
+        port = settings.MQTT_BROKER_PORT
         
         # Setup publisher client to send pings
         client = mqtt.Client(client_id="django_health_monitor", clean_session=True)
