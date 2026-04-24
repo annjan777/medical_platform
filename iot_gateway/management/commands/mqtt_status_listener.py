@@ -1,17 +1,21 @@
-import paho.mqtt.client as mqtt
-import os
 import json
-import django
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from devices.models import Device
+from django.conf import settings
 
 class Command(BaseCommand):
     help = 'Starts a background MQTT listener for device status updates'
 
     def handle(self, *args, **options):
-        broker = os.environ.get('MQTT_BROKER_URL', 'localhost')
-        port = int(os.environ.get('MQTT_BROKER_PORT', 1883))
+        if not settings.MQTT_ENABLED:
+            self.stdout.write(self.style.WARNING("MQTT is disabled"))
+            return
+
+        import paho.mqtt.client as mqtt
+
+        broker = settings.MQTT_BROKER_URL
+        port = settings.MQTT_BROKER_PORT
         
         self.stdout.write(self.style.SUCCESS(f"Starting MQTT Listener on {broker}:{port}"))
         

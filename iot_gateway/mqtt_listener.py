@@ -9,7 +9,6 @@ import os
 import json
 import logging
 import threading
-import paho.mqtt.client as mqtt
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +102,8 @@ def _on_message(client, userdata, msg):
 
 def _run_loop(broker, port):
     """Blocking MQTT loop — runs in a background daemon thread."""
+    import paho.mqtt.client as mqtt
+
     client = mqtt.Client(client_id="django_backend_listener", clean_session=True)
     client.on_connect = _on_connect
     client.on_message = _on_message
