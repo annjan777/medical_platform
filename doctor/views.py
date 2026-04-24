@@ -207,11 +207,26 @@ class ResponseListView(DoctorRequiredMixin, ListView):
 class ConsultationNoteCreateMixin:
     """Handle consultation note submission from the editable response view."""
 
+    ORAL_PATHOLOGY_CHOICES = (
+        'Gingivitis',
+        'Aphthous stomatitis',
+        'Oral candidiasis',
+        'Dental fluorosis',
+    )
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         patient = self.object.patient
 
         # Gather data from the form
+        oral_pathologies = [
+            pathology
+            for pathology in request.POST.getlist('oral_pathologies[]')
+            if pathology in self.ORAL_PATHOLOGY_CHOICES
+        ]
+        oral_pathologies_other = request.POST.get('oral_pathologies_other', '').strip()
+        if oral_pathologies_other:
+            oral_pathologies.append(oral_pathologies_other)
         provisional_diagnosis = request.POST.get('provisional_diagnosis', '').strip()
         on_examination = request.POST.get('on_examination', '').strip()
         investigations = request.POST.get('investigations', '').strip()
@@ -239,6 +254,8 @@ class ConsultationNoteCreateMixin:
 
         # Build the final content
         content_lines = []
+        if oral_pathologies:
+            content_lines.append(f"<strong>Oral Pathologies</strong><br>{', '.join(oral_pathologies)}")
         if provisional_diagnosis:
             content_lines.append(f"<strong>Provisional Diagnosis</strong><br>{provisional_diagnosis}")
         if on_examination:
