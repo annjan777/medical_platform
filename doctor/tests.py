@@ -50,6 +50,7 @@ class ResponseDetailViewTests(TestCase):
             reverse('doctor:response_detail', args=[self.response.pk]),
             {
                 'provisional_diagnosis': 'Acute pulpitis',
+                'oral_pathologies[]': ['Gingivitis', 'Oral candidiasis'],
                 'on_examination': 'Tender molar on percussion',
                 'investigations': 'IOPA advised',
                 'advice': 'Warm saline rinses',
@@ -69,5 +70,18 @@ class ResponseDetailViewTests(TestCase):
         self.assertEqual(note.author, self.doctor)
         self.assertEqual(note.title, f'Consultation Note - {self.questionnaire.title}')
         self.assertTrue(note.is_important)
+        self.assertIn('Oral Pathologies', note.content)
+        self.assertIn('Gingivitis, Oral candidiasis', note.content)
         self.assertIn('Acute pulpitis', note.content)
         self.assertIn('Ibuprofen 400mg', note.content)
+
+    def test_response_detail_shows_oral_pathology_options(self):
+        self.client.force_login(self.doctor)
+
+        response = self.client.get(reverse('doctor:response_detail', args=[self.response.pk]))
+
+        self.assertContains(response, 'Oral Pathologies')
+        self.assertContains(response, 'Gingivitis')
+        self.assertContains(response, 'Aphthous stomatitis')
+        self.assertContains(response, 'Oral candidiasis')
+        self.assertContains(response, 'Dental fluorosis')
