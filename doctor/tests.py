@@ -85,3 +85,54 @@ class ResponseDetailViewTests(TestCase):
         self.assertContains(response, 'Aphthous stomatitis')
         self.assertContains(response, 'Oral candidiasis')
         self.assertContains(response, 'Dental fluorosis')
+
+
+class ResponseListTimestampTests(TestCase):
+    def setUp(self):
+        self.user_model = get_user_model()
+        self.doctor = self.user_model.objects.create_user(
+            email='doctor-list@example.com',
+            password='testpass123',
+            role=self.user_model.Role.DOCTOR,
+        )
+        self.health_assistant = self.user_model.objects.create_user(
+            email='assistant-list@example.com',
+            password='testpass123',
+            role=self.user_model.Role.HEALTH_ASSISTANT,
+        )
+        self.questionnaire = Questionnaire.objects.create(
+            title='Timestamp Survey',
+            created_by=self.health_assistant,
+        )
+        ScreeningType.objects.create(
+            name='Default Screening',
+            code='default-screening-list',
+            is_active=True,
+        )
+        self.patient = Patient.objects.create(
+            first_name='Riya',
+            last_name='Shah',
+            phone_number='9876543211',
+            email='riya@example.com',
+            created_by=self.health_assistant,
+        )
+        self.response = Response.objects.create(
+            questionnaire=self.questionnaire,
+            respondent=self.health_assistant,
+            patient=self.patient,
+            is_complete=False,
+        )
+
+    def test_doctor_response_list_shows_started_at_when_submitted_at_missing(self):
+        self.client.force_login(self.doctor)
+
+        response = self.client.get(reverse('doctor:response_list'))
+
+        self.assertContains(response, self.response.started_at.strftime('%b %d, %Y'))
+
+    def test_health_assistant_response_list_shows_started_at_when_submitted_at_missing(self):
+        self.client.force_login(self.health_assistant)
+
+        response = self.client.get(reverse('questionnaires:response_list'))
+
+        self.assertContains(response, self.response.started_at.strftime('%b %d, %Y'))

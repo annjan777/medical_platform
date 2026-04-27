@@ -130,8 +130,8 @@
               {% endif %}
             </td>
             <td class="px-6 py-4">
-              <p class="text-[11px] font-bold text-gray-600">{{ response.submitted_at|date:"M d, Y"|default:response.started_at|date:"M d, Y" }}</p>
-              <p class="text-[10px] text-gray-400">{{ response.submitted_at|date:"H:i A"|default:response.started_at|date:"H:i A" }}</p>
+              <p class="text-[11px] font-bold text-gray-600">{{ response.display_timestamp|date:"M d, Y" }}</p>
+              <p class="text-[10px] text-gray-400">{{ response.display_timestamp|date:"H:i A" }}</p>
             </td>
             <td class="px-6 py-4 text-right">
               <div class="flex justify-end space-x-2">
