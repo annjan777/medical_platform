@@ -72,7 +72,7 @@
                             {% endif %}
                         </div>
                     </td>
-                    <td class="text-muted small">{{ response.submitted_at|date:"M d, Y H:i" }}</td>
+                    <td class="text-muted small">{{ response.display_timestamp|date:"M d, Y H:i" }}</td>
                     <td class="text-end pe-4">
                         <a href="{% url 'doctor:response_detail' response.pk %}" class="btn btn-sm btn-light border">
                             <i class="fas fa-eye me-1 text-primary"></i> View Report

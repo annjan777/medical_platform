@@ -314,6 +314,11 @@ class Response(models.Model):
     
     def get_absolute_url(self):
         return reverse('questionnaires:response_detail', args=[str(self.id)])
+
+    @property
+    def display_timestamp(self):
+        """Timestamp to show in lists when a response has not been submitted yet."""
+        return self.submitted_at or self.started_at
     
     def get_answers(self):
         """Get all answers for this response."""
