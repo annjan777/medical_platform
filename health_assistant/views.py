@@ -511,68 +511,72 @@ def _zip_parent_url(session, attachment, current_folder):
 
 
 def _get_zip_folder_entries(session, attachment, current_folder):
+    import io
     folders = {}
     rows = []
 
     try:
         attachment.file.open('rb')
         try:
-            with zipfile.ZipFile(attachment.file) as archive:
-                for info in sorted(archive.infolist(), key=lambda item: item.filename.lower()):
-                    entry_name = info.filename.replace('\\', '/').strip('/')
-                    if not _is_safe_zip_path(entry_name):
-                        continue
-
-                    entry_path = entry_name + '/' if info.is_dir() else entry_name
-                    if current_folder and not entry_path.startswith(current_folder):
-                        continue
-
-                    remainder = entry_path[len(current_folder):] if current_folder else entry_path
-                    remainder = remainder.strip('/')
-                    if not remainder:
-                        continue
-
-                    parts = remainder.split('/')
-                    if len(parts) > 1:
-                        child_folder = current_folder + parts[0] + '/'
-                        if child_folder not in folders:
-                            folders[child_folder] = {
-                                'kind': 'folder',
-                                'name': parts[0],
-                                'path': child_folder,
-                                'size_label': 'Folder',
-                                'preview_type': 'folder',
-                                'preview_url': '',
-                                'folder_url': _zip_folder_url(session, attachment, child_folder),
-                            }
-                        continue
-
-                    if info.is_dir():
-                        child_folder = current_folder + parts[0] + '/'
-                        if child_folder not in folders:
-                            folders[child_folder] = {
-                                'kind': 'folder',
-                                'name': parts[0],
-                                'path': child_folder,
-                                'size_label': 'Folder',
-                                'preview_type': 'folder',
-                                'preview_url': '',
-                                'folder_url': _zip_folder_url(session, attachment, child_folder),
-                            }
-                        continue
-
-                    preview_type = _zip_entry_preview_type(entry_name)
-                    rows.append({
-                        'kind': 'file',
-                        'name': parts[0],
-                        'path': entry_name,
-                        'size_label': _format_file_size(info.file_size),
-                        'preview_type': preview_type,
-                        'preview_url': _zip_entry_url(session, attachment, entry_name) if preview_type in ('image', 'text') else '',
-                        'folder_url': '',
-                    })
+            # Buffer into BytesIO so zipfile can seek — required for S3 file objects
+            zip_buffer = io.BytesIO(attachment.file.read())
         finally:
             attachment.file.close()
+
+        with zipfile.ZipFile(zip_buffer) as archive:
+            for info in sorted(archive.infolist(), key=lambda item: item.filename.lower()):
+                entry_name = info.filename.replace('\\', '/').strip('/')
+                if not _is_safe_zip_path(entry_name):
+                    continue
+
+                entry_path = entry_name + '/' if info.is_dir() else entry_name
+                if current_folder and not entry_path.startswith(current_folder):
+                    continue
+
+                remainder = entry_path[len(current_folder):] if current_folder else entry_path
+                remainder = remainder.strip('/')
+                if not remainder:
+                    continue
+
+                parts = remainder.split('/')
+                if len(parts) > 1:
+                    child_folder = current_folder + parts[0] + '/'
+                    if child_folder not in folders:
+                        folders[child_folder] = {
+                            'kind': 'folder',
+                            'name': parts[0],
+                            'path': child_folder,
+                            'size_label': 'Folder',
+                            'preview_type': 'folder',
+                            'preview_url': '',
+                            'folder_url': _zip_folder_url(session, attachment, child_folder),
+                        }
+                    continue
+
+                if info.is_dir():
+                    child_folder = current_folder + parts[0] + '/'
+                    if child_folder not in folders:
+                        folders[child_folder] = {
+                            'kind': 'folder',
+                            'name': parts[0],
+                            'path': child_folder,
+                            'size_label': 'Folder',
+                            'preview_type': 'folder',
+                            'preview_url': '',
+                            'folder_url': _zip_folder_url(session, attachment, child_folder),
+                        }
+                    continue
+
+                preview_type = _zip_entry_preview_type(entry_name)
+                rows.append({
+                    'kind': 'file',
+                    'name': parts[0],
+                    'path': entry_name,
+                    'size_label': _format_file_size(info.file_size),
+                    'preview_type': preview_type,
+                    'preview_url': _zip_entry_url(session, attachment, entry_name) if preview_type in ('image', 'text') else '',
+                    'folder_url': '',
+                })
     except zipfile.BadZipFile:
         return [], 'This ZIP file could not be opened. Download it to inspect the original file.'
     except Exception:
@@ -703,31 +707,35 @@ def session_zip_entry_view(request, session_id, attachment_id):
     text_preview_error = ''
 
     try:
+        import io
         attachment.file.open('rb')
         try:
-            with zipfile.ZipFile(attachment.file) as archive:
-                try:
-                    entry_info = archive.getinfo(entry_name)
-                except KeyError as exc:
-                    raise Http404('ZIP entry not found') from exc
-
-                if entry_info.is_dir():
-                    raise Http404('ZIP entry not found')
-
-                if raw_mode:
-                    raw_data = archive.read(entry_info)
-                elif preview_type == 'text':
-                    preview_limit = 512 * 1024
-                    with archive.open(entry_info) as entry_file:
-                        raw_text = entry_file.read(preview_limit + 1)
-                    text_preview_truncated = len(raw_text) > preview_limit
-                    raw_text = raw_text[:preview_limit]
-                    try:
-                        text_preview = raw_text.decode('utf-8')
-                    except UnicodeDecodeError:
-                        text_preview = raw_text.decode('latin-1', errors='replace')
+            # Buffer into BytesIO so zipfile can seek — required for S3 file objects
+            zip_buffer = io.BytesIO(attachment.file.read())
         finally:
             attachment.file.close()
+
+        with zipfile.ZipFile(zip_buffer) as archive:
+            try:
+                entry_info = archive.getinfo(entry_name)
+            except KeyError as exc:
+                raise Http404('ZIP entry not found') from exc
+
+            if entry_info.is_dir():
+                raise Http404('ZIP entry not found')
+
+            if raw_mode:
+                raw_data = archive.read(entry_info)
+            elif preview_type == 'text':
+                preview_limit = 512 * 1024
+                with archive.open(entry_info) as entry_file:
+                    raw_text = entry_file.read(preview_limit + 1)
+                text_preview_truncated = len(raw_text) > preview_limit
+                raw_text = raw_text[:preview_limit]
+                try:
+                    text_preview = raw_text.decode('utf-8')
+                except UnicodeDecodeError:
+                    text_preview = raw_text.decode('latin-1', errors='replace')
     except Http404:
         raise
     except zipfile.BadZipFile:
