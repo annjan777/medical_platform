@@ -179,15 +179,17 @@ if AWS_ACCESS_KEY_ID:
                 "region_name": AWS_S3_REGION_NAME,
                 "file_overwrite": False,
                 "default_acl": None,
-                "custom_domain": f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com",
+                "querystring_auth": True,   # generates presigned URLs — works with private buckets
+                "url_expiration": 3600,     # presigned URLs expire after 1 hour
             },
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+    # MEDIA_URL is not used for URL generation with S3 (presigned URLs used instead)
+    # but kept for any fallback reference
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/'
     MEDIA_ROOT = ''  # Not used when S3 is active
 
 
