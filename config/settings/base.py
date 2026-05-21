@@ -179,8 +179,8 @@ if AWS_ACCESS_KEY_ID:
                 "region_name": AWS_S3_REGION_NAME,
                 "file_overwrite": False,
                 "default_acl": None,
-                "querystring_auth": True,   # generates presigned URLs — works with private buckets
-                "url_expiration": 3600,     # presigned URLs expire after 1 hour
+                "querystring_auth": True,       # generates presigned URLs — works with private buckets
+                "querystring_expire": 3600,    # presigned URLs expire after 1 hour
             },
         },
         "staticfiles": {
