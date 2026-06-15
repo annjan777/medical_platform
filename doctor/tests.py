@@ -55,6 +55,7 @@ class ResponseDetailViewTests(TestCase):
                 'investigations': 'IOPA advised',
                 'advice': 'Warm saline rinses',
                 'further_followup': 'on',
+                'specialist_referral': 'on',
                 'pres_type[]': ['Tablet'],
                 'pres_medicine[]': ['Ibuprofen 400mg'],
                 'pres_dosage[]': ['1-0-1'],
@@ -74,6 +75,36 @@ class ResponseDetailViewTests(TestCase):
         self.assertIn('Gingivitis, Oral candidiasis', note.content)
         self.assertIn('Acute pulpitis', note.content)
         self.assertIn('Ibuprofen 400mg', note.content)
+        self.assertIn('<strong>Specialist Referral Required</strong><br>Yes', note.content)
+
+    def test_response_detail_post_allows_specialist_referral_if_already_diagnosed(self):
+        # Create an existing consultation note for the patient
+        PatientNote.objects.create(
+            patient=self.patient,
+            author=self.doctor,
+            note_type=PatientNote.NoteType.CONSULTATION,
+            title='Previous Consultation',
+            content='Some previous diagnosis',
+        )
+
+        self.client.force_login(self.doctor)
+
+        response = self.client.post(
+            reverse('doctor:response_detail', args=[self.response.pk]),
+            {
+                'provisional_diagnosis': 'Another pulpitis',
+                'further_followup': 'on',
+                'specialist_referral': 'on',
+            },
+        )
+
+        self.assertRedirects(response, reverse('doctor:pending_consultations'))
+
+        # Get the latest consultation note (there should be two notes now)
+        notes = PatientNote.objects.filter(patient=self.patient, note_type=PatientNote.NoteType.CONSULTATION).order_by('-created_at')
+        self.assertEqual(notes.count(), 2)
+        latest_note = notes[0]
+        self.assertIn('<strong>Specialist Referral Required</strong><br>Yes', latest_note.content)
 
     def test_response_detail_shows_oral_pathology_options(self):
         self.client.force_login(self.doctor)
@@ -136,3 +167,88 @@ class ResponseListTimestampTests(TestCase):
         response = self.client.get(reverse('questionnaires:response_list'))
 
         self.assertContains(response, self.response.started_at.strftime('%b %d, %Y'))
+
+
+class CompletedConsultationsExportTests(TestCase):
+    def setUp(self):
+        self.user_model = get_user_model()
+        self.doctor = self.user_model.objects.create_user(
+            email='doctor-export@example.com',
+            password='testpass123',
+            role=self.user_model.Role.DOCTOR,
+        )
+        self.health_assistant = self.user_model.objects.create_user(
+            email='assistant-export@example.com',
+            password='testpass123',
+            role=self.user_model.Role.HEALTH_ASSISTANT,
+        )
+        self.questionnaire = Questionnaire.objects.create(
+            title='Survey Form',
+            created_by=self.health_assistant,
+        )
+        ScreeningType.objects.create(
+            name='Default Screening',
+            code='default-screening-export',
+            is_active=True,
+        )
+        self.patient = Patient.objects.create(
+            first_name='Ananya',
+            last_name='Sen',
+            phone_number='9876543212',
+            email='ananya@example.com',
+            created_by=self.health_assistant,
+        )
+        self.response = Response.objects.create(
+            questionnaire=self.questionnaire,
+            respondent=self.health_assistant,
+            patient=self.patient,
+            is_complete=True,
+        )
+        # Create a completed consultation note
+        PatientNote.objects.create(
+            patient=self.patient,
+            author=self.doctor,
+            note_type=PatientNote.NoteType.CONSULTATION,
+            title='Consultation Note',
+            content='<strong>Oral Pathologies</strong><br>Gingivitis<br><br><strong>Provisional Diagnosis</strong><br>Dental caries<br><br><strong>On Examination</strong><br>Mild calculus<br><br><strong>Investigations</strong><br>X-Ray<br><br><strong>Prescriptions</strong><br>&bull; Tablet: Paracetamol | 1-0-1 | 5 days | After food | None<br><br><strong>Advice</strong><br>Brush twice daily<br><br><strong>Further Followup Required</strong><br>No<br><br><strong>Specialist Referral Required</strong><br>Yes',
+            is_important=False # False makes it appear under Completed consultations according to view filtering
+        )
+
+    def test_completed_consultations_export_csv(self):
+        self.client.force_login(self.doctor)
+        
+        # Request patient search API with export=csv and view=completed
+        response = self.client.get(
+            reverse('health_assistant:api_search_patients'),
+            {
+                'export': 'csv',
+                'view': 'completed'
+            }
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertIn('attachment; filename="patients_export.csv"', response['Content-Disposition'])
+        
+        csv_content = response.content.decode('utf-8')
+        
+        # Verify custom CSV headers exist
+        self.assertIn('Oral Pathologies', csv_content)
+        self.assertIn('Provisional Diagnosis', csv_content)
+        self.assertIn('On Examination', csv_content)
+        self.assertIn('Investigations', csv_content)
+        self.assertIn('Prescriptions', csv_content)
+        self.assertIn('Advice', csv_content)
+        self.assertIn('Further Followup Required', csv_content)
+        self.assertIn('Specialist Referral Required', csv_content)
+        
+        # Verify row content has parsed values
+        self.assertIn('Ananya', csv_content)
+        self.assertIn('Gingivitis', csv_content)
+        self.assertIn('Dental caries', csv_content)
+        self.assertIn('Mild calculus', csv_content)
+        self.assertIn('X-Ray', csv_content)
+        self.assertIn('Tablet: Paracetamol', csv_content)
+        self.assertIn('Brush twice daily', csv_content)
+        self.assertIn('No', csv_content)
+        self.assertIn('Yes', csv_content)

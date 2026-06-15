@@ -875,7 +875,7 @@ def api_search_patients(request):
     
         # Handle CSV export
         if export_format == 'csv':
-            return export_patients_csv(query, gender, date_from, date_to)
+            return export_patients_csv(query, gender, date_from, date_to, view_type=view_type)
         
         # Build filter conditions
         filters = Q()
@@ -1143,10 +1143,52 @@ def api_patient_update(request, patient_id):
         return JsonResponse({'error': str(e)}, status=400)
 
 
-def export_patients_csv(query, gender, date_from, date_to):
+def parse_consultation_content(content):
+    import re
+    parsed = {
+        'Oral Pathologies': '',
+        'Provisional Diagnosis': '',
+        'On Examination': '',
+        'Investigations': '',
+        'Prescriptions': '',
+        'Advice': '',
+        'Further Followup Required': '',
+        'Specialist Referral Required': ''
+    }
+    if not content:
+        return parsed
+        
+    # Split content by <br><br> (or similar spacing, using regex to handle variations)
+    blocks = re.split(r'<br\s*/?>\s*<br\s*/?>', content)
+    for block in blocks:
+        block = block.strip()
+        if not block:
+            continue
+        # Match <strong>Title</strong><br>Value
+        m = re.match(r'<strong>(.*?)</strong>\s*<br\s*/?>(.*)', block, re.DOTALL | re.IGNORECASE)
+        if m:
+            title = m.group(1).strip()
+            value = m.group(2).strip()
+            # Clean up HTML tags in value
+            value_clean = re.sub(r'<br\s*/?>', '\n', value)
+            value_clean = re.sub(r'<[^>]+>', '', value_clean) # strip all html tags
+            value_clean = value_clean.replace('&bull;', '•').replace('&amp;', '&').replace('&emsp;', '\t').replace('&nbsp;', ' ')
+            # Replace multiple newlines/spaces
+            value_clean = '\n'.join([line.strip() for line in value_clean.splitlines() if line.strip()])
+            
+            # Map standard titles to our dictionary keys
+            for key in parsed:
+                if title.lower() == key.lower():
+                    parsed[key] = value_clean
+                    break
+    return parsed
+
+
+def export_patients_csv(query, gender, date_from, date_to, view_type=None):
     """Export patients to CSV"""
     import csv
     from django.http import HttpResponse
+    from patients.models import PatientNote
     
     # Build filter conditions
     filters = Q()
@@ -1158,16 +1200,29 @@ def export_patients_csv(query, gender, date_from, date_to):
         filters &= Q(created_at__date__gte=date_from)
     if date_to:
         filters &= Q(created_at__date__lte=date_to)
+        
+    if view_type == 'pending':
+        filters &= Q(questionnaire_responses__isnull=False, questionnaire_responses__is_complete=True)
+        filters &= ~Q(notes__note_type=PatientNote.NoteType.CONSULTATION, notes__is_important=False)
+    elif view_type == 'completed':
+        filters &= Q(questionnaire_responses__isnull=False, questionnaire_responses__is_complete=True)
+        filters &= Q(notes__note_type=PatientNote.NoteType.CONSULTATION, notes__is_important=False)
     
-    patients = Patient.objects.filter(filters).order_by('-created_at')
+    patients = Patient.objects.filter(filters).order_by('-created_at').distinct()
     
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="patients_export.csv"'
     
     writer = csv.writer(response)
-    writer.writerow(['Setu ID', 'Patient ID', 'First Name', 'Last Name', 'Age', 'Gender', 'Phone', 'Email', 'City', 'Address', 'Created'])
+    writer.writerow([
+        'Setu ID', 'Patient ID', 'First Name', 'Last Name', 'Age', 'Gender', 'Phone', 'Email', 'City', 'Address', 'Created',
+        'Oral Pathologies', 'Provisional Diagnosis', 'On Examination', 'Investigations', 'Prescriptions', 'Advice', 'Further Followup Required', 'Specialist Referral Required'
+    ])
     
     for patient in patients:
+        latest_note = patient.notes.filter(note_type='CONSULTATION').order_by('-created_at').first()
+        parsed = parse_consultation_content(latest_note.content if latest_note else "")
+        
         writer.writerow([
             patient.setu_id,
             patient.patient_id,
@@ -1179,7 +1234,15 @@ def export_patients_csv(query, gender, date_from, date_to):
             patient.email or '',
             patient.city or '',
             patient.address or '',
-            patient.created_at.strftime('%Y-%m-%d %H:%M')
+            patient.created_at.strftime('%Y-%m-%d %H:%M') if patient.created_at else '',
+            parsed['Oral Pathologies'],
+            parsed['Provisional Diagnosis'],
+            parsed['On Examination'],
+            parsed['Investigations'],
+            parsed['Prescriptions'],
+            parsed['Advice'],
+            parsed['Further Followup Required'],
+            parsed['Specialist Referral Required']
         ])
     
     return response

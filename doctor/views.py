@@ -256,6 +256,7 @@ class ConsultationNoteCreateMixin:
         investigations = request.POST.get('investigations', '').strip()
         advice = request.POST.get('advice', '').strip()
         further_followup = request.POST.get('further_followup') == 'on'
+        specialist_referral = request.POST.get('specialist_referral') == 'on'
 
         # Gather prescriptions
         prescription_types = request.POST.getlist('pres_type[]')
@@ -293,6 +294,9 @@ class ConsultationNoteCreateMixin:
 
         followup_text = "Yes" if further_followup else "No"
         content_lines.append(f"<strong>Further Followup Required</strong><br>{followup_text}")
+
+        referral_text = "Yes" if specialist_referral else "No"
+        content_lines.append(f"<strong>Specialist Referral Required</strong><br>{referral_text}")
 
         content = "<br><br>".join(content_lines)
 
@@ -348,6 +352,7 @@ class ConsultationNoteCreateMixin:
                 'investigations': investigations,
                 'advice': advice,
                 'followup_required': "Yes" if further_followup else "No",
+                'specialist_referral_required': "Yes" if specialist_referral else "No",
                 'notes': on_examination,
                 'assistant_name': (
                     self.object.respondent.get_full_name() or
@@ -401,6 +406,7 @@ class ResponseDetailView(ConsultationNoteCreateMixin, DoctorRequiredMixin, Detai
         context['vitals'] = self.object.patient.vitals.order_by('-recorded_at').first()
         # Fetch previous consultations for this patient
         context['previous_consultations'] = self.object.patient.notes.filter(note_type='CONSULTATION').order_by('-created_at')
+        context['already_diagnosed'] = self.object.patient.notes.filter(note_type='CONSULTATION').exists()
         return context
 
 class ResponseReadOnlyView(DoctorRequiredMixin, DetailView):

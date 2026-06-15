@@ -433,6 +433,7 @@
             gender: currentGender,
             date_from: currentDateFrom,
             date_to: currentDateTo,
+            view: '{{ view|default:"" }}',
             export: 'csv'
         });
         window.location.href = `/health-assistant/api/search-patients/?${params.toString()}`;
