@@ -3,6 +3,15 @@
 import os
 import sys
 
+# Monkeypatch typing.Protocol for Python 3.7 compatibility with newer libraries like pypdf
+import typing
+if not hasattr(typing, 'Protocol'):
+    try:
+        from typing_extensions import Protocol
+        typing.Protocol = Protocol
+    except ImportError:
+        pass
+
 
 def main():
     """Run administrative tasks."""
