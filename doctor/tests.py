@@ -52,6 +52,8 @@ class ResponseDetailViewTests(TestCase):
                 'provisional_diagnosis': 'Acute pulpitis',
                 'oral_pathologies[]': ['Gingivitis', 'Oral candidiasis'],
                 'on_examination': 'Tender molar on percussion',
+                'white_patch': 'Yes',
+                'red_patch': 'No',
                 'investigations': 'IOPA advised',
                 'advice': 'Warm saline rinses',
                 'further_followup': 'on',
@@ -75,6 +77,8 @@ class ResponseDetailViewTests(TestCase):
         self.assertIn('Gingivitis, Oral candidiasis', note.content)
         self.assertIn('Acute pulpitis', note.content)
         self.assertIn('Ibuprofen 400mg', note.content)
+        self.assertIn('<strong>White patch present</strong><br>Yes', note.content)
+        self.assertIn('<strong>Red patch present</strong><br>No', note.content)
         self.assertIn('<strong>Specialist Referral Required</strong><br>Yes', note.content)
 
     def test_response_detail_post_allows_specialist_referral_if_already_diagnosed(self):
@@ -210,7 +214,7 @@ class CompletedConsultationsExportTests(TestCase):
             author=self.doctor,
             note_type=PatientNote.NoteType.CONSULTATION,
             title='Consultation Note',
-            content='<strong>Oral Pathologies</strong><br>Gingivitis<br><br><strong>Provisional Diagnosis</strong><br>Dental caries<br><br><strong>On Examination</strong><br>Mild calculus<br><br><strong>Investigations</strong><br>X-Ray<br><br><strong>Prescriptions</strong><br>&bull; Tablet: Paracetamol | 1-0-1 | 5 days | After food | None<br><br><strong>Advice</strong><br>Brush twice daily<br><br><strong>Further Followup Required</strong><br>No<br><br><strong>Specialist Referral Required</strong><br>Yes',
+            content='<strong>Oral Pathologies</strong><br>Gingivitis<br><br><strong>Provisional Diagnosis</strong><br>Dental caries<br><br><strong>On Examination</strong><br>Mild calculus<br><br><strong>Investigations</strong><br>X-Ray<br><br><strong>White patch present</strong><br>Yes<br><br><strong>Red patch present</strong><br>No<br><br><strong>Prescriptions</strong><br>&bull; Tablet: Paracetamol | 1-0-1 | 5 days | After food | None<br><br><strong>Advice</strong><br>Brush twice daily<br><br><strong>Further Followup Required</strong><br>No<br><br><strong>Specialist Referral Required</strong><br>Yes',
             is_important=False # False makes it appear under Completed consultations according to view filtering
         )
 
@@ -237,6 +241,8 @@ class CompletedConsultationsExportTests(TestCase):
         self.assertIn('Provisional Diagnosis', csv_content)
         self.assertIn('On Examination', csv_content)
         self.assertIn('Investigations', csv_content)
+        self.assertIn('White patch present', csv_content)
+        self.assertIn('Red patch present', csv_content)
         self.assertIn('Prescriptions', csv_content)
         self.assertIn('Advice', csv_content)
         self.assertIn('Further Followup Required', csv_content)

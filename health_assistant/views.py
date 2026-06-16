@@ -1150,6 +1150,8 @@ def parse_consultation_content(content):
         'Provisional Diagnosis': '',
         'On Examination': '',
         'Investigations': '',
+        'White patch present': '',
+        'Red patch present': '',
         'Prescriptions': '',
         'Advice': '',
         'Further Followup Required': '',
@@ -1216,7 +1218,7 @@ def export_patients_csv(query, gender, date_from, date_to, view_type=None):
     writer = csv.writer(response)
     writer.writerow([
         'Setu ID', 'Patient ID', 'First Name', 'Last Name', 'Age', 'Gender', 'Phone', 'Email', 'City', 'Address', 'Created',
-        'Oral Pathologies', 'Provisional Diagnosis', 'On Examination', 'Investigations', 'Prescriptions', 'Advice', 'Further Followup Required', 'Specialist Referral Required'
+        'Oral Pathologies', 'Provisional Diagnosis', 'On Examination', 'Investigations', 'White patch present', 'Red patch present', 'Prescriptions', 'Advice', 'Further Followup Required', 'Specialist Referral Required'
     ])
     
     for patient in patients:
@@ -1239,6 +1241,8 @@ def export_patients_csv(query, gender, date_from, date_to, view_type=None):
             parsed['Provisional Diagnosis'],
             parsed['On Examination'],
             parsed['Investigations'],
+            parsed['White patch present'],
+            parsed['Red patch present'],
             parsed['Prescriptions'],
             parsed['Advice'],
             parsed['Further Followup Required'],

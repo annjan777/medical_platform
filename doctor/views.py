@@ -253,6 +253,8 @@ class ConsultationNoteCreateMixin:
             oral_pathologies.append(oral_pathologies_other)
         provisional_diagnosis = request.POST.get('provisional_diagnosis', '').strip()
         on_examination = request.POST.get('on_examination', '').strip()
+        white_patch = request.POST.get('white_patch', 'No').strip().capitalize()
+        red_patch = request.POST.get('red_patch', 'No').strip().capitalize()
         investigations = request.POST.get('investigations', '').strip()
         advice = request.POST.get('advice', '').strip()
         further_followup = request.POST.get('further_followup') == 'on'
@@ -287,6 +289,8 @@ class ConsultationNoteCreateMixin:
             content_lines.append(f"<strong>On Examination</strong><br>{on_examination}")
         if investigations:
             content_lines.append(f"<strong>Investigations</strong><br>{investigations}")
+        content_lines.append(f"<strong>White patch present</strong><br>{white_patch}")
+        content_lines.append(f"<strong>Red patch present</strong><br>{red_patch}")
         if prescriptions_text:
             content_lines.append(f"<strong>Prescriptions</strong><br>{prescriptions_text}")
         if advice:
@@ -348,6 +352,8 @@ class ConsultationNoteCreateMixin:
                 'medications': medical_record.current_medications if medical_record else "None",
                 'allergies': medical_record.allergies if medical_record else "None",
                 'diagnosis': provisional_diagnosis,
+                'white_patch': white_patch,
+                'red_patch': red_patch,
                 'medicines': pdf_medicines,
                 'investigations': investigations,
                 'advice': advice,
