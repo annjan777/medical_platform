@@ -1,0 +1,4 @@
+ALLOWED_HOSTS = [
+    "13.204.125.52",
+    "health.sclab.in",
+]
