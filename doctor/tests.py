@@ -115,7 +115,7 @@ class ResponseDetailViewTests(TestCase):
 
         response = self.client.get(reverse('doctor:response_detail', args=[self.response.pk]))
 
-        self.assertContains(response, 'Oral Pathologies')
+        self.assertContains(response, 'Observation')
         self.assertContains(response, 'Gingivitis')
         self.assertContains(response, 'Aphthous stomatitis')
         self.assertContains(response, 'Oral candidiasis')

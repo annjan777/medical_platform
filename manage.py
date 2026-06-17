@@ -3,14 +3,17 @@
 import os
 import sys
 
-# Monkeypatch typing.Protocol for Python 3.7 compatibility with newer libraries like pypdf
+# Monkeypatch typing for Python 3.7 compatibility with newer libraries like pypdf
 import typing
-if not hasattr(typing, 'Protocol'):
-    try:
-        from typing_extensions import Protocol
-        typing.Protocol = Protocol
-    except ImportError:
-        pass
+for name in ('Protocol', 'Literal', 'TypedDict'):
+    if not hasattr(typing, name):
+        try:
+            import typing_extensions
+            val = getattr(typing_extensions, name, None)
+            if val is not None:
+                setattr(typing, name, val)
+        except ImportError:
+            pass
 
 
 def main():
