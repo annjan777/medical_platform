@@ -1,0 +1,636 @@
+[
+  {
+    "setuId": "SETU0002",
+    "patientId": "MDCP000001",
+    "dentalStatus": "scheduled",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-11 20:54:29.338015",
+    "dentalReleasedBy": "Smith james",
+    "dentalReleasedAt": "2026-03-14 14:38:02.748165",
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [
+      {
+        "question": "How are you?",
+        "answer": "B"
+      },
+      {
+        "question": "How many fingers are there in your hand?",
+        "answer": "4"
+      },
+      {
+        "question": "Do you play cricket?",
+        "answer": "yes"
+      },
+      {
+        "question": "Batter or bowler or all rounder?",
+        "answer": "Batter"
+      },
+      {
+        "question": "Do you play basketball or football?",
+        "answer": ""
+      },
+      {
+        "question": "This question can be edited?",
+        "answer": "false"
+      }
+    ],
+    "provisionalDiagnosis": "hjmn",
+    "onExamination": "hjk,",
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": "hnj",
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": "a",
+    "prescriptionNameAndStrength": "a",
+    "prescriptionDosage": "0",
+    "prescriptionInstructions": "a",
+    "prescriptionDuration": "0 days",
+    "prescriptionOthers": null,
+    "oralPathology": null,
+    "bloodPressure": null,
+    "heartRate": null,
+    "respiratoryRate": null,
+    "temperature": null,
+    "spo2": null,
+    "weight": null,
+    "height": null,
+    "bmi": null
+  },
+  {
+    "setuId": "SETU0003",
+    "patientId": "MDCP000002",
+    "dentalStatus": "scheduled",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-14 14:39:14.307661",
+    "dentalReleasedBy": "Smith james",
+    "dentalReleasedAt": "2026-03-14 14:41:49.096521",
+    "dentalIsFollowUpNeeded": true,
+    "dentalQuestionnaireResponses": [
+      {
+        "question": "Which Image is clear",
+        "answer": ""
+      },
+      {
+        "question": "Which option is correct?",
+        "answer": "no"
+      },
+      {
+        "question": "5+2 = ?",
+        "answer": ""
+      },
+      {
+        "question": "5-2 =3?",
+        "answer": "true"
+      }
+    ],
+    "provisionalDiagnosis": null,
+    "onExamination": null,
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": null,
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": "M",
+    "prescriptionNameAndStrength": "Med",
+    "prescriptionDosage": "1-0-0",
+    "prescriptionInstructions": "after breakfast",
+    "prescriptionDuration": "1 days",
+    "prescriptionOthers": null,
+    "oralPathology": null,
+    "bloodPressure": "100/100",
+    "heartRate": 100,
+    "respiratoryRate": 100,
+    "temperature": 37.8,
+    "spo2": 100,
+    "weight": 100.0,
+    "height": 100.0,
+    "bmi": 100.0
+  },
+  {
+    "setuId": "SETU0001",
+    "patientId": "MDCP000003",
+    "dentalStatus": "scheduled",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-14 18:24:03.420519",
+    "dentalReleasedBy": null,
+    "dentalReleasedAt": null,
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [
+      {
+        "question": "How are you?",
+        "answer": "A"
+      },
+      {
+        "question": "How many fingers are there in your hand?",
+        "answer": "5"
+      },
+      {
+        "question": "Do you play cricket?",
+        "answer": "no"
+      },
+      {
+        "question": "Do you play basketball or football?",
+        "answer": "yes"
+      },
+      {
+        "question": "This question can be edited?",
+        "answer": "true"
+      },
+      {
+        "question": "did it remove the responses?",
+        "answer": "yes"
+      }
+    ],
+    "provisionalDiagnosis": null,
+    "onExamination": null,
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": null,
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": null,
+    "prescriptionNameAndStrength": null,
+    "prescriptionDosage": null,
+    "prescriptionInstructions": null,
+    "prescriptionDuration": null,
+    "prescriptionOthers": null,
+    "oralPathology": null,
+    "bloodPressure": "120/80",
+    "heartRate": 77,
+    "respiratoryRate": 20,
+    "temperature": 36.9,
+    "spo2": 99,
+    "weight": 78.0,
+    "height": 167.0,
+    "bmi": 27.97
+  },
+  {
+    "setuId": "SETU0004",
+    "patientId": "MDCP000004",
+    "dentalStatus": "scheduled",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-14 22:09:36.279418",
+    "dentalReleasedBy": "Smith james",
+    "dentalReleasedAt": "2026-04-21 05:32:55.091346",
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [
+      {
+        "question": "How are you?",
+        "answer": "A, C"
+      },
+      {
+        "question": "How many fingers are there in your hand?",
+        "answer": "5"
+      },
+      {
+        "question": "Do you play cricket?",
+        "answer": "no"
+      },
+      {
+        "question": "Do you play basketball or football?",
+        "answer": "no"
+      },
+      {
+        "question": "This question can be edited?",
+        "answer": "true"
+      },
+      {
+        "question": "did it remove the responses?",
+        "answer": "yes"
+      }
+    ],
+    "provisionalDiagnosis": "a",
+    "onExamination": "a",
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": "a",
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": "a",
+    "prescriptionNameAndStrength": "a",
+    "prescriptionDosage": "1-0-1",
+    "prescriptionInstructions": "af",
+    "prescriptionDuration": "5 days",
+    "prescriptionOthers": "n",
+    "oralPathology": null,
+    "bloodPressure": null,
+    "heartRate": null,
+    "respiratoryRate": null,
+    "temperature": null,
+    "spo2": null,
+    "weight": null,
+    "height": null,
+    "bmi": null
+  },
+  {
+    "setuId": "SETU0001",
+    "patientId": "MDCP000005",
+    "dentalStatus": "scheduled",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-14 23:15:20.821384",
+    "dentalReleasedBy": null,
+    "dentalReleasedAt": null,
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [],
+    "provisionalDiagnosis": null,
+    "onExamination": null,
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": null,
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": null,
+    "prescriptionNameAndStrength": null,
+    "prescriptionDosage": null,
+    "prescriptionInstructions": null,
+    "prescriptionDuration": null,
+    "prescriptionOthers": null,
+    "oralPathology": null,
+    "bloodPressure": null,
+    "heartRate": null,
+    "respiratoryRate": null,
+    "temperature": null,
+    "spo2": null,
+    "weight": null,
+    "height": null,
+    "bmi": null
+  },
+  {
+    "setuId": "MDCP000006",
+    "patientId": "MDCP000006",
+    "dentalStatus": "scheduled",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-17 21:17:58.417209",
+    "dentalReleasedBy": null,
+    "dentalReleasedAt": null,
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [],
+    "provisionalDiagnosis": null,
+    "onExamination": null,
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": null,
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": null,
+    "prescriptionNameAndStrength": null,
+    "prescriptionDosage": null,
+    "prescriptionInstructions": null,
+    "prescriptionDuration": null,
+    "prescriptionOthers": null,
+    "oralPathology": null,
+    "bloodPressure": null,
+    "heartRate": null,
+    "respiratoryRate": null,
+    "temperature": null,
+    "spo2": null,
+    "weight": null,
+    "height": null,
+    "bmi": null
+  },
+  {
+    "setuId": "MDCP000007",
+    "patientId": "MDCP000007",
+    "dentalStatus": "scheduled",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-19 14:33:57.121292",
+    "dentalReleasedBy": "Smith james",
+    "dentalReleasedAt": "2026-06-16 14:49:55.993279",
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [
+      {
+        "question": "How are you?",
+        "answer": "A, B"
+      },
+      {
+        "question": "How many fingers are there in your hand?",
+        "answer": "5"
+      },
+      {
+        "question": "Do you play cricket?",
+        "answer": "yes"
+      },
+      {
+        "question": "Batter or bowler or all rounder?",
+        "answer": "a"
+      },
+      {
+        "question": "This question can be edited?",
+        "answer": "true"
+      },
+      {
+        "question": "did it remove the responses?",
+        "answer": "yes"
+      }
+    ],
+    "provisionalDiagnosis": "a",
+    "onExamination": "a",
+    "whitePatch": true,
+    "redPatch": false,
+    "investigations": "a",
+    "advice": null,
+    "specialistReferral": true,
+    "prescriptionType": "a",
+    "prescriptionNameAndStrength": "aa",
+    "prescriptionDosage": "aaa",
+    "prescriptionInstructions": "a",
+    "prescriptionDuration": "1 days",
+    "prescriptionOthers": "a",
+    "oralPathology": "Gingivitis",
+    "bloodPressure": "120/90",
+    "heartRate": 77,
+    "respiratoryRate": 16,
+    "temperature": 36.7,
+    "spo2": 98,
+    "weight": 78.0,
+    "height": 160.0,
+    "bmi": 30.47
+  },
+  {
+    "setuId": "134-1234",
+    "patientId": "MDCP000008",
+    "dentalStatus": "completed",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-19 20:11:47.901132",
+    "dentalReleasedBy": "Smith james",
+    "dentalReleasedAt": "2026-05-07 09:50:21.744234",
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [
+      {
+        "question": "How are you?",
+        "answer": "A, B, D"
+      },
+      {
+        "question": "How many fingers are there in your hand?",
+        "answer": "5"
+      },
+      {
+        "question": "Do you play cricket?",
+        "answer": "no"
+      },
+      {
+        "question": "Do you play basketball or football?",
+        "answer": "yes"
+      },
+      {
+        "question": "This question can be edited?",
+        "answer": "false"
+      },
+      {
+        "question": "did it remove the responses?",
+        "answer": "yes"
+      }
+    ],
+    "provisionalDiagnosis": "Chronic Generalized Gingivitis with localized minor Aphthous Ulcer.",
+    "onExamination": "Bleeding Gums (BOP+), Halitosis (bad breath), and sensitivity in the upper quadrant.",
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": "Intraoral Periapical Radiograph (IOPA) for #16, #26; Vitamin B12 level check.",
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": "Tablet, Tablet, Tablet",
+    "prescriptionNameAndStrength": "Amoxicillin 500mg, Cetirizine 10mg, Katrol DT",
+    "prescriptionDosage": "1-0-1, 0-0-1, -",
+    "prescriptionInstructions": "After Food, Before sleep, When Needed",
+    "prescriptionDuration": "7 days, 5 days, 7 days",
+    "prescriptionOthers": "Complete full course, In case of pain",
+    "oralPathology": "Oral candidiasis",
+    "bloodPressure": "110/90",
+    "heartRate": 88,
+    "respiratoryRate": 18,
+    "temperature": 37.3,
+    "spo2": 99,
+    "weight": 78.0,
+    "height": 168.0,
+    "bmi": 27.64
+  },
+  {
+    "setuId": "MDCP000009",
+    "patientId": "MDCP000009",
+    "dentalStatus": "completed",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-19 20:17:34.048245",
+    "dentalReleasedBy": "Smith james",
+    "dentalReleasedAt": "2026-06-15 12:15:16.413775",
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [
+      {
+        "question": "How are you?",
+        "answer": "A"
+      },
+      {
+        "question": "How many fingers are there in your hand?",
+        "answer": "5"
+      },
+      {
+        "question": "Do you play cricket?",
+        "answer": "no"
+      },
+      {
+        "question": "Do you play basketball or football?",
+        "answer": "yes"
+      },
+      {
+        "question": "This question can be edited?",
+        "answer": "false"
+      },
+      {
+        "question": "did it remove the responses?",
+        "answer": "no"
+      }
+    ],
+    "provisionalDiagnosis": "a",
+    "onExamination": "a",
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": "a",
+    "advice": null,
+    "specialistReferral": true,
+    "prescriptionType": "a",
+    "prescriptionNameAndStrength": "a",
+    "prescriptionDosage": "0-1-1",
+    "prescriptionInstructions": "na",
+    "prescriptionDuration": "2 days",
+    "prescriptionOthers": "na",
+    "oralPathology": "na",
+    "bloodPressure": null,
+    "heartRate": null,
+    "respiratoryRate": null,
+    "temperature": null,
+    "spo2": null,
+    "weight": null,
+    "height": null,
+    "bmi": null
+  },
+  {
+    "setuId": "MDCP000010",
+    "patientId": "MDCP000010",
+    "dentalStatus": "scheduled",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-03-19 20:29:25.213219",
+    "dentalReleasedBy": "Smith james",
+    "dentalReleasedAt": "2026-03-24 09:24:42.047195",
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [
+      {
+        "question": "How are you?",
+        "answer": "C"
+      },
+      {
+        "question": "How many fingers are there in your hand?",
+        "answer": "6"
+      },
+      {
+        "question": "Do you play cricket?",
+        "answer": "no"
+      },
+      {
+        "question": "Do you play basketball or football?",
+        "answer": "no"
+      },
+      {
+        "question": "This question can be edited?",
+        "answer": "false"
+      },
+      {
+        "question": "did it remove the responses?",
+        "answer": "no"
+      }
+    ],
+    "provisionalDiagnosis": "No D",
+    "onExamination": "D",
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": "D",
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": "MC",
+    "prescriptionNameAndStrength": "D",
+    "prescriptionDosage": "0-1-0",
+    "prescriptionInstructions": "in food",
+    "prescriptionDuration": "7 days",
+    "prescriptionOthers": "aweek",
+    "oralPathology": null,
+    "bloodPressure": null,
+    "heartRate": null,
+    "respiratoryRate": null,
+    "temperature": null,
+    "spo2": null,
+    "weight": null,
+    "height": null,
+    "bmi": null
+  },
+  {
+    "setuId": "setu-009",
+    "patientId": "MDCP000011",
+    "dentalStatus": "scheduled",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-04-03 04:05:18.124617",
+    "dentalReleasedBy": null,
+    "dentalReleasedAt": null,
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [],
+    "provisionalDiagnosis": null,
+    "onExamination": null,
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": null,
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": null,
+    "prescriptionNameAndStrength": null,
+    "prescriptionDosage": null,
+    "prescriptionInstructions": null,
+    "prescriptionDuration": null,
+    "prescriptionOthers": null,
+    "oralPathology": null,
+    "bloodPressure": null,
+    "heartRate": null,
+    "respiratoryRate": null,
+    "temperature": null,
+    "spo2": null,
+    "weight": null,
+    "height": null,
+    "bmi": null
+  },
+  {
+    "setuId": "MDCP000012",
+    "patientId": "MDCP000012",
+    "dentalStatus": "completed",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-04-03 04:13:00.567177",
+    "dentalReleasedBy": null,
+    "dentalReleasedAt": "2026-04-03 04:13:40.514375",
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [],
+    "provisionalDiagnosis": null,
+    "onExamination": null,
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": null,
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": null,
+    "prescriptionNameAndStrength": null,
+    "prescriptionDosage": null,
+    "prescriptionInstructions": null,
+    "prescriptionDuration": null,
+    "prescriptionOthers": null,
+    "oralPathology": null,
+    "bloodPressure": null,
+    "heartRate": null,
+    "respiratoryRate": null,
+    "temperature": null,
+    "spo2": null,
+    "weight": null,
+    "height": null,
+    "bmi": null
+  },
+  {
+    "setuId": "1234*4321",
+    "patientId": "MDCP000013",
+    "dentalStatus": "completed",
+    "dentalAllottedBy": "John Doe",
+    "dentalAllottedAt": "2026-04-07 15:11:43.280758",
+    "dentalReleasedBy": "Smith james",
+    "dentalReleasedAt": "2026-05-07 19:29:16.606418",
+    "dentalIsFollowUpNeeded": false,
+    "dentalQuestionnaireResponses": [
+      {
+        "question": "Which Image is clear",
+        "answer": ""
+      },
+      {
+        "question": "Which option is correct?",
+        "answer": "no"
+      },
+      {
+        "question": "5-2 =3?",
+        "answer": "true"
+      }
+    ],
+    "provisionalDiagnosis": "ab",
+    "onExamination": "ba",
+    "whitePatch": false,
+    "redPatch": false,
+    "investigations": "cd",
+    "advice": null,
+    "specialistReferral": false,
+    "prescriptionType": "Na",
+    "prescriptionNameAndStrength": "na",
+    "prescriptionDosage": "0-0-0",
+    "prescriptionInstructions": "AF",
+    "prescriptionDuration": "3 days",
+    "prescriptionOthers": "na",
+    "oralPathology": "Aphthous stomatitis",
+    "bloodPressure": null,
+    "heartRate": null,
+    "respiratoryRate": null,
+    "temperature": null,
+    "spo2": null,
+    "weight": null,
+    "height": null,
+    "bmi": null
+  }
+]

@@ -100,6 +100,9 @@
                     <button type="button" class="btn btn-outline-success btn-sm" onclick="exportPatients()">
                         <i class="fas fa-download me-1"></i>Export CSV
                     </button>
+                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="exportPatientsJson()">
+                        <i class="fas fa-file-code me-1"></i>Export JSON
+                    </button>
                     <button class="btn btn-outline-primary btn-sm" onclick="refreshPatients()">
                         <i class="fas fa-sync-alt me-1"></i>Refresh
                     </button>
@@ -435,6 +438,18 @@
             date_to: currentDateTo,
             view: '{{ view|default:"" }}',
             export: 'csv'
+        });
+        window.location.href = `/health-assistant/api/search-patients/?${params.toString()}`;
+    }
+
+    function exportPatientsJson() {
+        const params = new URLSearchParams({
+            q: currentQuery,
+            gender: currentGender,
+            date_from: currentDateFrom,
+            date_to: currentDateTo,
+            view: '{{ view|default:"" }}',
+            export: 'json'
         });
         window.location.href = `/health-assistant/api/search-patients/?${params.toString()}`;
     }

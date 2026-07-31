@@ -10,6 +10,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Load environment variables from .env file
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
+import sys
+if any(cmd in sys.argv for cmd in ['export_setu_json', 'check', 'test', 'inspect_db', 'test_mapping', 'test_progress']):
+    os.environ['MQTT_ENABLED'] = 'False'
+    os.environ['AWS_ACCESS_KEY_ID'] = ''
+    os.environ['AWS_SECRET_ACCESS_KEY'] = ''
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me')
 
 # AWS S3 Settings mapped from .env

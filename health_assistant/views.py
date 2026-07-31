@@ -873,9 +873,11 @@ def api_search_patients(request):
         export_format = request.GET.get('export', '')
         view_type = request.GET.get('view', '')
     
-        # Handle CSV export
+        # Handle CSV/JSON export
         if export_format == 'csv':
             return export_patients_csv(query, gender, date_from, date_to, view_type=view_type)
+        elif export_format == 'json':
+            return export_patients_setu_json(query, gender, date_from, date_to, view_type=view_type)
         
         # Build filter conditions
         filters = Q()
@@ -1184,6 +1186,223 @@ def parse_consultation_content(content):
                     parsed[key] = value_clean
                     break
     return parsed
+
+
+def parse_prescriptions_from_content(content):
+    import re
+    if not content:
+        return []
+    blocks = re.split(r'<br\s*/?>\s*<br\s*/?>', content)
+    pres_block = None
+    for block in blocks:
+        block = block.strip()
+        if block.startswith("<strong>Prescriptions</strong>"):
+            pres_block = block
+            break
+            
+    if not pres_block:
+        return []
+        
+    lines = re.split(r'<br\s*/?>', pres_block)
+    results = []
+    for line in lines:
+        line = line.strip()
+        if not line or "Prescriptions" in line:
+            continue
+        
+        line = re.sub(r'^&bull;\s*', '', line).strip()
+        if not line:
+            continue
+            
+        pattern = r'<em>(.*?)</em>:\s*<strong>(.*?)</strong>\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*(?:\|\s*(.*))?$'
+        match = re.match(pattern, line)
+        if match:
+            typ = match.group(1).strip()
+            med = match.group(2).strip()
+            dos = match.group(3).strip()
+            dur = match.group(4).strip()
+            ins = match.group(5).strip()
+            oth = match.group(6).strip() if match.group(6) else ""
+            results.append({
+                'type': typ,
+                'medicine': med,
+                'dosage': dos,
+                'duration': dur,
+                'instructions': ins,
+                'others': oth
+            })
+        else:
+            # Resilient fallback parser
+            header_match = re.match(r'<em>(.*?)</em>:\s*<strong>(.*?)</strong>\s*\|?(.*)', line)
+            if header_match:
+                typ = header_match.group(1).strip()
+                med = header_match.group(2).strip()
+                rest = header_match.group(3).strip()
+                parts = [p.strip() for p in rest.split('|') if p.strip()]
+                dos = parts[0] if len(parts) > 0 else ""
+                dur = parts[1] if len(parts) > 1 else ""
+                ins = parts[2] if len(parts) > 2 else ""
+                oth = parts[3] if len(parts) > 3 else ""
+                results.append({
+                    'type': typ,
+                    'medicine': med,
+                    'dosage': dos,
+                    'duration': dur,
+                    'instructions': ins,
+                    'others': oth
+                })
+    return results
+
+
+def get_patient_setu_data(patient):
+    # Get latest consultation note
+    latest_note = patient.notes.filter(note_type='CONSULTATION').order_by('-created_at').first()
+    parsed = parse_consultation_content(latest_note.content if latest_note else "")
+    
+    # Get screening session
+    session = getattr(patient, 'screening_session', None)
+    
+    # Allotment fields
+    allotted_by_user = None
+    if session:
+        allotted_by_user = session.conducted_by or session.created_by
+    if not allotted_by_user:
+        allotted_by_user = patient.created_by
+        
+    dental_allotted_by = allotted_by_user.get_full_name() or allotted_by_user.email if allotted_by_user else None
+    
+    allotted_at = None
+    if session:
+        allotted_at = session.actual_start_time or session.created_at
+    if not allotted_at:
+        allotted_at = patient.created_at
+        
+    dental_allotted_at = allotted_at.isoformat() if allotted_at else None
+    
+    # Release fields
+    released_by_user = latest_note.author if latest_note else (session.reviewed_by if session else None)
+    dental_released_by = released_by_user.get_full_name() or released_by_user.email if released_by_user else None
+    
+    released_at = latest_note.created_at if latest_note else (session.actual_end_time if session else None)
+    dental_released_at = released_at.isoformat() if released_at else None
+    
+    # Follow-up
+    dental_is_follow_up_needed = latest_note.is_important if latest_note else False
+    
+    # Questionnaire responses
+    q_responses = []
+    latest_response = patient.questionnaire_responses.filter(is_complete=True).order_by('-submitted_at').first()
+    if latest_response:
+        for ans in latest_response.answers.all().select_related('question'):
+            ans_str = ""
+            if ans.file_answer:
+                ans_str = ans.file_answer.url
+            elif ans.option_answer.exists():
+                ans_str = ", ".join([opt.text for opt in ans.option_answer.all()])
+            elif ans.number_answer is not None:
+                ans_str = str(ans.number_answer)
+            elif ans.date_answer is not None:
+                ans_str = str(ans.date_answer)
+            else:
+                ans_str = ans.text_answer
+            
+            q_responses.append({
+                "question": ans.question.question_text,
+                "answer": ans_str
+            })
+            
+    # Prescriptions
+    prescriptions = parse_prescriptions_from_content(latest_note.content if latest_note else "")
+    
+    prescription_type = ", ".join([p['type'] for p in prescriptions if p.get('type')]) or None
+    prescription_name = ", ".join([p['medicine'] for p in prescriptions if p.get('medicine')]) or None
+    prescription_dosage = ", ".join([p['dosage'] for p in prescriptions if p.get('dosage')]) or None
+    prescription_instructions = ", ".join([p['instructions'] for p in prescriptions if p.get('instructions')]) or None
+    prescription_duration = ", ".join([p['duration'] for p in prescriptions if p.get('duration')]) or None
+    prescription_others = ", ".join([p['others'] for p in prescriptions if p.get('others')]) or None
+    
+    # Vitals
+    vitals = patient.vitals.order_by('-recorded_at').first()
+    
+    bp_str = None
+    if vitals and vitals.blood_pressure_systolic is not None and vitals.blood_pressure_diastolic is not None:
+        bp_str = f"{vitals.blood_pressure_systolic}/{vitals.blood_pressure_diastolic}"
+        
+    temp_c = None
+    if vitals and vitals.temperature is not None:
+        try:
+            temp_c = round((float(vitals.temperature) - 32) * 5 / 9, 1)
+        except (ValueError, TypeError):
+            pass
+        
+    record = {
+        "setuId": patient.setu_id or patient.patient_id or str(patient.id),
+        "patientId": patient.patient_id,
+        "dentalStatus": session.status if session else ("completed" if latest_note else "pending"),
+        "dentalAllottedBy": dental_allotted_by,
+        "dentalAllottedAt": dental_allotted_at,
+        "dentalReleasedBy": dental_released_by,
+        "dentalReleasedAt": dental_released_at,
+        "dentalIsFollowUpNeeded": dental_is_follow_up_needed,
+        "dentalQuestionnaireResponses": q_responses,
+        "provisionalDiagnosis": parsed.get('provisional diagnosis') or None,
+        "onExamination": parsed.get('on examination') or None,
+        "whitePatch": parsed.get('white patch present', '').strip().lower() == 'yes',
+        "redPatch": parsed.get('red patch present', '').strip().lower() == 'yes',
+        "investigations": parsed.get('investigations') or None,
+        "advice": parsed.get('advice') or None,
+        "specialistReferral": parsed.get('specialist referral required', '').strip().lower() == 'yes',
+        "prescriptionType": prescription_type,
+        "prescriptionNameAndStrength": prescription_name,
+        "prescriptionDosage": prescription_dosage,
+        "prescriptionInstructions": prescription_instructions,
+        "prescriptionDuration": prescription_duration,
+        "prescriptionOthers": prescription_others,
+        "oralPathology": parsed.get('oral pathologies') or None,
+        "bloodPressure": bp_str,
+        "heartRate": int(vitals.heart_rate) if vitals and vitals.heart_rate is not None else None,
+        "respiratoryRate": int(vitals.respiratory_rate) if vitals and vitals.respiratory_rate is not None else None,
+        "temperature": temp_c,
+        "spo2": int(vitals.spo2) if vitals and vitals.spo2 is not None else None,
+        "weight": float(vitals.weight) if vitals and vitals.weight is not None else None,
+        "height": float(vitals.height) if vitals and vitals.height is not None else None,
+        "bmi": float(vitals.bmi) if vitals and vitals.bmi is not None else None,
+    }
+    return record
+
+
+def export_patients_setu_json(query, gender, date_from, date_to, view_type=None):
+    """Export patients to JSON matching the Setu unstructured schema"""
+    from django.http import JsonResponse
+    from patients.models import Patient, PatientNote
+    
+    # Build filter conditions
+    filters = Q()
+    if query:
+        filters |= Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(patient_id__icontains=query) | Q(phone_number__icontains=query) | Q(setu_id__icontains=query)
+    if gender:
+        filters &= Q(gender=gender)
+    if date_from:
+        filters &= Q(created_at__date__gte=date_from)
+    if date_to:
+        filters &= Q(created_at__date__lte=date_to)
+        
+    if view_type == 'pending':
+        filters &= Q(questionnaire_responses__isnull=False, questionnaire_responses__is_complete=True)
+        filters &= ~Q(notes__note_type=PatientNote.NoteType.CONSULTATION, notes__is_important=False)
+    elif view_type == 'completed':
+        filters &= Q(questionnaire_responses__isnull=False, questionnaire_responses__is_complete=True)
+        filters &= Q(notes__note_type=PatientNote.NoteType.CONSULTATION, notes__is_important=False)
+    
+    patients = Patient.objects.filter(filters).order_by('-created_at').distinct()
+    
+    data = []
+    for patient in patients:
+        data.append(get_patient_setu_data(patient))
+        
+    response = JsonResponse(data, safe=False, json_dumps_params={'indent': 2})
+    response['Content-Disposition'] = 'attachment; filename="setu_patients_export.json"'
+    return response
 
 
 def export_patients_csv(query, gender, date_from, date_to, view_type=None):
