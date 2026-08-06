@@ -139,9 +139,13 @@
                                     </div>
                                 </td>
                                 <td>
+                                    {% if session.has_uploaded_data %}
+                                    <span class="status-badge status-completed">Completed</span>
+                                    {% else %}
                                     <span class="status-badge status-{{ session.status|lower }}">
                                         {{ session.get_status_display }}
                                     </span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <div>
@@ -151,7 +155,11 @@
                                     </div>
                                 </td>
                                 <td>
-                                    {% if session.actual_end_time %}
+                                    {% if session.has_uploaded_data %}
+                                    <span class="text-success">
+                                        <i class="fas fa-check-circle me-1"></i>Uploaded
+                                    </span>
+                                    {% elif session.actual_end_time %}
                                     {% with duration=session.actual_end_time|timeuntil:session.created_at %}
                                     <span class="text-muted">{{ duration }}</span>
                                     {% endwith %}

@@ -337,6 +337,51 @@ class ScreeningAttachment(models.Model):
         return f"{self.file.name} - {self.session}"
 
 
+class FrameAnnotation(models.Model):
+    """Doctor-placed marker + note on a specific frame within a ZIP attachment."""
+
+    QUADRANT_CHOICES = [
+        ('RU', 'Right-Upper'),
+        ('RL', 'Right-Lower'),
+        ('LU', 'Left-Upper'),
+        ('LL', 'Left-Lower'),
+    ]
+    IMAGE_TYPE_CHOICES = [
+        ('visual', 'Visual'),
+        ('thermal', 'Thermal'),
+    ]
+
+    session = models.ForeignKey(
+        ScreeningSession, on_delete=models.CASCADE, related_name='frame_annotations',
+    )
+    attachment = models.ForeignKey(
+        ScreeningAttachment, on_delete=models.CASCADE, related_name='frame_annotations',
+    )
+    quadrant = models.CharField(max_length=2, choices=QUADRANT_CHOICES)
+    frame_index = models.PositiveSmallIntegerField()
+    image_type = models.CharField(max_length=10, choices=IMAGE_TYPE_CHOICES)
+    marker_x = models.FloatField(help_text='X position as percentage 0–100')
+    marker_y = models.FloatField(help_text='Y position as percentage 0–100')
+    note = models.TextField()
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name='frame_annotations',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'frame annotation'
+        verbose_name_plural = 'frame annotations'
+
+    def __str__(self):
+        return f"Annotation by {self.created_by} — {self.session_id} Q:{self.quadrant} F:{self.frame_index}"
+
+    @property
+    def quadrant_label(self):
+        return dict(self.QUADRANT_CHOICES).get(self.quadrant, self.quadrant)
+
+
 class ScreeningReminder(models.Model):
     """Model to track reminders for upcoming or due screenings."""
     

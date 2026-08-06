@@ -14,6 +14,7 @@ urlpatterns = [
     path('responses/<int:pk>/view/', views.ResponseReadOnlyView.as_view(), name='response_readonly'),
     path('prescription/<int:document_id>/download/', views.download_prescription, name='download_prescription'),
     path('sessions/', views.SessionListView.as_view(), name='session_list'),
+    path('annotations/', views.AnnotationListView.as_view(), name='annotation_list'),
     
     # API endpoints
     path('api/prescription/<str:identifier>/', api_views.setu_prescription_api, name='api_fetch_prescription'),

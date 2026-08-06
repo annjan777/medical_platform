@@ -25,6 +25,10 @@ urlpatterns = [
     path('session/<str:session_id>/overview/', views.session_overview, name='session_overview'),
     path('session/<str:session_id>/attachments/<int:attachment_id>/', views.session_attachment_view, name='session_attachment_view'),
     path('session/<str:session_id>/attachments/<int:attachment_id>/zip-entry/', views.session_zip_entry_view, name='session_zip_entry_view'),
+    path('session/<str:session_id>/attachments/<int:attachment_id>/analyze/', views.session_attachment_analyze_view, name='session_attachment_analyze_view'),
+    path('session/<str:session_id>/attachments/<int:attachment_id>/frame/<str:quadrant>/<int:frame_idx>/', views.session_frame_annotate_view, name='session_frame_annotate_view'),
+    path('api/annotations/save/', views.api_save_frame_annotation, name='api_save_frame_annotation'),
+    path('api/annotations/<int:annotation_id>/delete/', views.api_delete_frame_annotation, name='api_delete_frame_annotation'),
     path('sessions/', views.my_sessions, name='my_sessions'),
     
     # API Endpoints

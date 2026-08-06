@@ -3,11 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView, ListView, DetailView
 from django.contrib import messages
-from django.db.models import Q, Subquery, OuterRef
+from django.db.models import Q, Subquery, OuterRef, Exists
 from accounts.models import User
 from patients.models import Patient
 from questionnaires.models import Response, Questionnaire
-from screening.models import ScreeningSession
+from screening.models import ScreeningSession, FrameAnnotation, ScreeningAttachment
 from textwrap import dedent
 
 
@@ -26,7 +26,9 @@ class SessionListView(DoctorRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = ScreeningSession.objects.select_related('patient', 'screening_type').order_by('-created_at')
+        queryset = ScreeningSession.objects.select_related('patient', 'screening_type').order_by('-created_at').annotate(
+            has_uploaded_data=Exists(ScreeningAttachment.objects.filter(session=OuterRef('pk')))
+        )
         
         q = self.request.GET.get('q')
         status = self.request.GET.get('status')
@@ -425,4 +427,69 @@ class ResponseReadOnlyView(DoctorRequiredMixin, DetailView):
         context['vitals'] = self.object.patient.vitals.order_by('-recorded_at').first()
         context['previous_consultations'] = self.object.patient.notes.filter(note_type='CONSULTATION').order_by('-created_at')
         context['read_only'] = True
+        return context
+
+
+class AnnotationListView(DoctorRequiredMixin, TemplateView):
+    template_name = 'doctor/annotation_list.html'
+
+    def get_context_data(self, **kwargs):
+        from itertools import groupby
+        from django.core.paginator import Paginator
+        from django.urls import reverse as url_reverse
+
+        context = super().get_context_data(**kwargs)
+        patient_q = self.request.GET.get('patient', '').strip()
+
+        qs = (
+            FrameAnnotation.objects
+            .filter(created_by=self.request.user)
+            .select_related('session', 'session__patient', 'attachment')
+            .order_by('session_id', 'attachment_id', 'quadrant', 'frame_index', 'created_at')
+        )
+        if patient_q:
+            qs = qs.filter(
+                Q(session__patient__first_name__icontains=patient_q) |
+                Q(session__patient__last_name__icontains=patient_q) |
+                Q(session__id__icontains=patient_q)
+            )
+
+        # Group by (session, attachment, quadrant, frame_index)
+        groups = []
+        key_fn = lambda a: (a.session_id, a.attachment_id, a.quadrant, a.frame_index)
+        for _, items in groupby(qs, key=key_fn):
+            ann_list = list(items)
+            first = ann_list[0]
+            try:
+                annotate_url = url_reverse('health_assistant:session_frame_annotate_view', kwargs={
+                    'session_id': first.session_id,
+                    'attachment_id': first.attachment_id,
+                    'quadrant': first.quadrant,
+                    'frame_idx': first.frame_index,
+                })
+            except Exception:
+                annotate_url = '#'
+            groups.append({
+                'session': first.session,
+                'patient': first.session.patient,
+                'attachment': first.attachment,
+                'quadrant': first.quadrant,
+                'quadrant_label': first.quadrant_label,
+                'frame_index': first.frame_index,
+                'annotations': ann_list,
+                'note_count': len(ann_list),
+                'annotate_url': annotate_url,
+                'latest_at': ann_list[-1].created_at,
+            })
+
+        # Sort groups newest-first by latest annotation in the group
+        groups.sort(key=lambda g: g['latest_at'], reverse=True)
+
+        paginator = Paginator(groups, 10)
+        page_obj = paginator.get_page(self.request.GET.get('page', 1))
+
+        context['page_obj'] = page_obj
+        context['frame_groups'] = page_obj.object_list
+        context['is_paginated'] = page_obj.has_other_pages()
+        context['patient_q'] = patient_q
         return context

@@ -20,7 +20,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from accounts.models import User
 from patients.models import Patient, PatientVitals
-from screening.models import ScreeningAttachment, ScreeningSession, ScreeningType
+from screening.models import ScreeningAttachment, ScreeningSession, ScreeningType, FrameAnnotation
 from devices.models import Device
 from questionnaires.models import Questionnaire, Question
 from .forms import PatientRegistrationForm, VitalsForm
@@ -778,6 +778,242 @@ def session_zip_entry_view(request, session_id, attachment_id):
         'base_template': base_template,
         'back_href': zip_back_href,
     })
+
+
+_QUADRANT_SEG    = {'RU': 0, 'RL': 30, 'LU': 60, 'LL': 90}
+_QUADRANT_LABELS = {'RU': 'Right-Upper', 'RL': 'Right-Lower', 'LU': 'Left-Upper', 'LL': 'Left-Lower'}
+
+
+def _img_sort_key(filename):
+    base = filename.rsplit('.', 1)[0]
+    stem = base.split('(')[-1].rstrip(')')
+    try:
+        return int(stem)
+    except ValueError:
+        return -1
+
+
+def _load_zip_image_lists(attachment):
+    """Return (visual_imgs, thermal_imgs) sorted lists of zip-internal paths."""
+    visual_imgs, thermal_imgs = [], []
+    attachment.file.open('rb')
+    try:
+        with zipfile.ZipFile(attachment.file) as archive:
+            for info in archive.infolist():
+                if info.is_dir():
+                    continue
+                norm = info.filename.replace('\\', '/').strip('/')
+                parts = norm.split('/')
+                if len(parts) < 2:
+                    continue
+                parent, basename = parts[-2], parts[-1]
+                ext = basename.lower().rsplit('.', 1)[-1] if '.' in basename else ''
+                if ext not in IMAGE_EXTENSIONS:
+                    continue
+                if parent == 'VisualImage':
+                    visual_imgs.append(norm)
+                elif parent == 'ThermalImage':
+                    thermal_imgs.append(norm)
+    finally:
+        attachment.file.close()
+    visual_imgs.sort(key=lambda n: _img_sort_key(n.rsplit('/', 1)[-1]))
+    thermal_imgs.sort(key=lambda n: _img_sort_key(n.rsplit('/', 1)[-1]))
+    return visual_imgs, thermal_imgs
+
+
+@login_required
+def session_attachment_analyze_view(request, session_id, attachment_id):
+    """2×2 visual/thermal layout viewer for ZIP attachments."""
+    if request.user.role not in [User.Role.HEALTH_ASSISTANT, User.Role.DOCTOR, User.Role.SUPER_ADMIN] and not request.user.is_staff:
+        messages.error(request, 'Access denied. Authorized medical staff only.')
+        return redirect('login')
+
+    try:
+        session, attachment = _get_session_attachment_for_user(request, session_id, attachment_id)
+    except Http404:
+        messages.error(request, 'You do not have permission to view this session attachment.')
+        return redirect('health_assistant:my_sessions')
+
+    preview_context = _attachment_preview_context(attachment)
+    if preview_context['preview_type'] != 'zip':
+        raise Http404('Attachment is not a ZIP file')
+
+    try:
+        visual_imgs, thermal_imgs = _load_zip_image_lists(attachment)
+    except zipfile.BadZipFile:
+        raise Http404('ZIP file could not be opened')
+
+    total = min(len(visual_imgs), len(thermal_imgs))
+
+    try:
+        frame = max(0, min(29, int(request.GET.get('frame', 14))))
+    except (ValueError, TypeError):
+        frame = 14
+
+    def get_pair_urls(seg_start):
+        idx = seg_start + frame
+        if idx >= total:
+            return '', ''
+        return (
+            _zip_entry_url(session, attachment, visual_imgs[idx], raw=True),
+            _zip_entry_url(session, attachment, thermal_imgs[idx], raw=True),
+        )
+
+    ru_v_url, ru_t_url = get_pair_urls(0)
+    rl_v_url, rl_t_url = get_pair_urls(30)
+    lu_v_url, lu_t_url = get_pair_urls(60)
+    ll_v_url, ll_t_url = get_pair_urls(90)
+
+    back_href = reverse('health_assistant:session_overview', kwargs={'session_id': session.id})
+
+    def annotate_url(q):
+        return reverse('health_assistant:session_frame_annotate_view', kwargs={
+            'session_id': session.id, 'attachment_id': attachment.id,
+            'quadrant': q, 'frame_idx': frame,
+        })
+
+    ann_counts = dict(
+        FrameAnnotation.objects
+        .filter(attachment=attachment, frame_index=frame)
+        .values('quadrant')
+        .annotate(n=Count('id'))
+        .values_list('quadrant', 'n')
+    )
+
+    return render(request, 'health_assistant/session_attachment_analyze.html', {
+        'session': session, 'attachment': attachment,
+        'frame': frame, 'total': total, 'back_href': back_href,
+        'ru_v_url': ru_v_url, 'ru_t_url': ru_t_url,
+        'rl_v_url': rl_v_url, 'rl_t_url': rl_t_url,
+        'lu_v_url': lu_v_url, 'lu_t_url': lu_t_url,
+        'll_v_url': ll_v_url, 'll_t_url': ll_t_url,
+        'ru_annotate_url': annotate_url('RU'), 'rl_annotate_url': annotate_url('RL'),
+        'lu_annotate_url': annotate_url('LU'), 'll_annotate_url': annotate_url('LL'),
+        'ru_ann_count': ann_counts.get('RU', 0), 'rl_ann_count': ann_counts.get('RL', 0),
+        'lu_ann_count': ann_counts.get('LU', 0), 'll_ann_count': ann_counts.get('LL', 0),
+    })
+
+
+@login_required
+def session_frame_annotate_view(request, session_id, attachment_id, quadrant, frame_idx):
+    """Full-page frame annotator with clickable marker overlay."""
+    if request.user.role not in [User.Role.HEALTH_ASSISTANT, User.Role.DOCTOR, User.Role.SUPER_ADMIN] and not request.user.is_staff:
+        messages.error(request, 'Access denied. Authorized medical staff only.')
+        return redirect('login')
+
+    try:
+        session, attachment = _get_session_attachment_for_user(request, session_id, attachment_id)
+    except Http404:
+        messages.error(request, 'You do not have permission to view this attachment.')
+        return redirect('health_assistant:my_sessions')
+
+    quadrant = quadrant.upper()
+    if quadrant not in _QUADRANT_SEG:
+        raise Http404('Invalid quadrant')
+
+    try:
+        frame_idx = max(0, min(29, int(frame_idx)))
+    except (ValueError, TypeError):
+        raise Http404('Invalid frame index')
+
+    preview_context = _attachment_preview_context(attachment)
+    if preview_context['preview_type'] != 'zip':
+        raise Http404('Attachment is not a ZIP file')
+
+    try:
+        visual_imgs, thermal_imgs = _load_zip_image_lists(attachment)
+    except zipfile.BadZipFile:
+        raise Http404('ZIP file could not be opened')
+
+    total = min(len(visual_imgs), len(thermal_imgs))
+    img_idx = _QUADRANT_SEG[quadrant] + frame_idx
+
+    visual_url  = _zip_entry_url(session, attachment, visual_imgs[img_idx],  raw=True) if img_idx < total else ''
+    thermal_url = _zip_entry_url(session, attachment, thermal_imgs[img_idx], raw=True) if img_idx < total else ''
+
+    annotations = (
+        FrameAnnotation.objects
+        .filter(attachment=attachment, quadrant=quadrant, frame_index=frame_idx)
+        .select_related('created_by')
+        .order_by('created_at')
+    )
+
+    analyze_url = (
+        reverse('health_assistant:session_attachment_analyze_view', kwargs={
+            'session_id': session.id, 'attachment_id': attachment.id,
+        }) + f'?frame={frame_idx}'
+    )
+    save_url       = reverse('health_assistant:api_save_frame_annotation')
+    delete_url_base = reverse('health_assistant:api_delete_frame_annotation', kwargs={'annotation_id': 0}).rstrip('0/')
+
+    return render(request, 'health_assistant/session_frame_annotate.html', {
+        'session': session, 'attachment': attachment,
+        'quadrant': quadrant, 'quadrant_label': _QUADRANT_LABELS[quadrant],
+        'frame_idx': frame_idx,
+        'visual_url': visual_url, 'thermal_url': thermal_url,
+        'annotations': annotations,
+        'analyze_url': analyze_url, 'save_url': save_url, 'delete_url_base': delete_url_base,
+    })
+
+
+@login_required
+@require_POST
+def api_save_frame_annotation(request):
+    """Save a new frame annotation (JSON POST)."""
+    if request.user.role not in [User.Role.HEALTH_ASSISTANT, User.Role.DOCTOR, User.Role.SUPER_ADMIN] and not request.user.is_staff:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    try:
+        data       = json.loads(request.body)
+        session_id    = data['session_id']
+        attachment_id = int(data['attachment_id'])
+        quadrant      = data['quadrant'].upper()
+        frame_index   = int(data['frame_index'])
+        image_type    = data['image_type']
+        marker_x      = float(data['marker_x'])
+        marker_y      = float(data['marker_y'])
+        note          = data['note'].strip()
+    except (KeyError, ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    if quadrant not in _QUADRANT_SEG:
+        return JsonResponse({'error': 'Invalid quadrant'}, status=400)
+    if image_type not in ('visual', 'thermal'):
+        return JsonResponse({'error': 'Invalid image_type'}, status=400)
+    if not note:
+        return JsonResponse({'error': 'Note cannot be empty'}, status=400)
+
+    try:
+        session, attachment = _get_session_attachment_for_user(request, session_id, attachment_id)
+    except Http404:
+        return JsonResponse({'error': 'Attachment not found'}, status=404)
+
+    annotation = FrameAnnotation.objects.create(
+        session=session, attachment=attachment,
+        quadrant=quadrant, frame_index=frame_index,
+        image_type=image_type, marker_x=marker_x, marker_y=marker_y,
+        note=note, created_by=request.user,
+    )
+
+    return JsonResponse({
+        'id': annotation.id, 'quadrant': annotation.quadrant,
+        'frame_index': annotation.frame_index, 'image_type': annotation.image_type,
+        'marker_x': annotation.marker_x, 'marker_y': annotation.marker_y,
+        'note': annotation.note,
+        'created_by': request.user.get_full_name() or request.user.email,
+        'created_at': annotation.created_at.strftime('%b %d, %Y %H:%M'),
+    })
+
+
+@login_required
+@require_POST
+def api_delete_frame_annotation(request, annotation_id):
+    """Delete a frame annotation (owner or staff only)."""
+    annotation = get_object_or_404(FrameAnnotation, id=annotation_id)
+    if annotation.created_by_id != request.user.id and not request.user.is_staff and not getattr(request.user, 'is_super_admin', False):
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    annotation.delete()
+    return JsonResponse({'deleted': True})
 
 
 @login_required
